@@ -1,0 +1,7 @@
+dependencies {
+    api platform('org.testcontainers:testcontainers-bom:1.20.4')
+    api 'org.testcontainers:junit-jupiter'
+    api 'org.testcontainers:postgresql'
+    api 'org.testcontainers:mongodb'
+    api 'org.testcontainers:kafka'
+}

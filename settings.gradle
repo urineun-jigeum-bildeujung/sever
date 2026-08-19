@@ -1,0 +1,14 @@
+rootProject.name = 'golajugaenyang-server'
+
+include 'modules:common-core'
+include 'modules:common-security'
+include 'modules:common-event'
+include 'modules:common-test'
+
+include 'platform:api-gateway'
+
+include 'services:auth-service'
+include 'services:member-service'
+include 'services:product-service'
+include 'services:order-service'
+include 'services:payment-service'

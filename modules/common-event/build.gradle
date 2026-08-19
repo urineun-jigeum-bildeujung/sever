@@ -1,0 +1,5 @@
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    testImplementation "com.tngtech.archunit:archunit-junit5:1.3.0"
+}

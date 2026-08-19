@@ -1,0 +1,74 @@
+include:
+  - local-infra/docker-compose.yml
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: platform/api-gateway/Dockerfile
+    profiles: ["all", "gateway"]
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      AUTH_SERVICE_HOST: auth-service
+      MEMBER_SERVICE_HOST: member-service
+      PRODUCT_SERVICE_HOST: product-service
+      ORDER_SERVICE_HOST: order-service
+      PAYMENT_SERVICE_HOST: payment-service
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    profiles: ["all", "auth"]
+    depends_on: [postgres]
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+
+  member-service:
+    build:
+      context: .
+      dockerfile: services/member-service/Dockerfile
+    profiles: ["all", "member"]
+    depends_on: [postgres]
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    profiles: ["all", "product"]
+    depends_on: [postgres]
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    profiles: ["all", "order"]
+    depends_on: [postgres, kafka]
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    profiles: ["all", "payment"]
+    depends_on: [postgres, kafka]
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+
