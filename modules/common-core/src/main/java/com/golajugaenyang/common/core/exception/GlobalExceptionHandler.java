@@ -1,12 +1,13 @@
 package com.golajugaenyang.common.core.exception;
 
-import jakarta.annotation.Nullable;
+
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -69,16 +70,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    protected ResponseEntity<Object> handleExceptionInternal(
-        @NonNull Exception ex, @Nullable Object body, @NonNull HttpHeaders headers,
+    protected ResponseEntity<Object> createResponseEntity(
+        @Nullable Object body, @NonNull HttpHeaders headers,
         @NonNull HttpStatusCode statusCode, @NonNull WebRequest request) {
 
-        if (body instanceof ProblemDetail problemDetail
-            && (problemDetail.getProperties() == null
-            || !problemDetail.getProperties().containsKey(ERROR_CODE_PROPERTY))) {
+        if (body instanceof ProblemDetail problemDetail && !hasErrorCode(problemDetail)) {
             problemDetail.setProperty(ERROR_CODE_PROPERTY, "COMMON_" + statusCode.value());
         }
-        return super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        return super.createResponseEntity(body, headers, statusCode, request);
+    }
+
+    private boolean hasErrorCode(ProblemDetail problemDetail) {
+        Map<String, Object> properties = problemDetail.getProperties();
+        return properties != null && properties.containsKey(ERROR_CODE_PROPERTY);
     }
 
     @ExceptionHandler(Exception.class)
