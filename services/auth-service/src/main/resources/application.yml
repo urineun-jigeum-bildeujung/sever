@@ -1,6 +1,9 @@
 spring:
   application:
     name: auth-service
+  mvc:
+    problemdetails:
+      enabled: true
 
 management:
   endpoints:
