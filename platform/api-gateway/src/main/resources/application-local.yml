@@ -28,3 +28,7 @@ spring:
               uri: http://${REVIEW_SERVICE_HOST:localhost}:8086
               predicates:
                 - Path=/api/reviews/**
+            - id: notification-service
+              uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8087
+              predicates:
+                - Path=/api/notifications/**

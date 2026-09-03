@@ -82,3 +82,14 @@ services:
       - "8086:8086"
     environment:
       SPRING_PROFILES_ACTIVE: local
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    profiles: ["all", "notification"]
+    depends_on: [postgres, kafka]
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
