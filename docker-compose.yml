@@ -16,6 +16,8 @@ services:
       PRODUCT_SERVICE_HOST: product-service
       ORDER_SERVICE_HOST: order-service
       PAYMENT_SERVICE_HOST: payment-service
+      REVIEW_SERVICE_HOST: review-service
+      NOTIFICATION_SERVICE_HOST: notification-service
 
   auth-service:
     build:
