@@ -6,6 +6,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation project(':modules:common-core')
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation project(':modules:common-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
