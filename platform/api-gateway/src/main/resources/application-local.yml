@@ -24,3 +24,7 @@ spring:
               uri: http://${PAYMENT_SERVICE_HOST:localhost}:8085
               predicates:
                 - Path=/api/payments/**
+            - id: review-service
+              uri: http://${REVIEW_SERVICE_HOST:localhost}:8086
+              predicates:
+                - Path=/api/reviews/**

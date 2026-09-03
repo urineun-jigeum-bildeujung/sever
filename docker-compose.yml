@@ -72,3 +72,13 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
 
+  review-service:
+    build:
+      context: .
+      dockerfile: services/review-service/Dockerfile
+    profiles: ["all", "review"]
+    depends_on: [postgres, kafka]
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
