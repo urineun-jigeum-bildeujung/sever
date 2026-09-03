@@ -1,5 +1,7 @@
-CREATE SCHEMA IF NOT EXISTS auth_schema;
-CREATE SCHEMA IF NOT EXISTS member_schema;
-CREATE SCHEMA IF NOT EXISTS product_schema;
-CREATE SCHEMA IF NOT EXISTS order_schema;
-CREATE SCHEMA IF NOT EXISTS payment_schema;
+CREATE DATABASE auth_db;
+CREATE DATABASE member_db;
+CREATE DATABASE product_db;
+CREATE DATABASE order_db;
+CREATE DATABASE payment_db;
+CREATE DATABASE review_db;
+CREATE DATABASE notification_db
