@@ -1,6 +1,6 @@
 spring:
   application:
-    name: member-service
+    name: notification-service
   mvc:
     problemdetails:
       enabled: true

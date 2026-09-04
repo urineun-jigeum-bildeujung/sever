@@ -4,11 +4,11 @@ COPY . .
 RUN chmod +x gradlew
 ENV GRADLE_OPTS="-Xmx1g"
 RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew :services:product-service:bootJar -x test --no-daemon
+    ./gradlew :services:review-service:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:25-jre
 RUN groupadd --system appgroup && useradd --system --gid appgroup --no-create-home appuser
 WORKDIR /app
-COPY --from=build --chown=appuser:appgroup /workspace/services/product-service/build/libs/*.jar app.jar
+COPY --from=build --chown=appuser:appgroup /workspace/services/review-service/build/libs/*.jar app.jar
 USER appuser
 ENTRYPOINT ["java", "-jar", "app.jar"]
