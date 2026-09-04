@@ -7,6 +7,8 @@ RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew :services:auth-service:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:25-jre
+RUN groupadd --system appgroup && useradd --system --gid appgroup --no-create-home appuser
 WORKDIR /app
-COPY --from=build /workspace/services/auth-service/build/libs/*.jar app.jar
+COPY --from=build --chown=appuser:appgroup /workspace/services/auth-service/build/libs/*.jar app.jar
+USER appuser
 ENTRYPOINT ["java", "-jar", "app.jar"]
