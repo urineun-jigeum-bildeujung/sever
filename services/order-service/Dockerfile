@@ -11,4 +11,5 @@ RUN groupadd --system appgroup && useradd --system --gid appgroup --no-create-ho
 WORKDIR /app
 COPY --from=build --chown=appuser:appgroup /workspace/services/order-service/build/libs/*.jar app.jar
 USER appuser
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+EXPOSE 8080
