@@ -7,9 +7,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum TargetBreedSize {
-    GROWTH("성장기"),
-    ADULT("성견/성묘"),
-    SENIOR("노령");
+    SMALL("소형"),
+    MEDIUM("중형"),
+    LARGE("대형");
 
     private final String displayName;
 }

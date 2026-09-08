@@ -7,9 +7,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum TargetAgeGroup {
-    SMALL("소형"),
-    MEDIUM("중형"),
-    LARGE("대형");
+    GROWTH("성장기"),
+    ADULT("성견/성묘"),
+    SENIOR("노령");
 
     private final String displayName;
 }
