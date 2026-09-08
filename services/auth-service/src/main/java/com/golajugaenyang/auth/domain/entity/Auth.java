@@ -1,7 +1,7 @@
 package com.golajugaenyang.auth.domain.entity;
 
 import com.golajugaenyang.auth.domain.entity.enums.Status;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Getter
@@ -12,11 +12,11 @@ public class Auth {
     private String socialId;
     private String socialEmail;
     private Status status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public Auth(Long id, String provider, String socialId, String socialEmail, Status status,
-        LocalDateTime createdAt, LocalDateTime updatedAt) {
+        OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
         this.provider = provider;
         this.socialId = socialId;

@@ -5,6 +5,7 @@ import com.golajugaenyang.member.domain.entity.enums.Sex;
 import com.golajugaenyang.member.domain.entity.enums.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Getter
@@ -25,13 +26,13 @@ public class Pet {
     private LocalDateTime deletedAt;
     private Long memberId;
     private Long breedId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public Pet(Long id, boolean isDefault, String name, Sex sex,
         boolean isNeutered, Species species, int age, LocalDate birthDate,
         Size size, String weight, int bcs, String image, LocalDateTime deletedAt,
-        Long memberId, Long breedId, LocalDateTime createdAt, LocalDateTime updatedAt){
+        Long memberId, Long breedId, OffsetDateTime createdAt, OffsetDateTime updatedAt){
         this.id = id;
         this.isDefault = isDefault;
         this.name = name;

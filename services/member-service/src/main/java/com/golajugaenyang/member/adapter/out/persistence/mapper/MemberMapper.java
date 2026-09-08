@@ -14,8 +14,8 @@ public class MemberMapper {
             jpaEntity.getName(),
             jpaEntity.getBirth(),
             jpaEntity.getPhone(),
-            jpaEntity.getCreatedAt() == null ? null : jpaEntity.getCreatedAt().toLocalDateTime(),
-            jpaEntity.getUpdatedAt() == null ? null : jpaEntity.getUpdatedAt().toLocalDateTime(),
+            jpaEntity.getCreatedAt(),
+            jpaEntity.getUpdatedAt(),
             jpaEntity.getAuthId()
         );
     }

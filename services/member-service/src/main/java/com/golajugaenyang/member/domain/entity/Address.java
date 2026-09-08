@@ -1,6 +1,6 @@
 package com.golajugaenyang.member.domain.entity;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Getter
@@ -13,13 +13,13 @@ public class Address {
     private String addressDetail;
     private boolean isDefault;
     private String deliveryNode;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
     private Long memberId;
 
     public Address(Long id, String addressName, String receiver, String address,
         String addressDetail,
-        boolean isDefault, String deliveryNode, LocalDateTime createdAt, LocalDateTime updatedAt,
+        boolean isDefault, String deliveryNode, OffsetDateTime createdAt, OffsetDateTime updatedAt,
         Long memberId) {
         this.id = id;
         this.addressName = addressName;

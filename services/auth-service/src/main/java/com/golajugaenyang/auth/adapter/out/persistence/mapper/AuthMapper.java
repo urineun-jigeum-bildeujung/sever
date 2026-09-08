@@ -13,8 +13,8 @@ public class AuthMapper {
             jpaEntity.getSocialId(),
             jpaEntity.getSocialEmail(),
             jpaEntity.getStatus(),
-            jpaEntity.getCreatedAt() == null ? null : jpaEntity.getCreatedAt().toLocalDateTime(),
-            jpaEntity.getUpdatedAt() == null ? null : jpaEntity.getUpdatedAt().toLocalDateTime()
+            jpaEntity.getCreatedAt(),
+            jpaEntity.getUpdatedAt()
         );
     }
 

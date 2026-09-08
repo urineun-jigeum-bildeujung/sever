@@ -15,8 +15,8 @@ public class AddressMapper {
             jpaEntity.getAddressDetail(),
             jpaEntity.isDefault(),
             jpaEntity.getDeliveryNode(),
-            jpaEntity.getCreatedAt() == null ? null : jpaEntity.getCreatedAt().toLocalDateTime(),
-            jpaEntity.getUpdatedAt() == null ? null : jpaEntity.getUpdatedAt().toLocalDateTime(),
+            jpaEntity.getCreatedAt(),
+            jpaEntity.getUpdatedAt(),
             jpaEntity.getMemberId()
         );
     }
