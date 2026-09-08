@@ -25,11 +25,13 @@ public class Pet {
     private LocalDateTime deletedAt;
     private Long memberId;
     private Long breedId;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public Pet(Long id, boolean isDefault, String name, Sex sex,
         boolean isNeutered, Species species, int age, LocalDate birthDate,
         Size size, String weight, int bcs, String image, LocalDateTime deletedAt,
-        Long memberId, Long breedId){
+        Long memberId, Long breedId, LocalDateTime createdAt, LocalDateTime updatedAt){
         this.id = id;
         this.isDefault = isDefault;
         this.name = name;
@@ -45,5 +47,7 @@ public class Pet {
         this.deletedAt = deletedAt;
         this.memberId = memberId;
         this.breedId = breedId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 }
