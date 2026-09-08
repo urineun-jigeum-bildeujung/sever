@@ -47,6 +47,10 @@ public class BaseOutboxEntity {
     }
 
     public void markFailed() {
+        if (!this.status.canTransitTo(OutboxStatus.FAILED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 상태 %s에서 FAILED로 전이할 수 없습니다.".formatted(getId(), this.status));
+        }
         this.status = OutboxStatus.FAILED;
     }
 }
