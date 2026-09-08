@@ -8,10 +8,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.OffsetDateTime;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @MappedSuperclass
 public class BaseOutboxEntity {
 
@@ -28,6 +33,7 @@ public class BaseOutboxEntity {
     @Column(name = "event_type", nullable = false, length = 50)
     private String eventType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private String payload;
 
@@ -40,6 +46,16 @@ public class BaseOutboxEntity {
 
     @Column(name = "sent_at")
     private OffsetDateTime sentAt;
+
+    protected BaseOutboxEntity(
+        String aggregateType, Long aggregateId,
+        String eventType, String payload
+    ) {
+        this.aggregateType = aggregateType;
+        this.aggregateId = aggregateId;
+        this.eventType = eventType;
+        this.payload = payload;
+    }
 
     public void markSent() {
         this.status = OutboxStatus.SENT;
