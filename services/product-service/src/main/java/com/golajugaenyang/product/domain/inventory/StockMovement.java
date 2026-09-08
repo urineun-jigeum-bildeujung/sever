@@ -1,5 +1,6 @@
 package com.golajugaenyang.product.domain.inventory;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
@@ -17,6 +18,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 @Table(
     name = "stock_movements",
     uniqueConstraints = @UniqueConstraint(
