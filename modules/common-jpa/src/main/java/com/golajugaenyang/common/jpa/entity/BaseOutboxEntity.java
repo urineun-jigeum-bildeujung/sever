@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import tools.jackson.databind.JsonNode;
 
 
 @Getter
@@ -35,7 +36,7 @@ public class BaseOutboxEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
-    private String payload;
+    private JsonNode payload;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -49,7 +50,7 @@ public class BaseOutboxEntity {
 
     protected BaseOutboxEntity(
         String aggregateType, Long aggregateId,
-        String eventType, String payload
+        String eventType, JsonNode payload
     ) {
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
