@@ -1,6 +1,6 @@
 package com.golajugaenyang.auth.adapter.out.persistence.entity;
 
-import com.golajugaenyang.auth.domain.entity.enums.Status;
+import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,5 +39,5 @@ public class AuthJpaEntity extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status;
+    private AuthStatus status;
 }

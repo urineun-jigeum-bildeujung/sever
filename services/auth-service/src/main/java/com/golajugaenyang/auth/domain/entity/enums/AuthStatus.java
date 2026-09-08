@@ -1,6 +1,6 @@
 package com.golajugaenyang.auth.domain.entity.enums;
 
-public enum Status {
+public enum AuthStatus {
     ACTIVE,
     DELETED
 }
