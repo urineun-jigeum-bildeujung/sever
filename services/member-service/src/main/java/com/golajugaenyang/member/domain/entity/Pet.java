@@ -1,8 +1,8 @@
 package com.golajugaenyang.member.domain.entity;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
-import com.golajugaenyang.member.domain.entity.enums.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -19,7 +19,7 @@ public class Pet {
     private Species species;
     private int age;
     private LocalDate birthDate;
-    private Size size;
+    private TargetBreedSize targetBreedSize;
     private String weight;
     private int bcs;
     private String image;
@@ -31,7 +31,7 @@ public class Pet {
 
     public Pet(Long id, boolean isDefault, String name, Sex sex,
         boolean isNeutered, Species species, int age, LocalDate birthDate,
-        Size size, String weight, int bcs, String image, LocalDateTime deletedAt,
+        TargetBreedSize targetBreedSize, String weight, int bcs, String image, LocalDateTime deletedAt,
         Long memberId, Long breedId, OffsetDateTime createdAt, OffsetDateTime updatedAt){
         this.id = id;
         this.isDefault = isDefault;
@@ -41,7 +41,7 @@ public class Pet {
         this.species = species;
         this.age = age;
         this.birthDate = birthDate;
-        this.size = size;
+        this.targetBreedSize = targetBreedSize;
         this.weight = weight;
         this.bcs = bcs;
         this.image = image;

@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.adapter.out.persistence.entity;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
 import jakarta.persistence.Column;
@@ -11,7 +12,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import com.golajugaenyang.member.domain.entity.enums.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -55,7 +55,7 @@ public class PetJpaEntity extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Size size;
+    private TargetBreedSize targetBreedSize;
 
     @Column(nullable = false)
     private String weight;

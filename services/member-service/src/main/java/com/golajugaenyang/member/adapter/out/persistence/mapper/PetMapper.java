@@ -16,7 +16,7 @@ public class PetMapper {
             jpaEntity.getSpecies(),
             jpaEntity.getAge(),
             jpaEntity.getBirthDate(),
-            jpaEntity.getSize(),
+            jpaEntity.getTargetBreedSize(),
             jpaEntity.getWeight(),
             jpaEntity.getBcs(),
             jpaEntity.getImage(),
@@ -39,7 +39,7 @@ public class PetMapper {
             .species(domain.getSpecies())
             .age(domain.getAge())
             .birthDate(domain.getBirthDate())
-            .size(domain.getSize())
+            .targetBreedSize(domain.getTargetBreedSize())
             .weight(domain.getWeight())
             .bcs(domain.getBcs())
             .image(domain.getImage())
