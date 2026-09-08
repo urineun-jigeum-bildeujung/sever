@@ -55,7 +55,7 @@ public class Product extends BaseTimeEntity {
     @Column(length = 50)
     private String sku;
 
-    @Column(name = "thumbnail_Url", nullable = false, length = 500)
+    @Column(name = "thumbnail_url", nullable = false, length = 500)
     private String thumbnailUrl;
 
     @Column(name = "product_group_id", nullable = false)
