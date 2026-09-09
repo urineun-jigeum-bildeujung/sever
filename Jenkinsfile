@@ -2,7 +2,33 @@
 def detectedServices = '[]'
 
 pipeline {
-    agent any
+    // Jenkins가 K8s 파드로 떠서 도커 데몬이 없음 — kaniko가 daemon 없이 이미지를
+    // 빌드+push까지 처리함. Detect Services 스테이지의 git 명령어는 여기서 지정 안 한
+    // 기본 컨테이너(jnlp, git 내장)에서 실행되고, kaniko 실행만 container('kaniko')로 지정.
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: jenkins-kaniko # TODO(인프라팀): ECR push 권한(ecr:*Layer*, ecr:PutImage, ecr:GetAuthorizationToken)을
+                                      # 가진 EKS Pod Identity로 이 이름의 ServiceAccount 생성 필요. 아직 없으면 push 단계에서 실패함.
+  containers:
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:debug
+      command:
+        - /busybox/cat
+      tty: true
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+"""
+        }
+    }
 
     parameters {
         // 수동 빌드 시 여기 값 채워서 실행 = GHA의 workflow_dispatch.inputs.image 역할
@@ -10,8 +36,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_REGISTRY = 'ci.local' // TODO: infra팀한테 받은 실제 ECR 주소로 교체
-        DOCKER_BUILD_PLATFORMS = 'linux/amd64'
+        IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
     }
 
     stages {
@@ -66,13 +91,14 @@ pipeline {
                     def branches = [:]
                     services.each { svc ->
                         branches[svc] = {
-                            sh """
-                                docker buildx build \\
-                                  --platform ${env.DOCKER_BUILD_PLATFORMS} \\
-                                  -f services/${svc}/Dockerfile \\
-                                  -t ${env.IMAGE_REGISTRY}/${svc}:${imageTag} \\
-                                  .
-                            """
+                            container('kaniko') {
+                                sh """
+                                    /kaniko/executor \\
+                                      --context=`pwd` \\
+                                      --dockerfile=services/${svc}/Dockerfile \\
+                                      --destination=${env.IMAGE_REGISTRY}/${svc}:${imageTag}
+                                """
+                            }
                         }
                     }
                     parallel branches
