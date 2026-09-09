@@ -19,4 +19,7 @@ dependencies {
 
     // spring security
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // jwt (RSA 서명/키 처리)
+    implementation 'com.nimbusds:nimbus-jose-jwt'
 }
