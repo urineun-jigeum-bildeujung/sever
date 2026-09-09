@@ -44,7 +44,18 @@ import lombok.NoArgsConstructor;
     name = "products",
     uniqueConstraints = @UniqueConstraint(name = "uq_products_sku", columnNames = "sku"),
     indexes = {
-        @Index(name = "idx_products_category", columnList = "category_code")
+        @Index(name = "idx_products_category_sales",
+            columnList = "category_code, is_active, sales_count DESC, id DESC"),
+        @Index(name = "idx_products_category_review",
+            columnList = "category_code, is_active, review_count DESC, id DESC"),
+        @Index(name = "idx_products_category_price",
+            columnList = "category_code, is_active, price, id"),
+        @Index(name = "idx_products_active_sales",
+            columnList = "is_active, sales_count DESC, id DESC"),
+        @Index(name = "idx_products_active_review",
+            columnList = "is_active, review_count DESC, id DESC"),
+        @Index(name = "idx_products_active_price",
+            columnList = "is_active, price, id")
     })
 public class Product extends BaseTimeEntity {
 
@@ -113,6 +124,9 @@ public class Product extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "target_age_group", length = 20)
     private TargetAgeGroup targetAgeGroup;
+
+    @Column(name = "original_price", precision = 12, scale = 2)
+    private BigDecimal originalPrice;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
