@@ -1,11 +1,9 @@
 package com.golajugaenyang.auth.security;
 
-import com.golajugaenyang.auth.domain.entity.Auth;
-import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
-import com.golajugaenyang.auth.domain.repository.AuthRepository;
+import com.golajugaenyang.auth.application.AuthLoginResult;
+import com.golajugaenyang.auth.application.AuthService;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -18,10 +16,10 @@ import org.springframework.stereotype.Service;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
-    private final AuthRepository authRepository;
+    private final AuthService authService;
 
-    CustomOAuth2UserService(AuthRepository authRepository) {
-        this.authRepository = authRepository;
+    CustomOAuth2UserService(AuthService authService) {
+        this.authService = authService;
     }
 
     @Override
@@ -45,17 +43,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             nameAttributeKey = "sub";
         }
 
-        Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(registrationId, socialId);
-        boolean isNewUser = existingAuth.isEmpty();
-        Auth auth = existingAuth.orElseGet(() -> authRepository.save(
-            new Auth(null, registrationId, socialId, socialEmail, AuthStatus.ACTIVE, null, null)
-        ));
+        AuthLoginResult loginResult = authService.findOrCreateAuth(registrationId, socialId, socialEmail);
 
         return new CustomOAuth2User(
             Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
             attributes,
-            auth,
-            isNewUser,
+            loginResult.auth(),
+            loginResult.isNewUser(),
             nameAttributeKey
         );
     }
