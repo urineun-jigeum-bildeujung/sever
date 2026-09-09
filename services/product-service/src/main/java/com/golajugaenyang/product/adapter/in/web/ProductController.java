@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 @Validated
-public class ProductController {
+public class ProductController implements ProductControllerDocs {
 
     private final ProductListUseCase productListUseCase;
     private final ProductListProperties productListProperties;
