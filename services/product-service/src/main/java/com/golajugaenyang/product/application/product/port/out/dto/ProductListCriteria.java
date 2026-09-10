@@ -7,11 +7,11 @@ import com.golajugaenyang.product.domain.product.ProductSortType;
 public record ProductListCriteria(
     CategoryCode category,
     ProductSortType sortType,
-    ProductCursor cursor,
+    PageCursor cursor,
     int size
 ) {
 
-    public static ProductListCriteria of(ProductListCommand command, ProductCursor cursor) {
+    public static ProductListCriteria of(ProductListCommand command, PageCursor cursor) {
         return new ProductListCriteria(
             command.category(),
             command.sortType(),

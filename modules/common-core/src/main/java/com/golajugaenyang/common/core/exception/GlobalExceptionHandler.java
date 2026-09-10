@@ -2,6 +2,7 @@ package com.golajugaenyang.common.core.exception;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -96,6 +98,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
         problemDetail.setTitle(errorCode.getCode());
         problemDetail.setProperty(ERROR_CODE_PROPERTY, errorCode.getCode());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolationException(ConstraintViolationException e) {
+        List<Map<String, String>> fieldErrors = e.getConstraintViolations().stream()
+            .map(v -> Map.of(
+                "field", v.getPropertyPath().toString(),
+                "reason", v.getMessage()))
+            .toList();
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST, CommonErrorCode.INVALID_INPUT_VALUE.getMessage());
+        problemDetail.setProperty(
+            ERROR_CODE_PROPERTY, CommonErrorCode.INVALID_INPUT_VALUE.getCode());
+        problemDetail.setProperty("fieldErrors", fieldErrors);
+
+        log.warn("[ConstraintViolationException] fieldErrors={}", fieldErrors);
         return problemDetail;
     }
 
