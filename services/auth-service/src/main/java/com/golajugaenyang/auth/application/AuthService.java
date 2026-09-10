@@ -64,7 +64,6 @@ public class AuthService {
                 nickname = memberClient.getNicknameSuggestion().nickname();
             } catch (Exception e) {
                 log.warn("닉네임 제안 조회 실패, authId={}", authId, e);
-                throw new RuntimeException(e);
             }
         }
 
