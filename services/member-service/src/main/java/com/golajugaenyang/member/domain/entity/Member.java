@@ -1,7 +1,7 @@
 package com.golajugaenyang.member.domain.entity;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import lombok.Getter;
 
 @Getter
@@ -12,12 +12,12 @@ public class Member {
     private String name;
     private LocalDate birth;
     private String phone;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     private Long authId;
 
     public Member(Long id, String nickname, String profileImage, String name, LocalDate birth,
-        String phone, OffsetDateTime createdAt, OffsetDateTime updatedAt, Long authId){
+        String phone, Instant createdAt, Instant updatedAt, Long authId){
         this.id = id;
         this.nickname = nickname;
         this.profileImage = profileImage;

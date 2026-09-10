@@ -13,4 +13,16 @@ dependencies {
 
     implementation project(':modules:common-jpa')
     runtimeOnly 'org.postgresql:postgresql'
+
+    //oauth2
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // spring security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // jwt (RSA 서명/키 처리)
+    implementation 'com.nimbusds:nimbus-jose-jwt'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
