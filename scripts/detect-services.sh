@@ -12,13 +12,27 @@
 
 set -euo pipefail
 
+# Detect Services 스테이지는 Jenkins 기본(jnlp) 컨테이너에서 도는데 jq가 없어서
+# (2026-09-10 실제로 겪음), jq 없이 순수 bash로 JSON 배열을 만든다. 서비스
+# 디렉토리명은 영숫자+하이픈뿐이라 별도 이스케이프 없이 안전하게 처리 가능.
+to_json_array() {
+  local first=true
+  printf '['
+  while IFS= read -r line; do
+    [ -z "${line}" ] && continue
+    if [ "${first}" = true ]; then first=false; else printf ','; fi
+    printf '"%s"' "${line}"
+  done
+  printf ']'
+}
+
 all_services="$(find services -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)"
 
 if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
   if [ "${REQUESTED_IMAGE}" = "all" ]; then
-    services="$(echo "${all_services}" | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+    services="$(echo "${all_services}" | to_json_array)"
   else
-    services="$(jq -nc --arg s "${REQUESTED_IMAGE}" '[$s]')"
+    services="$(printf '%s\n' "${REQUESTED_IMAGE}" | to_json_array)"
   fi
 else
   changed_files="$(mktemp)"
@@ -26,9 +40,12 @@ else
   git diff --name-only "${BASE_SHA}" HEAD > "${changed_files}"
 
   if grep -qE '^(modules/|build\.gradle$|settings\.gradle$|gradle\.properties$)' "${changed_files}"; then
-    services="$(echo "${all_services}" | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+    services="$(echo "${all_services}" | to_json_array)"
   else
-    services="$(grep -oE '^services/[^/]+' "${changed_files}" | sed 's|services/||' | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))' || echo '[]')"
+    # grep -oE는 매치가 없으면 exit 1 -> pipefail 때문에 to_json_array가 이미
+    # "[]"를 정상 출력했어도 전체 파이프가 실패로 잡힘. ||를 $(...) 안에 두면
+    # 이미 캡처된 출력에 폴백 출력이 덧붙어 "[][]"가 되므로 바깥에서 처리한다.
+    services="$(grep -oE '^services/[^/]+' "${changed_files}" | sed 's|services/||' | sort -u | to_json_array)" || services='[]'
   fi
 fi
 
