@@ -9,6 +9,11 @@ pipeline {
     // Jenkins가 K8s 파드로 떠서 도커 데몬이 없음 — kaniko가 daemon 없이 이미지를 빌드함.
     // Detect Services/Update GitOps 스테이지의 git 명령어는 기본 컨테이너(jnlp, git 내장)에서
     // 실행되고, 나머지(테스트/빌드/스캔/push)는 각자 맞는 컨테이너를 지정해서 씀.
+    //
+    // requests는 일부러 작게 잡음 — 컨테이너 4개가 실제로는 한 번에 하나씩만 일하고
+    // 나머진 sleep으로 대기 중이라, 넉넉하게 잡으면 노드에 스케줄링이 안 됨(실측: DEV
+    // 노드 2대 c7i-flex.large라 여유가 적음, 2026-09-10). limit은 그대로 둬서 실제
+    // 작업할 때는 필요한 만큼 쓸 수 있게 함.
     agent {
         kubernetes {
             yaml """
@@ -25,8 +30,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 500m
-          memory: 1Gi
+          cpu: 200m
+          memory: 512Mi
         limits:
           cpu: "2"
           memory: 2Gi
@@ -37,8 +42,8 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: 500m
-          memory: 512Mi
+          cpu: 200m
+          memory: 256Mi
         limits:
           cpu: "2"
           memory: 2Gi
@@ -50,8 +55,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 250m
-          memory: 512Mi
+          cpu: 100m
+          memory: 256Mi
         limits:
           cpu: "1"
           memory: 1Gi
@@ -63,8 +68,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 100m
-          memory: 128Mi
+          cpu: 50m
+          memory: 64Mi
         limits:
           cpu: 500m
           memory: 256Mi
