@@ -4,6 +4,12 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: Asia/Seoul
+        default_batch_fetch_size: 100
 
 management:
   endpoints:
