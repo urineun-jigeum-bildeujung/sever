@@ -11,7 +11,7 @@ public record ProductCursor(
     ProductSortType sortType,
     String sortValue,
     Long id
-) {
+) implements SortCursor {
 
     private static final int SEGMENT_COUNT = 3;
 
@@ -40,6 +40,7 @@ public record ProductCursor(
         }
     }
 
+    @Override
     public int sortValueAsInt() {
         try {
             return Integer.parseInt(sortValue);
@@ -48,6 +49,7 @@ public record ProductCursor(
         }
     }
 
+    @Override
     public BigDecimal sortValueAsBigDecimal() {
         try {
             return new BigDecimal(sortValue);
