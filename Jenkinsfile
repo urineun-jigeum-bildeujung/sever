@@ -14,6 +14,11 @@ pipeline {
     // 나머진 sleep으로 대기 중이라, 넉넉하게 잡으면 노드에 스케줄링이 안 됨(실측: DEV
     // 노드 2대 c7i-flex.large라 여유가 적음, 2026-09-10). limit은 그대로 둬서 실제
     // 작업할 때는 필요한 만큼 쓸 수 있게 함.
+    //
+    // ephemeral-storage도 명시함 — 원래 이게 없어서 노드 디스크 사용량을 스케줄러가
+    // 전혀 파악 못 했고, 실제로 노드 하나가 디스크 99% 차서 DiskPressure로 통째로
+    // 재기동되는 사고가 남(2026-09-10). kaniko는 이미지 빌드 tar를, gradle은 배포판+
+    // 의존성 캐시를 workspace-volume(emptyDir, 노드 디스크)에 쓰기 때문에 둘 다 넉넉히 잡음.
     agent {
         kubernetes {
             yaml """
@@ -32,9 +37,11 @@ spec:
         requests:
           cpu: 200m
           memory: 512Mi
+          ephemeral-storage: 512Mi
         limits:
           cpu: "2"
           memory: 2Gi
+          ephemeral-storage: 2Gi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command:
@@ -44,9 +51,11 @@ spec:
         requests:
           cpu: 200m
           memory: 256Mi
+          ephemeral-storage: 1Gi
         limits:
           cpu: "2"
           memory: 2Gi
+          ephemeral-storage: 3Gi
     - name: trivy
       image: aquasec/trivy:0.74.0 # 2026-09-10 기준 최신 안정 버전
       command:
@@ -57,9 +66,11 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
+          ephemeral-storage: 512Mi
         limits:
           cpu: "1"
           memory: 1Gi
+          ephemeral-storage: 1Gi
     - name: crane
       image: gcr.io/go-containerregistry/crane:debug
       command:
@@ -70,9 +81,11 @@ spec:
         requests:
           cpu: 50m
           memory: 64Mi
+          ephemeral-storage: 128Mi
         limits:
           cpu: 500m
           memory: 256Mi
+          ephemeral-storage: 512Mi
 """
         }
     }
