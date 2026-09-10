@@ -8,14 +8,14 @@ public record ProductSearchCriteria(
     String keyword,
     CategoryCode category,
     ProductSortType effectiveSortType,
-    ProductSearchCursor cursor,
+    PageCursor cursor,
     int size
 ) {
 
     public static ProductSearchCriteria of(
         ProductSearchCommand command,
         ProductSortType effectiveSortType,
-        ProductSearchCursor cursor
+        PageCursor cursor
     ) {
         return new ProductSearchCriteria(
             command.keyword(),

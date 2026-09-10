@@ -6,9 +6,10 @@ import com.golajugaenyang.product.application.product.port.in.dto.ProductListIte
 import com.golajugaenyang.product.application.product.port.in.dto.ProductSearchCommand;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductSearchResult;
 import com.golajugaenyang.product.application.product.port.out.ProductSearchQueryRepository;
+import com.golajugaenyang.product.application.product.port.out.dto.PageCursor;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductListProjection;
+import com.golajugaenyang.product.application.product.port.out.dto.ProductSearchContext;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductSearchCriteria;
-import com.golajugaenyang.product.application.product.port.out.dto.ProductSearchCursor;
 import com.golajugaenyang.product.domain.product.ProductSortType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,12 @@ public class ProductSearchService implements ProductSearchUseCase {
     @Transactional(readOnly = true)
     public ProductSearchResult searchProducts(ProductSearchCommand command) {
         ProductSortType effectiveSort = command.sortType().resolveEffectiveSort();
+        ProductSearchContext context = new ProductSearchContext(effectiveSort, command.keyword(),
+            command.category());
 
-        ProductSearchCursor cursor = ProductSearchCursor.decode(command.cursor());
+        PageCursor cursor = PageCursor.decode(command.cursor());
         if (cursor != null) {
-            cursor.validate(effectiveSort, command.keyword());
+            cursor.validate(context);
         }
 
         ProductSearchCriteria criteria = ProductSearchCriteria.of(command, effectiveSort, cursor);
@@ -44,7 +47,7 @@ public class ProductSearchService implements ProductSearchUseCase {
         List<ProductListItem> items = pageItems.stream().map(ProductListItem::from).toList();
 
         String nextCursor = hasNext
-            ? buildNextCursor(pageItems.getLast(), effectiveSort, command.keyword())
+            ? buildNextCursor(pageItems.getLast(), context)
             : null;
 
         Long totalCount = (cursor == null)
@@ -55,13 +58,13 @@ public class ProductSearchService implements ProductSearchUseCase {
     }
 
     private String buildNextCursor(
-        ProductListProjection last, ProductSortType sortType, String keyword) {
-        String sortValue = switch (sortType) {
+        ProductListProjection last, ProductSearchContext context) {
+        String sortValue = switch (context.sortType()) {
             case POPULAR -> String.valueOf(last.salesCount());
             case REVIEW -> String.valueOf(last.reviewCount());
             case PRICE_DESC, PRICE_ASC -> last.price().toPlainString();
             case RECOMMEND -> throw new IllegalStateException("도달 불가");
         };
-        return new ProductSearchCursor(sortType, keyword, sortValue, last.id()).encode();
+        return PageCursor.issue(context, sortValue, last.id()).encode();
     }
 }

@@ -1,7 +1,8 @@
 package com.golajugaenyang.product.application.product;
 
-import com.golajugaenyang.product.application.product.port.out.dto.ProductCursor;
+import com.golajugaenyang.product.application.product.port.out.dto.PageCursor;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductListCommand;
+import com.golajugaenyang.product.application.product.port.out.dto.ProductListContext;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductListCriteria;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductListItem;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductListProjection;
@@ -24,11 +25,11 @@ public class ProductListService implements ProductListUseCase {
     @Override
     @Transactional(readOnly = true)
     public ProductListResult getProductList(ProductListCommand command) {
-
-        ProductCursor cursor = ProductCursor.decode(command.cursor());
         ProductSortType effectiveSort = command.sortType().resolveEffectiveSort();
+        PageCursor cursor = PageCursor.decode(command.cursor());
+        ProductListContext context = new ProductListContext(effectiveSort, command.category());
         if (cursor != null) {
-            cursor.validateSortType(effectiveSort);
+            cursor.validate(context);
         }
         ProductListCriteria criteria = ProductListCriteria.of(command, cursor);
 
@@ -44,19 +45,19 @@ public class ProductListService implements ProductListUseCase {
             .toList();
 
         String nextCursor = hasNext
-            ? buildNextCursor(pageItems.getLast(), command.sortType())
+            ? buildNextCursor(pageItems.getLast(), context)
             : null;
 
         return new ProductListResult(items, nextCursor, hasNext);
     }
 
-    private String buildNextCursor(ProductListProjection last, ProductSortType sortType) {
-        String sortValue = switch (sortType) {
+    private String buildNextCursor(ProductListProjection last, ProductListContext context) {
+        String sortValue = switch (context.sortType()) {
             case POPULAR -> String.valueOf(last.salesCount());
             case REVIEW -> String.valueOf(last.reviewCount());
             case PRICE_DESC, PRICE_ASC -> last.price().toPlainString();
             case RECOMMEND -> throw new IllegalStateException("도달 불가");
         };
-        return new ProductCursor(sortType, sortValue, last.id()).encode();
+        return PageCursor.issue(context, sortValue, last.id()).encode();
     }
 }

@@ -2,7 +2,7 @@ package com.golajugaenyang.product.adapter.out.persistence;
 
 import static com.golajugaenyang.product.domain.product.QProduct.product;
 
-import com.golajugaenyang.product.application.product.port.out.dto.SortCursor;
+import com.golajugaenyang.product.application.product.port.out.dto.PageCursor;
 import com.golajugaenyang.product.domain.product.ProductSortType;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -14,7 +14,7 @@ final class ProductSortQuerySupport {
     private ProductSortQuerySupport() {
     }
 
-    static BooleanExpression cursorCondition(ProductSortType sort, SortCursor cursor) {
+    static BooleanExpression cursorCondition(ProductSortType sort, PageCursor cursor) {
         if (cursor == null) {
             return null;
         }

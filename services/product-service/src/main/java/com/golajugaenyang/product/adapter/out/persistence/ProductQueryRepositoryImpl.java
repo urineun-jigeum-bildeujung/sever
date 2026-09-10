@@ -3,17 +3,14 @@ package com.golajugaenyang.product.adapter.out.persistence;
 
 import static com.golajugaenyang.product.domain.product.QProduct.product;
 
-import com.golajugaenyang.product.application.product.port.out.dto.ProductCursor;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductListCriteria;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductListProjection;
 import com.golajugaenyang.product.application.product.port.out.ProductQueryRepository;
 import com.golajugaenyang.product.domain.product.ProductSortType;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

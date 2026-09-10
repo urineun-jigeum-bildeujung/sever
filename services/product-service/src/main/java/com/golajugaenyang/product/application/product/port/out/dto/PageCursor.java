@@ -1,46 +1,44 @@
 package com.golajugaenyang.product.application.product.port.out.dto;
 
 import com.golajugaenyang.common.core.exception.AppException;
-import com.golajugaenyang.product.domain.product.ProductSortType;
 import com.golajugaenyang.product.error.ProductErrorCode;
 import com.golajugaenyang.product.support.CursorCodec;
 import java.math.BigDecimal;
 
-
-public record ProductCursor(
-    ProductSortType sortType,
+public record PageCursor(
+    String contextFingerprint,
     String sortValue,
     Long id
-) implements SortCursor {
+) {
 
     private static final int SEGMENT_COUNT = 3;
 
-    public static ProductCursor decode(String encoded) {
+    public static PageCursor decode(String encoded) {
         if (encoded == null || encoded.isBlank()) {
             return null;
         }
         try {
-            String[] segments = CursorCodec.decode(encoded, SEGMENT_COUNT);
-            ProductSortType sortType = ProductSortType.valueOf(segments[0]);
-            String sortValue = segments[1];
-            Long id = Long.parseLong(segments[2]);
-            return new ProductCursor(sortType, sortValue, id);
+            String[] s = CursorCodec.decode(encoded, SEGMENT_COUNT);
+            return new PageCursor(s[0], s[1], Long.parseLong(s[2]));
         } catch (IllegalArgumentException e) {
             throw new AppException(ProductErrorCode.INVALID_CURSOR);
         }
     }
 
-    public String encode() {
-        return CursorCodec.encode(sortType.name(), sortValue, String.valueOf(id));
+    public static PageCursor issue(CursorContext context, String sortValue, Long id) {
+        return new PageCursor(context.fingerprint(), sortValue, id);
     }
 
-    public void validateSortType(ProductSortType effectiveSort) {
-        if (this.sortType != effectiveSort) {
+    public String encode() {
+        return CursorCodec.encode(contextFingerprint, sortValue, String.valueOf(id));
+    }
+
+    public void validate(CursorContext requestedContext) {
+        if (!this.contextFingerprint.equals(requestedContext.fingerprint())) {
             throw new AppException(ProductErrorCode.INVALID_CURSOR);
         }
     }
 
-    @Override
     public int sortValueAsInt() {
         try {
             return Integer.parseInt(sortValue);
@@ -49,7 +47,6 @@ public record ProductCursor(
         }
     }
 
-    @Override
     public BigDecimal sortValueAsBigDecimal() {
         try {
             return new BigDecimal(sortValue);
@@ -57,4 +54,5 @@ public record ProductCursor(
             throw new AppException(ProductErrorCode.INVALID_CURSOR);
         }
     }
+
 }
