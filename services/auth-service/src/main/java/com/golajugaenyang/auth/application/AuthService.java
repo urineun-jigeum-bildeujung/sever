@@ -1,5 +1,6 @@
 package com.golajugaenyang.auth.application;
 
+import com.golajugaenyang.auth.adapter.out.client.MemberClient;
 import com.golajugaenyang.auth.application.recods.AuthLoginResult;
 import com.golajugaenyang.auth.application.recods.LoginCodePayload;
 import com.golajugaenyang.auth.application.recods.TokenPair;
@@ -14,17 +15,20 @@ import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final AuthRepository authRepository;
     private final JwtIssuer jwtIssuer;
     private final RefreshTokenStore refreshTokenStore;
     private final LoginCodeStore loginCodeStore;
+    private final MemberClient memberClient;
 
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
@@ -53,8 +57,17 @@ public class AuthService {
 
     public String issueLoginCode(Long authId, boolean isNewUser) {
         TokenPair tokenPair = issueTokens(authId);
-        // TODO: MemberClient 구현 후 신규 유저일 때 실제 랜덤 닉네임으로 교체
+
         String nickname = null;
+        if(isNewUser){
+            try{
+                nickname = memberClient.getNicknameSuggestion().nickname();
+            } catch (Exception e) {
+                log.warn("닉네임 제안 조회 실패, authId={}", authId, e);
+                throw new RuntimeException(e);
+            }
+        }
+
         LoginCodePayload payload = new LoginCodePayload(
             tokenPair.accessToken(), tokenPair.refreshToken(), isNewUser, nickname
         );
