@@ -31,6 +31,10 @@ public class JwtIssuer {
         return generateToken(authId, REFRESH_TOKEN_TYPE, refreshTokenExpirationSeconds);
     }
 
+    public long getRefreshTokenExpirationSeconds() {
+        return refreshTokenExpirationSeconds;
+    }
+
     private String generateToken(Long authId, String tokenType, long expirationSeconds) {
         Instant now = Instant.now();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()

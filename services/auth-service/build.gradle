@@ -22,4 +22,7 @@ dependencies {
 
     // jwt (RSA 서명/키 처리)
     implementation 'com.nimbusds:nimbus-jose-jwt'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
