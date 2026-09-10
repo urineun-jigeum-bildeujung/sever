@@ -11,6 +11,12 @@ spring:
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 100
 
+product:
+  list:
+    default-size: 10
+    max-size: 30
+
+
 management:
   endpoints:
     web:
