@@ -32,7 +32,7 @@ public class ProductController implements ProductControllerDocs {
         @RequestParam(required = false) CategoryCode category,
         @RequestParam(defaultValue = "POPULAR") ProductSortType sort,
         @RequestParam(required = false) String cursor,
-        @RequestParam(required = false) @Min(1) @Max(30) Integer size,
+        @RequestParam(required = false) @Min(1) Integer size,
         @RequestParam(required = false) Long petId
     ) {
         int resolvedSize = productListProperties.resolveSize(size);

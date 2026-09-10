@@ -10,9 +10,9 @@ public record ProductListProperties(
 ) {
 
     public ProductListProperties {
-        if (defaultSize > maxSize) {
+        if (defaultSize <= 0 || maxSize <= 0 || defaultSize > maxSize) {
             throw new IllegalStateException(
-                "product.list.default-size(%d)는 product.list.max-size(%d)보다 클 수 없습니다."
+                "product.list.default-size(%d)와 product.list.max-size(%d) 설정이 유효하지 않습니다."
                     .formatted(defaultSize, maxSize));
         }
     }
