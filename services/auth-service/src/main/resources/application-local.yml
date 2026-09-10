@@ -50,3 +50,6 @@ jwt:
     refresh: 604800
   rsa:
     private-key: ${JWT_RSA_PRIVATE_KEY}
+
+member-service:
+  url: http://${MEMBER_SERVICE_HOST:localhost}:8082
