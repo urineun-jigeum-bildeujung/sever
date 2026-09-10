@@ -65,22 +65,22 @@ public class ProductQueryRepositoryImpl implements ProductQueryRepository {
         Long cursorId = cursor.id();
         return switch (sort) {
             case POPULAR -> {
-                int v = Integer.parseInt(cursor.sortValue());
+                int v = cursor.sortValueAsInt();
                 yield product.salesCount.lt(v)
                     .or(product.salesCount.eq(v).and(product.id.lt(cursorId)));
             }
             case REVIEW -> {
-                int v = Integer.parseInt(cursor.sortValue());
+                int v = cursor.sortValueAsInt();
                 yield product.reviewCount.lt(v)
                     .or(product.reviewCount.eq(v).and(product.id.lt(cursorId)));
             }
             case PRICE_DESC -> {
-                BigDecimal v = new BigDecimal(cursor.sortValue());
+                BigDecimal v = cursor.sortValueAsBigDecimal();
                 yield product.price.lt(v)
                     .or(product.price.eq(v).and(product.id.lt(cursorId)));
             }
             case PRICE_ASC -> {
-                BigDecimal v = new BigDecimal(cursor.sortValue());
+                BigDecimal v = cursor.sortValueAsBigDecimal();
                 yield product.price.gt(v)
                     .or(product.price.eq(v).and(product.id.gt(cursorId)));
             }

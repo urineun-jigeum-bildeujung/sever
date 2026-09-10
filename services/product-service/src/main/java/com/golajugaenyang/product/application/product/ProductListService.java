@@ -24,7 +24,12 @@ public class ProductListService implements ProductListUseCase {
     @Override
     @Transactional(readOnly = true)
     public ProductListResult getProductList(ProductListCommand command) {
+
         ProductCursor cursor = ProductCursor.decode(command.cursor());
+        ProductSortType effectiveSort = command.sortType().resolveEffectiveSort();
+        if (cursor != null) {
+            cursor.validateSortType(effectiveSort);
+        }
         ProductListCriteria criteria = ProductListCriteria.of(command, cursor);
 
         List<ProductListProjection> fetched = productQueryRepository.findProductList(criteria);
@@ -46,13 +51,12 @@ public class ProductListService implements ProductListUseCase {
     }
 
     private String buildNextCursor(ProductListProjection last, ProductSortType sortType) {
-        ProductSortType effective = sortType.resolveEffectiveSort();
-        String sortValue = switch (effective) {
+        String sortValue = switch (sortType) {
             case POPULAR -> String.valueOf(last.salesCount());
             case REVIEW -> String.valueOf(last.reviewCount());
             case PRICE_DESC, PRICE_ASC -> last.price().toPlainString();
             case RECOMMEND -> throw new IllegalStateException("도달 불가");
         };
-        return new ProductCursor(sortValue, last.id()).encode();
+        return new ProductCursor(sortType, sortValue, last.id()).encode();
     }
 }
