@@ -97,7 +97,7 @@ public class Order extends BaseTimeEntity {
     }
 
     public boolean isCancellable() {
-        return orderStatus == OrderStatus.PAID || orderStatus == OrderStatus.PREPARING;
+        return orderStatus.canTransitTo(OrderStatus.CANCELLED);
     }
 
     public void addItem(OrderItem item) {
