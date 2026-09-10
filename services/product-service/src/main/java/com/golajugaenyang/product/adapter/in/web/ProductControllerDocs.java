@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 
 
@@ -32,6 +33,7 @@ public interface ProductControllerDocs {
         @Parameter(description = "이전 응답의 nextCursor 값. 첫 페이지 조회 시 생략")
         String cursor,
 
+        @Min(1)
         @Parameter(description = "페이지당 조회 개수. 생략 시 서버 기본값 적용")
         Integer size,
 
