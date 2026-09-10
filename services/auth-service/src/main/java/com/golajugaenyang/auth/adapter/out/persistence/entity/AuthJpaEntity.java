@@ -35,7 +35,6 @@ public class AuthJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private String socialId;
 
-    @Column(nullable = false)
     private String socialEmail;
 
     @Enumerated(EnumType.STRING)

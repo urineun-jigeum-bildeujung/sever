@@ -35,7 +35,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         if (registrationId.equals("kakao")) {
             socialId = String.valueOf(attributes.get("id"));
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-            socialEmail = (String) kakaoAccount.get("email");
+            socialEmail = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
             nameAttributeKey = "id";
         } else {
             socialId = String.valueOf(attributes.get("sub"));
