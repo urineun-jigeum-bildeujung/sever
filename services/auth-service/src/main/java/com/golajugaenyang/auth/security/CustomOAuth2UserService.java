@@ -1,6 +1,6 @@
 package com.golajugaenyang.auth.security;
 
-import com.golajugaenyang.auth.application.AuthLoginResult;
+import com.golajugaenyang.auth.application.recods.AuthLoginResult;
 import com.golajugaenyang.auth.application.AuthService;
 import java.util.Collections;
 import java.util.Map;

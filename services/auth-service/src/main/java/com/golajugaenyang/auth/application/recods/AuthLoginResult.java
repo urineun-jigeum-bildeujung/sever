@@ -1,4 +1,4 @@
-package com.golajugaenyang.auth.application;
+package com.golajugaenyang.auth.application.recods;
 
 import com.golajugaenyang.auth.domain.entity.Auth;
 

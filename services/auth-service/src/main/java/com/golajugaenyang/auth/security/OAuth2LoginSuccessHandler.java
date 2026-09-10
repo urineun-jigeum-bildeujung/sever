@@ -1,7 +1,7 @@
 package com.golajugaenyang.auth.security;
 
 import com.golajugaenyang.auth.application.AuthService;
-import com.golajugaenyang.auth.application.TokenPair;
+import com.golajugaenyang.auth.application.recods.TokenPair;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
