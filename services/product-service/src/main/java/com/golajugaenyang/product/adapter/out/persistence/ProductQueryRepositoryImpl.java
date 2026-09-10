@@ -34,7 +34,8 @@ public class ProductQueryRepositoryImpl implements ProductQueryRepository {
         if (criteria.category() != null) {
             where.and(product.categoryCode.eq(criteria.category()));
         }
-        BooleanExpression cursorCondition = cursorCondition(sort, criteria.cursor());
+        BooleanExpression cursorCondition = ProductSortQuerySupport
+            .cursorCondition(sort, criteria.cursor());
         if (cursorCondition != null) {
             where.and(cursorCondition);
         }
@@ -53,49 +54,8 @@ public class ProductQueryRepositoryImpl implements ProductQueryRepository {
                 product.salesCount))
             .from(product)
             .where(where)
-            .orderBy(orderSpecifiers(sort))
+            .orderBy(ProductSortQuerySupport.orderSpecifiers(sort))
             .limit(criteria.size() + 1L)
             .fetch();
-    }
-
-    private BooleanExpression cursorCondition(ProductSortType sort, ProductCursor cursor) {
-        if (cursor == null) {
-            return null;
-        }
-        Long cursorId = cursor.id();
-        return switch (sort) {
-            case POPULAR -> {
-                int v = cursor.sortValueAsInt();
-                yield product.salesCount.lt(v)
-                    .or(product.salesCount.eq(v).and(product.id.lt(cursorId)));
-            }
-            case REVIEW -> {
-                int v = cursor.sortValueAsInt();
-                yield product.reviewCount.lt(v)
-                    .or(product.reviewCount.eq(v).and(product.id.lt(cursorId)));
-            }
-            case PRICE_DESC -> {
-                BigDecimal v = cursor.sortValueAsBigDecimal();
-                yield product.price.lt(v)
-                    .or(product.price.eq(v).and(product.id.lt(cursorId)));
-            }
-            case PRICE_ASC -> {
-                BigDecimal v = cursor.sortValueAsBigDecimal();
-                yield product.price.gt(v)
-                    .or(product.price.eq(v).and(product.id.gt(cursorId)));
-            }
-            case RECOMMEND -> throw new IllegalStateException("추천 시스템 연동 필요");
-        };
-    }
-
-    private OrderSpecifier<?>[] orderSpecifiers(ProductSortType sort) {
-        return switch (sort) {
-            case POPULAR -> new OrderSpecifier<?>[]{product.salesCount.desc(), product.id.desc()};
-            case REVIEW -> new OrderSpecifier<?>[]{product.reviewCount.desc(), product.id.desc()};
-            case PRICE_DESC -> new OrderSpecifier<?>[]{product.price.desc(), product.id.desc()};
-            case PRICE_ASC -> new OrderSpecifier<?>[]{product.price.asc(), product.id.asc()};
-            // TODO: 추천 시스템 연동 후 수정
-            case RECOMMEND -> new OrderSpecifier<?>[]{product.salesCount.desc(), product.id.desc()};
-        };
     }
 }
