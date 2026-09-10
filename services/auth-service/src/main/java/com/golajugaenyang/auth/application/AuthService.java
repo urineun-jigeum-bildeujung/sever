@@ -5,7 +5,9 @@ import com.golajugaenyang.auth.application.recods.LoginCodePayload;
 import com.golajugaenyang.auth.application.recods.TokenPair;
 import com.golajugaenyang.auth.domain.entity.Auth;
 import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
+import com.golajugaenyang.auth.domain.exception.AuthErrorCode;
 import com.golajugaenyang.auth.domain.repository.AuthRepository;
+import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.auth.security.jwt.JwtIssuer;
 import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
 import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
@@ -64,6 +66,6 @@ public class AuthService {
 
     public LoginCodePayload exchangeLoginCode(String code) {
         return loginCodeStore.consume(code)
-            .orElseThrow(() -> new IllegalArgumentException("유효하지 않거나 만료된 로그인 코드입니다."));
+            .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
     }
 }

@@ -1,7 +1,6 @@
 package com.golajugaenyang.auth.security;
 
 import com.golajugaenyang.auth.application.AuthService;
-import com.golajugaenyang.auth.application.recods.TokenPair;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,12 +28,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         Long authId = oAuth2User.getAuth().getId();
 
-        TokenPair tokenPair = authService.issueTokens(authId);
+        String code = authService.issueLoginCode(authId, oAuth2User.isNewUser());
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
-            .queryParam("accessToken", tokenPair.accessToken())
-            .queryParam("refreshToken", tokenPair.refreshToken())
-            .queryParam("isNewUser", oAuth2User.isNewUser())
+            .queryParam("code", code)
             .build()
             .toUriString();
 
