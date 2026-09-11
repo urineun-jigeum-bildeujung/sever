@@ -10,6 +10,9 @@ dependencies {
 
     testImplementation project(':modules:common-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    implementation project(':modules:common-jpa')
+    runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.register("prepareKotlinBuildScriptModel") {}
