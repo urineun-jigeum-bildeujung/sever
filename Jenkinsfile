@@ -15,6 +15,10 @@ pipeline {
     // 노드 2대 c7i-flex.large라 여유가 적음, 2026-09-10). limit은 그대로 둬서 실제
     // 작업할 때는 필요한 만큼 쓸 수 있게 함.
     //
+    // 2026-09-11: 노드 1대 추가 전까지 임시로 request를 한 번 더 낮춤 — 기존 값(gradle
+    // 200m/512Mi 등, 합계 550m/1088Mi)으로는 지금 두 노드 다 여유가 없어서 에이전트 Pod
+    // 자체가 스케줄링이 안 됨. 노드 추가되면 위 주석의 원래 값으로 되돌릴 것.
+    //
     // ephemeral-storage도 명시함 — 원래 이게 없어서 노드 디스크 사용량을 스케줄러가
     // 전혀 파악 못 했고, 실제로 노드 하나가 디스크 99% 차서 DiskPressure로 통째로
     // 재기동되는 사고가 남(2026-09-10). kaniko는 이미지 빌드 tar를, gradle은 배포판+
@@ -35,8 +39,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 200m
-          memory: 512Mi
+          cpu: 50m
+          memory: 256Mi
           ephemeral-storage: 512Mi
         limits:
           cpu: "2"
@@ -49,8 +53,8 @@ spec:
       tty: true
       resources:
         requests:
-          cpu: 200m
-          memory: 256Mi
+          cpu: 50m
+          memory: 128Mi
           ephemeral-storage: 1Gi
         limits:
           cpu: "2"
@@ -64,8 +68,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 30m
+          memory: 128Mi
           ephemeral-storage: 512Mi
         limits:
           cpu: "1"
@@ -79,8 +83,8 @@ spec:
         - 99d
       resources:
         requests:
-          cpu: 50m
-          memory: 64Mi
+          cpu: 20m
+          memory: 32Mi
           ephemeral-storage: 128Mi
         limits:
           cpu: 500m
