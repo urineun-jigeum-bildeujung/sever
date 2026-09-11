@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/internal/users")
+@RequestMapping("/internal/v1/members")
 @RequiredArgsConstructor
 public class NicknameController {
 
