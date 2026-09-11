@@ -64,6 +64,7 @@ public class AuthService {
                 nickname = memberClient.getNicknameSuggestion().nickname();
             } catch (Exception e) {
                 log.warn("닉네임 제안 조회 실패, authId={}", authId, e);
+                nickname = generateFallbackNickname();
             }
         }
 
@@ -79,5 +80,9 @@ public class AuthService {
     public LoginCodePayload exchangeLoginCode(String code) {
         return loginCodeStore.consume(code)
             .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
+    }
+
+    private String generateFallbackNickname() {
+        return "user" + UUID.randomUUID().toString().substring(0, 8);
     }
 }
