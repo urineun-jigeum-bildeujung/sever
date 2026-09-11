@@ -246,9 +246,25 @@ spec:
                     // values.yaml의 tag 필드만 이번에 push한 커밋 SHA로 갱신.
                     // gitops-value의 values/dev/services/<svc>/values.yaml 구조에 맞춤
                     // (gitops-value README/appset.yaml과 반드시 일치해야 하는 경로).
+                    //
+                    // sed 대신 yq를 쓰는 이유 — sed는 YAML 구조를 모르고 "tag: "로 시작하는
+                    // 줄이면 전부 매치해서 바꿔버림. 지금은 파일마다 tag: 줄이 하나뿐이라
+                    // 우연히 안전하지만, 나중에 카나리(canary.image.tag) 구조가 추가되면
+                    // stable/canary가 같은 값으로 덮어써지는 사고로 이어짐(2026-09-11 도입
+                    // 전에 미리 발견). yq는 .image.tag처럼 정확한 경로만 지정해서 바꾸므로
+                    // 그런 사고가 구조적으로 불가능함.
+                    //
+                    // Update GitOps 스테이지는 container()로 안 감싸여 있어서 Jenkins가
+                    // 자동으로 붙여주는 jnlp 에이전트 컨테이너에서 도는데(git 내장), 여긴
+                    // yq가 없어서 매 빌드마다 고정 버전 바이너리를 내려받아 씀.
+                    sh '''
+                        curl -sL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /tmp/yq
+                        chmod +x /tmp/yq
+                    '''
+
                     services.each { svc ->
                         sh """
-                            sed -i 's|tag: .*|tag: "${imageTag}"|' gitops-value-checkout/values/dev/services/${svc}/values.yaml
+                            /tmp/yq -i '.image.tag = "${imageTag}"' gitops-value-checkout/values/dev/services/${svc}/values.yaml
                         """
                     }
 
