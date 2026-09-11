@@ -39,6 +39,7 @@ public class MemberService {
 
     @Transactional
     public void signUp(Long authId, String nickname, List<SignupRequest.AgreementItem> agreements) {
+        validateNoDuplicateAgreementTypes(agreements);
         validateRequiredAgreementsAgreed(agreements);
         alreadySignedAuthId(authId);
         checkUniqueNickname(nickname);
@@ -56,6 +57,17 @@ public class MemberService {
             .toList();
 
         agreementRepo.saveAll(agreementsToSave);
+    }
+
+    private void validateNoDuplicateAgreementTypes(List<SignupRequest.AgreementItem> agreements) {
+        long distinctTypeCount = agreements.stream()
+            .map(SignupRequest.AgreementItem::type)
+            .distinct()
+            .count();
+
+        if (distinctTypeCount != agreements.size()) {
+            throw new AppException(MemberErrorCode.DUPLICATE_AGREEMENT_TYPE);
+        }
     }
 
     private void validateRequiredAgreementsAgreed(List<SignupRequest.AgreementItem> agreements) {
