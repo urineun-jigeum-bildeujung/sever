@@ -13,4 +13,7 @@ dependencies {
 
     implementation project(':modules:common-jpa')
     runtimeOnly 'org.postgresql:postgresql'
+
+    // jwt (임시 authId 파싱 - 게이트웨이 검증 방식 확정 전까지, auth-service와 버전 통일)
+    implementation 'com.nimbusds:nimbus-jose-jwt:10.9'
 }
