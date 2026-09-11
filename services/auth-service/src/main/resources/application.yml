@@ -4,6 +4,13 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          member-service:
+            connectTimeout: 1000
+            readTimeout: 2000
 
 management:
   endpoints:
