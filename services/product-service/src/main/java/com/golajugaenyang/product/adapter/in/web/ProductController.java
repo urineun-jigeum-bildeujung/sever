@@ -1,9 +1,12 @@
 package com.golajugaenyang.product.adapter.in.web;
 
 import com.golajugaenyang.common.core.domain.CategoryCode;
+import com.golajugaenyang.product.adapter.in.web.dto.ProductDetailResponse;
 import com.golajugaenyang.product.adapter.in.web.dto.ProductListResponse;
 import com.golajugaenyang.product.adapter.in.web.dto.ProductSearchResponse;
+import com.golajugaenyang.product.application.product.port.in.ProductDetailUseCase;
 import com.golajugaenyang.product.application.product.port.in.ProductSearchUseCase;
+import com.golajugaenyang.product.application.product.port.in.dto.ProductDetailResult;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductListCommand;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductListResult;
 import com.golajugaenyang.product.application.product.port.in.ProductListUseCase;
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +35,7 @@ public class ProductController implements ProductControllerDocs {
 
     private final ProductListUseCase productListUseCase;
     private final ProductSearchUseCase productSearchUseCase;
+    private final ProductDetailUseCase productDetailUseCase;
     private final ProductListProperties productListProperties;
 
     @GetMapping
@@ -62,5 +67,12 @@ public class ProductController implements ProductControllerDocs {
             keyword, category, sort, cursor, resolvedSize);
         ProductSearchResult result = productSearchUseCase.searchProducts(command);
         return ResponseEntity.ok(ProductSearchResponse.from(result));
+    }
+
+    @Override
+    @GetMapping("/{productId}")
+    public ProductDetailResponse getProductDetail(@PathVariable Long productId) {
+        ProductDetailResult result = productDetailUseCase.getProductDetail(productId);
+        return ProductDetailResponse.from(result);
     }
 }

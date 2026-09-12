@@ -1,6 +1,7 @@
 package com.golajugaenyang.product.adapter.in.web;
 
 import com.golajugaenyang.common.core.domain.CategoryCode;
+import com.golajugaenyang.product.adapter.in.web.dto.ProductDetailResponse;
 import com.golajugaenyang.product.adapter.in.web.dto.ProductListResponse;
 import com.golajugaenyang.product.adapter.in.web.dto.ProductSearchResponse;
 import com.golajugaenyang.product.domain.product.ProductSortType;
@@ -58,5 +59,17 @@ public interface ProductControllerDocs {
         @Parameter(description = "정렬 기준. 기본값 POPULAR") ProductSortType sort,
         @Parameter(description = "이전 응답의 nextCursor 값") String cursor,
         @Parameter(description = "페이지당 조회 개수") @Min(1) Integer size
+    );
+
+    @Operation(
+        summary = "상품 상세 조회",
+        description = "상품 상세 페이지 상단 요약 정보와 상세 정보 탭 데이터를 함께 반환합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 상품")
+    })
+    ProductDetailResponse getProductDetail(
+        @Parameter(description = "상품 ID") Long productId
     );
 }

@@ -37,10 +37,6 @@ public class ProductImage {
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "image_type", nullable = false, length = 20)
-    private ImageType imageType = ImageType.DETAIL;
-
     @Column(name = "sort_order", nullable = false)
     private int sortOrder = 0;
 
