@@ -11,6 +11,10 @@ spring:
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 100
 
+springdoc:
+  paths-to-exclude:
+    - /internal/**
+
 product:
   list:
     default-size: 10
