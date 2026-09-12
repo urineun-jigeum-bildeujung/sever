@@ -12,8 +12,12 @@ public enum ProductErrorCode implements ErrorCode {
     INVALID_CURSOR(
         HttpStatus.BAD_REQUEST,
         "PRODUCT_400_INVALID_CURSOR",
-        "유효하지 않은 커서 값입니다.");
-
+        "유효하지 않은 커서 값입니다."),
+    PRODUCT_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "PRODUCT_404_PRODUCT_NOT_FOUND",
+        "상품이 존재하지 않습니다."),
+    ;
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
