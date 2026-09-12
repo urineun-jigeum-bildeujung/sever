@@ -86,6 +86,10 @@ public class Product extends BaseTimeEntity {
     @Column(name = "subcategory_code", length = 30)
     private SubcategoryCode subcategoryCode;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private ProductStatus status = ProductStatus.ON_SALE;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
         name = "product_target_species",
@@ -224,5 +228,17 @@ public class Product extends BaseTimeEntity {
     public void addImage(ProductImage image) {
         images.add(image);
         image.assignTo(this);
+    }
+
+    public void markSoldOut() {
+        this.status = ProductStatus.SOLD_OUT;
+    }
+
+    public void markOnSale() {
+        this.status = ProductStatus.ON_SALE;
+    }
+
+    public void discontinue() {
+        this.status = ProductStatus.DISCONTINUED;
     }
 }
