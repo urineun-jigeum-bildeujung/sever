@@ -1,4 +1,4 @@
-package com.golajugaenyang.product.adapter.out.persistence;
+package com.golajugaenyang.product.adapter.out.persistence.product;
 
 import static com.golajugaenyang.product.domain.product.QProduct.product;
 
