@@ -6,7 +6,6 @@ import com.golajugaenyang.product.domain.inventory.StockMovement;
 import com.golajugaenyang.product.domain.inventory.StockMovementType;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
 
@@ -18,12 +17,13 @@ public class StockMovementRepositoryImpl implements StockMovementRepository {
 
     @Override
     public boolean recordIfAbsent(StockMovement movement) {
-        try {
-            jpaRepository.saveAndFlush(movement);
-            return true;
-        } catch (DataIntegrityViolationException e) {
-            return false;
-        }
+        int inserted = jpaRepository.insertIfAbsent(
+            movement.getSubjectType().name(),
+            movement.getSubjectId(),
+            movement.getOrderItemId(),
+            movement.getMovementType().name(),
+            movement.getQuantity());
+        return inserted > 0;
     }
 
     @Override
