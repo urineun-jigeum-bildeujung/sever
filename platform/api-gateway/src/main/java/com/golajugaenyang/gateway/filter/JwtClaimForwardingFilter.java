@@ -1,5 +1,6 @@
 package com.golajugaenyang.gateway.filter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -17,10 +18,17 @@ import reactor.core.publisher.Mono;
 public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
 
     private static final String AUTH_ID_HEADER = "X-Auth-Id";
+    private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+
+    private final String internalGatewaySecret;
+
+    public JwtClaimForwardingFilter(@Value("${internal.gateway-secret}") String internalGatewaySecret) {
+        this.internalGatewaySecret = internalGatewaySecret;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerWebExchange sanitizedExchange = stripClientSuppliedAuthIdHeader(exchange);
+        ServerWebExchange sanitizedExchange = stripClientSuppliedHeaders(exchange);
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -32,9 +40,12 @@ public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
             .flatMap(chain::filter);
     }
 
-    private ServerWebExchange stripClientSuppliedAuthIdHeader(ServerWebExchange exchange) {
+    private ServerWebExchange stripClientSuppliedHeaders(ServerWebExchange exchange) {
         ServerHttpRequest strippedRequest = exchange.getRequest().mutate()
-            .headers(headers -> headers.remove(AUTH_ID_HEADER))
+            .headers(headers -> {
+                headers.remove(AUTH_ID_HEADER);
+                headers.remove(INTERNAL_SECRET_HEADER);
+            })
             .build();
 
         return exchange.mutate().request(strippedRequest).build();
@@ -43,6 +54,7 @@ public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
     private ServerWebExchange withAuthIdHeader(ServerWebExchange exchange, Jwt jwt) {
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
             .header(AUTH_ID_HEADER, jwt.getSubject())
+            .header(INTERNAL_SECRET_HEADER, internalGatewaySecret)
             .build();
 
         return exchange.mutate().request(mutatedRequest).build();
