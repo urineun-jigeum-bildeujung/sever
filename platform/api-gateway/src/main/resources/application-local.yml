@@ -1,3 +1,6 @@
+jwt:
+  jwks-uri: http://${AUTH_SERVICE_HOST:localhost}:8081/oauth2/jwks
+
 spring:
   cloud:
     gateway:
