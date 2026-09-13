@@ -14,3 +14,10 @@ spring:
       hibernate:
         format_sql: true
         highlight_sql: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: product-service.inventory-consumer
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: RECORD
