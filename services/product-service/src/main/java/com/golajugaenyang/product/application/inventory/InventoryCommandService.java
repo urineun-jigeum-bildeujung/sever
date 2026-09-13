@@ -84,15 +84,27 @@ public class InventoryCommandService implements InventoryCommandUseCase {
         StockSubjectType subjectType, Long subjectId, Long orderItemId,
         StockMovementType type, int quantity
     ) {
+        // 수량 유효성 검증
+        if (quantity <= 0) {
+            log.warn("[InventoryCommand] 0 이하 수량 요청 거부. orderItemId={}, type={}, quantity={}",
+                orderItemId, type, quantity);
+            throw new AppException(ProductErrorCode.STOCK_MOVEMENT_PRECONDITION_NOT_MET);
+        }
+
         // 이력 검증
         if (type.requiresPrecedingMovement()) {
-            int precedingQuantity = stockMovementRepository
-                .findQuantity(orderItemId, type.getRequiredPrecedingType())
-                .orElse(0);
+            StockMovement preceding = stockMovementRepository
+                .findPreceding(orderItemId, type.getRequiredPrecedingType())
+                .orElse(null);
 
-            if (precedingQuantity != quantity) {
+            boolean valid = preceding != null
+                && preceding.getSubjectType() == subjectType
+                && preceding.getSubjectId().equals(subjectId)
+                && preceding.getQuantity() == quantity;
+
+            if (!valid) {
                 log.warn(
-                    "[InventoryCommand] 선행 이력 오류. orderItemId={}, type={}", orderItemId, type);
+                    "[InventoryCommand] 선행 이력 불일치. orderItemId={}, type={}", orderItemId, type);
                 throw new AppException(ProductErrorCode.STOCK_MOVEMENT_PRECONDITION_NOT_MET);
             }
         }

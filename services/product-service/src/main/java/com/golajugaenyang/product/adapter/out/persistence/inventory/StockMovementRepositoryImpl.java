@@ -27,8 +27,7 @@ public class StockMovementRepositoryImpl implements StockMovementRepository {
     }
 
     @Override
-    public Optional<Integer> findQuantity(Long orderItemId, StockMovementType movementType) {
-        return jpaRepository.findByOrderItemIdAndMovementType(orderItemId, movementType)
-            .map(StockMovement::getQuantity);
+    public Optional<StockMovement> findPreceding(Long orderItemId, StockMovementType movementType) {
+        return jpaRepository.findByOrderItemIdAndMovementType(orderItemId, movementType);
     }
 }
