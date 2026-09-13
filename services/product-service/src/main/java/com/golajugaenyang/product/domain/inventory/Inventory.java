@@ -26,4 +26,15 @@ public class Inventory extends BaseTimeEntity {
     @Column(name = "reserved_stock", nullable = false)
     private int reservedStock;
 
+    public static Inventory initialize(Long productId, int totalStock) {
+        Inventory inventory = new Inventory();
+        inventory.productId = productId;
+        inventory.totalStock = totalStock;
+        return inventory;
+    }
+
+    public int availableStock() {
+        return totalStock - reservedStock;
+    }
+
 }
