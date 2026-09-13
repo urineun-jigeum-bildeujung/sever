@@ -3,8 +3,9 @@ WORKDIR /workspace
 COPY . .
 RUN chmod +x gradlew
 ENV GRADLE_OPTS="-Xmx1g"
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew :services:product-service:bootJar -x test --no-daemon
+# --mount=type=cache는 BuildKit 전용 문법이라 Kaniko(Jenkinsfile의 빌드 도구)가
+# 지원 안 함 — 붙어있으면 이미지 빌드 자체가 실패함(2026-09-13 CodeRabbit 리뷰로 발견).
+RUN ./gradlew :services:product-service:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S appgroup && adduser -S --ingroup appgroup -H appuser

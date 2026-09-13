@@ -127,19 +127,33 @@ spec:
                         }
                     }
 
-                    detectedServices = sh(
-                        script: """
-                            EVENT_NAME=${eventName} BASE_SHA=${baseSha} REQUESTED_IMAGE=${requestedImage} \
-                            bash scripts/detect-services.sh
-                        """,
-                        returnStdout: true
-                    ).trim()
+                    // requestedImage는 사람이 입력하는 Jenkins 빌드 파라미터라 신뢰 못 함 —
+                    // 예전엔 이 값을 Groovy 문자열 보간으로 셸 스크립트 소스에 직접 끼워넣어서,
+                    // 세미콜론/백틱 등을 넣으면 임의 명령 실행이 가능했음(2026-09-13 CodeRabbit
+                    // 리뷰로 발견). withEnv로 진짜 프로세스 환경변수로 넘기면 셸이 그 값을
+                    // "명령의 일부"가 아니라 "그냥 문자열 데이터"로만 다루므로 안전함.
+                    withEnv([
+                        "EVENT_NAME=${eventName}",
+                        "BASE_SHA=${baseSha}",
+                        "REQUESTED_IMAGE=${requestedImage}",
+                    ]) {
+                        detectedServices = sh(
+                            script: 'bash scripts/detect-services.sh',
+                            returnStdout: true
+                        ).trim()
+                    }
 
                     imageTag = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
 
                     // dev 브랜치로 실제 merge된 push 빌드만 배포로 취급 (PR 검증 빌드, 다른
-                    // 브랜치 push는 빌드+테스트+스캔까지만 하고 ECR push/values 갱신은 안 함)
-                    isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev')
+                    // 브랜치 push는 빌드+테스트+스캔까지만 하고 ECR push/values 갱신은 안 함).
+                    // 사람이 "Build Now"로 수동 실행한 빌드는(IMAGE 파라미터를 안 채웠어도)
+                    // CHANGE_ID==null && BRANCH_NAME=='dev' 조건을 그대로 만족해버려서, 자동
+                    // push와 구분이 안 됨 — UserIdCause가 있으면 사람이 직접 누른 것이므로
+                    // 실배포에서 제외한다(2026-09-13 CodeRabbit 리뷰로 발견 — "그냥 재실행"이
+                    // 실제 ECR push/GitOps 갱신으로 이어지는 사고를 막기 위함).
+                    def isManualTrigger = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
+                    isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
 
                     echo "감지된 서비스: ${detectedServices}"
                     echo "실배포 여부: ${isRealDeploy}"

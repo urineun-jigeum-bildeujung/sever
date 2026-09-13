@@ -32,6 +32,14 @@ if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
   if [ "${REQUESTED_IMAGE}" = "all" ]; then
     services="$(echo "${all_services}" | to_json_array)"
   else
+    # REQUESTED_IMAGE는 Jenkins 빌드 파라미터로 사람이 직접 입력하는 값이라 신뢰 못 함 —
+    # 실제 서비스 디렉토리명과 정확히 일치할 때만 받아들이고, 그 외(오타, 따옴표/개행 등
+    # 이상한 값)는 바로 실패시켜서 이후 readJSON/셸 단계로 안 넘어가게 막는다
+    # (2026-09-13 CodeRabbit 리뷰로 발견).
+    if ! printf '%s\n' "${all_services}" | grep -Fxq -- "${REQUESTED_IMAGE}"; then
+      echo "알 수 없는 서비스명: ${REQUESTED_IMAGE}" >&2
+      exit 2
+    fi
     services="$(printf '%s\n' "${REQUESTED_IMAGE}" | to_json_array)"
   fi
 else
