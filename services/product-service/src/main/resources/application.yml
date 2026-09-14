@@ -19,6 +19,10 @@ product:
   list:
     default-size: 10
     max-size: 30
+    
+time-deal:
+  list:
+    low-stock-threshold-ratio: 0.1
 
 
 management:
