@@ -82,7 +82,10 @@ spec:
         limits:
           cpu: "1"
           memory: 1Gi
-          ephemeral-storage: 1Gi
+          # workspace-volume(emptyDir)을 파드 내 모든 컨테이너가 공유해서, 체크아웃한
+          # 소스 + gradle 빌드 산출물 + trivy DB(~113MB)까지 이 컨테이너 한도에 잡힘 —
+          # 1Gi로는 부족해서 파드가 Evicted됨(2026-09-14 실제로 겪음). 여유 있게 상향.
+          ephemeral-storage: 3Gi
     - name: crane
       image: gcr.io/go-containerregistry/crane:debug
       command:
@@ -207,43 +210,49 @@ spec:
                         return
                     }
 
-                    // build.yml의 matrix 역할 — 서비스 개수만큼 병렬 브랜치 생성.
-                    // 각 브랜치: kaniko로 로컬 tar 빌드(push 안 함) -> Trivy로 CRITICAL 스캔
+                    // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Trivy로 CRITICAL 스캔
                     // (걸리면 실패) -> 실배포일 때만 crane으로 그 tar를 그대로 ECR에 push.
                     // kaniko는 빌드만, crane은 push만 담당 — 스캔 통과 못 한 이미지는
                     // 애초에 push 코드 경로를 안 타서 물리적으로 못 올라감.
-                    def branches = [:]
+                    //
+                    // 서비스 개수만큼 병렬(parallel)로 돌렸었는데, 파드 안 kaniko/trivy
+                    // 컨테이너가 서비스별로 따로 있는 게 아니라 딱 1개씩만 있어서, 병렬
+                    // 실행 시 여러 gradlew 프로세스가 같은 /root/.gradle 캐시를 동시에
+                    // 잡으려다 "Timeout waiting to lock journal cache"로 충돌함(2026-09-14
+                    // 실제 Jenkins 빌드에서 재현). 순차 실행으로 바꿔서 캐시 경합을 원천
+                    // 차단한다. 서비스별 tar도 다음 서비스 빌드 전에 지워서 공유 workspace
+                    // 볼륨에 여러 이미지가 동시에 쌓여 ephemeral-storage 한도를 넘기지
+                    // 않게 한다(같은 빌드에서 trivy 컨테이너가 storage 초과로 Evicted됨).
                     services.each { svc ->
-                        branches[svc] = {
-                            def tarFile = "${svc}.tar"
-                            def imageRef = "${env.IMAGE_REGISTRY}/${svc}:${imageTag}"
+                        def tarFile = "${svc}.tar"
+                        def imageRef = "${env.IMAGE_REGISTRY}/${svc}:${imageTag}"
 
-                            container('kaniko') {
-                                sh """
-                                    /kaniko/executor \\
-                                      --context=`pwd` \\
-                                      --dockerfile=services/${svc}/Dockerfile \\
-                                      --destination=${imageRef} \\
-                                      --no-push \\
-                                      --tarPath=${tarFile}
-                                """
-                            }
+                        container('kaniko') {
+                            sh """
+                                /kaniko/executor \\
+                                  --context=`pwd` \\
+                                  --dockerfile=services/${svc}/Dockerfile \\
+                                  --destination=${imageRef} \\
+                                  --no-push \\
+                                  --tarPath=${tarFile}
+                            """
+                        }
 
-                            container('trivy') {
-                                sh """
-                                    trivy image --input ${tarFile} \\
-                                      --severity CRITICAL --exit-code 1 --ignore-unfixed
-                                """
-                            }
+                        container('trivy') {
+                            sh """
+                                trivy image --input ${tarFile} \\
+                                  --severity CRITICAL --exit-code 1 --ignore-unfixed
+                            """
+                        }
 
-                            if (isRealDeploy) {
-                                container('crane') {
-                                    sh "crane push ${tarFile} ${imageRef}"
-                                }
+                        if (isRealDeploy) {
+                            container('crane') {
+                                sh "crane push ${tarFile} ${imageRef}"
                             }
                         }
+
+                        sh "rm -f ${tarFile}"
                     }
-                    parallel branches
                 }
             }
         }
