@@ -1,5 +1,7 @@
 package com.golajugaenyang.common.security.config;
 
+import com.golajugaenyang.common.security.filter.HeaderAuthenticationEntryPoint;
+import com.golajugaenyang.common.security.filter.HeaderAuthenticationFilter;
 import com.golajugaenyang.common.security.filter.InternalGatewaySecurityFilter;
 import com.golajugaenyang.common.security.resolver.AuthIdArgumentResolver;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +14,9 @@ import org.springframework.core.Ordered;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -28,7 +32,12 @@ public class CommonSecurityAutoConfiguration implements WebMvcConfigurer {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HeaderAuthenticationEntryPoint()))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/internal/**").permitAll()
+                .anyRequest().authenticated())
             .build();
     }
 
