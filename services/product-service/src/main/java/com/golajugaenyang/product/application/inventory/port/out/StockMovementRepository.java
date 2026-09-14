@@ -8,5 +8,5 @@ public interface StockMovementRepository {
 
     boolean recordIfAbsent(StockMovement movement);
 
-    Optional<StockMovement> findPreceding(Long orderItemId, StockMovementType movementType);
+    Optional<StockMovement> find(Long orderItemId, StockMovementType movementType);
 }

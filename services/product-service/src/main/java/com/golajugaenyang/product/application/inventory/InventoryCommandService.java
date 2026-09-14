@@ -94,15 +94,10 @@ public class InventoryCommandService implements InventoryCommandUseCase {
         // 이력 검증
         if (type.requiresPrecedingMovement()) {
             StockMovement preceding = stockMovementRepository
-                .findPreceding(orderItemId, type.getRequiredPrecedingType())
+                .find(orderItemId, type.getRequiredPrecedingType())
                 .orElse(null);
 
-            boolean valid = preceding != null
-                && preceding.getSubjectType() == subjectType
-                && preceding.getSubjectId().equals(subjectId)
-                && preceding.getQuantity() == quantity;
-
-            if (!valid) {
+            if (!matches(preceding, subjectType, subjectId, quantity)) {
                 log.warn(
                     "[InventoryCommand] 선행 이력 불일치. orderItemId={}, type={}", orderItemId, type);
                 throw new AppException(ProductErrorCode.STOCK_MOVEMENT_PRECONDITION_NOT_MET);
@@ -112,7 +107,18 @@ public class InventoryCommandService implements InventoryCommandUseCase {
         // 이력 삽입
         boolean recorded = stockMovementRepository.recordIfAbsent(
             StockMovement.of(subjectType, subjectId, orderItemId, type, quantity));
+
         if (!recorded) {
+            StockMovement existing = stockMovementRepository
+                .find(orderItemId, type)
+                .orElse(null);
+
+            if (!matches(existing, subjectType, subjectId, quantity)) {
+                log.warn(
+                    "[InventoryCommand] 동일 주문 유형에 다른 내용의 요청 충돌 orderItemId={}, type={}, request={}",
+                    orderItemId, type, subjectType);
+                throw new AppException(ProductErrorCode.STOCK_MOVEMENT_CONFLICT);
+            }
             return true;
         }
 
@@ -125,6 +131,16 @@ public class InventoryCommandService implements InventoryCommandUseCase {
         // 상태 동기화 이벤트 발행
         eventPublisher.publishEvent(new StockChangedEvent(subjectType, subjectId));
         return true;
+    }
+
+    private boolean matches(
+        StockMovement movement, StockSubjectType subjectType,
+        Long subjectId, int quantity
+    ) {
+        return movement != null
+            && movement.getSubjectType() == subjectType
+            && movement.getSubjectId().equals(subjectId)
+            && movement.getQuantity() == quantity;
     }
 
     private int dispatchUpdate(

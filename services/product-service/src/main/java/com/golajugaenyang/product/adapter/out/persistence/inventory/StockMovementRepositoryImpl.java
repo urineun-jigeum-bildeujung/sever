@@ -27,7 +27,7 @@ public class StockMovementRepositoryImpl implements StockMovementRepository {
     }
 
     @Override
-    public Optional<StockMovement> findPreceding(Long orderItemId, StockMovementType movementType) {
+    public Optional<StockMovement> find(Long orderItemId, StockMovementType movementType) {
         return jpaRepository.findByOrderItemIdAndMovementType(orderItemId, movementType);
     }
 }
