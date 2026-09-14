@@ -59,6 +59,11 @@ public class MemberService {
         agreementRepo.saveAll(agreementsToSave);
     }
 
+    public Long getMemberIdByAuthId(Long authId){
+        return memberRepo.findByAuthId(authId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND)).getId();
+    }
+
     private void validateNoDuplicateAgreementTypes(List<SignupRequest.AgreementItem> agreements) {
         long distinctTypeCount = agreements.stream()
             .map(SignupRequest.AgreementItem::type)

@@ -11,6 +11,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class MemberAdapter implements MemberRepository {
@@ -51,6 +53,12 @@ public class MemberAdapter implements MemberRepository {
             return new AppException(MemberErrorCode.ALREADY_HAVE_NICKNAME);
         }
         throw e;
+    }
+
+    @Override
+    public Optional<Member> findByAuthId(Long authId){
+        return memberJpaRepo.findByAuthId(authId)
+                .map(MemberMapper::toDomain);
     }
 
 }

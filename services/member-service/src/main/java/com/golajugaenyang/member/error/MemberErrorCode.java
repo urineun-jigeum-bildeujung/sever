@@ -21,6 +21,10 @@ public enum MemberErrorCode implements ErrorCode {
         HttpStatus.UNAUTHORIZED,
         "MEMBER_401_UNAUTHORIZED", "인증에 실패했습니다."
     ),
+    NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "MEMBER_404_NOT_FOUND", "회원을 찾을 수 없습니다."
+    ),
     ALREADY_SIGNED_UP(
             HttpStatus.CONFLICT,
             "MEMBER_409_ALREADY_SIGNED_UP", "이미 등록되었습니다."
