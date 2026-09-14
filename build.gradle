@@ -37,14 +37,6 @@ subprojects {
         imports {
             mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
         }
-        // Spring Boot 4.1.0이 물고 오는 내장 Tomcat(11.0.22)에 CRITICAL 취약점 3건
-        // (CVE-2026-65182/65905/68525, 인증 우회 계열) — trivy 스캔에서 실제로 걸림
-        // (2026-09-14). 셋 다 같은 버전으로 맞춰야 해서 embed 3종 전부 명시.
-        dependencies {
-            dependency 'org.apache.tomcat.embed:tomcat-embed-core:11.0.25'
-            dependency 'org.apache.tomcat.embed:tomcat-embed-el:11.0.25'
-            dependency 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25'
-        }
     }
 
     tasks.withType(JavaCompile).configureEach {
