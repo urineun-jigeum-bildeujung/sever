@@ -28,4 +28,11 @@ public class ConcernMasterAdapter implements ConcernMasterRepository {
             .map(ConcernMasterMapper::toDomain)
             .toList();
     }
+
+    @Override
+    public List<ConcernMaster> findByIdIn(List<Long> ids) {
+        return concernMasterJpaRepo.findAllById(ids).stream()
+            .map(ConcernMasterMapper::toDomain)
+            .toList();
+    }
 }

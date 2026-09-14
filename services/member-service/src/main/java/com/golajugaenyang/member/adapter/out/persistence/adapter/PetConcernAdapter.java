@@ -25,4 +25,11 @@ public class PetConcernAdapter implements PetConcernRepository {
             .map(PetConcernMapper::toDomain)
             .toList();
     }
+
+    @Override
+    public List<PetConcern> findByPetId(Long petId){
+        return petConcernJpaRepo.findByPetId(petId).stream()
+                .map(PetConcernMapper::toDomain)
+                .toList();
+    }
 }

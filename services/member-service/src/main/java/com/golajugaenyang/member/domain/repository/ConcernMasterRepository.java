@@ -10,4 +10,6 @@ public interface ConcernMasterRepository {
 
     List<ConcernMaster> findBySpecies(Species species);
 
+    List<ConcernMaster> findByIdIn(List<Long> ids);
+
 }

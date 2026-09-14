@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface PetAllergyRepository {
     List<PetAllergy> saveAll(List<PetAllergy> petAllergies);
+
+    List<PetAllergy> findByPetId(Long petId);
 }

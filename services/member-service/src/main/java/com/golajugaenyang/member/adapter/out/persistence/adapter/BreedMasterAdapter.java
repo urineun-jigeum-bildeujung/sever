@@ -6,6 +6,8 @@ import com.golajugaenyang.member.adapter.out.persistence.repository.BreedMasterJ
 import com.golajugaenyang.member.domain.entity.BreedMaster;
 import com.golajugaenyang.member.domain.repository.BreedMasterRepository;
 import java.util.List;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,5 +22,11 @@ public class BreedMasterAdapter implements BreedMasterRepository {
         return breedMasterJpaRepo.findBySpecies(species).stream()
             .map(BreedMasterMapper::toDomain)
             .toList();
+    }
+
+    @Override
+    public Optional<BreedMaster> findById(Long breedId){
+        return breedMasterJpaRepo.findById(breedId)
+                .map(BreedMasterMapper::toDomain);
     }
 }

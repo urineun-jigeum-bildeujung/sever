@@ -25,4 +25,11 @@ public class PetAllergyAdapter implements PetAllergyRepository {
             .map(PetAllergyMapper::toDomain)
             .toList();
     }
+
+    @Override
+    public List<PetAllergy> findByPetId(Long petId) {
+        return petAllergyJpaRepo.findByPetId(petId).stream()
+                .map(PetAllergyMapper::toDomain)
+                .toList();
+    }
 }
