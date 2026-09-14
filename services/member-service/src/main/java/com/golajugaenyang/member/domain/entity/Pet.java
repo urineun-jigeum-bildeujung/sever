@@ -20,7 +20,7 @@ public class Pet {
     private int age;
     private LocalDate birthDate;
     private TargetBreedSize targetBreedSize;
-    private String weight;
+    private double weight;
     private int bcs;
     private String image;
     private LocalDateTime deletedAt;
@@ -31,7 +31,7 @@ public class Pet {
 
     public Pet(Long id, boolean isDefault, String name, Sex sex,
         boolean isNeutered, Species species, int age, LocalDate birthDate,
-        TargetBreedSize targetBreedSize, String weight, int bcs, String image, LocalDateTime deletedAt,
+        TargetBreedSize targetBreedSize, double weight, int bcs, String image, LocalDateTime deletedAt,
         Long memberId, Long breedId, Instant createdAt, Instant updatedAt){
         this.id = id;
         this.isDefault = isDefault;

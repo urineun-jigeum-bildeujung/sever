@@ -58,7 +58,7 @@ public class PetJpaEntity extends BaseTimeEntity {
     private TargetBreedSize targetBreedSize;
 
     @Column(nullable = false)
-    private String weight;
+    private double weight;
 
     @Column(nullable = false)
     private int bcs;
