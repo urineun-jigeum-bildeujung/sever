@@ -43,10 +43,26 @@ subprojects {
         // Spring Boot 4.1.0이 물고 오는 내장 Tomcat(11.0.22)에 CRITICAL 취약점 3건
         // (CVE-2026-65182/65905/68525, 인증 우회 계열) — trivy 스캔에서 실제로 걸림
         // (2026-09-14). 셋 다 같은 버전으로 맞춰야 해서 embed 3종 전부 명시.
+        //
+        // auth-service의 spring-boot-starter-data-redis -> lettuce-core가 물고 오는
+        // netty-handler 4.2.15.Final에도 CRITICAL 취약점(CVE-2026-75595) — 마찬가지로
+        // trivy 스캔에서 실제로 걸림. io.netty:netty-bom을 imports에 추가해봤지만
+        // spring-boot-dependencies가 이미 관리하는 버전이라 그게 우선돼서 안 먹혔음
+        // (2026-09-14 로컬 재검증으로 확인) — tomcat과 동일하게 개별 아티팩트 직접
+        // 지정으로 강제 오버라이드한다.
         dependencies {
             dependency 'org.apache.tomcat.embed:tomcat-embed-core:11.0.25'
             dependency 'org.apache.tomcat.embed:tomcat-embed-el:11.0.25'
             dependency 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25'
+            dependency 'io.netty:netty-common:4.2.17.Final'
+            dependency 'io.netty:netty-handler:4.2.17.Final'
+            dependency 'io.netty:netty-buffer:4.2.17.Final'
+            dependency 'io.netty:netty-transport:4.2.17.Final'
+            dependency 'io.netty:netty-resolver:4.2.17.Final'
+            dependency 'io.netty:netty-resolver-dns:4.2.17.Final'
+            dependency 'io.netty:netty-transport-native-unix-common:4.2.17.Final'
+            dependency 'io.netty:netty-codec-base:4.2.17.Final'
+            dependency 'io.netty:netty-codec-dns:4.2.17.Final'
         }
     }
 
