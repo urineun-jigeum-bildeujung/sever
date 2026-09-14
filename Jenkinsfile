@@ -210,19 +210,29 @@ spec:
                         return
                     }
 
+                    // Dockerfile 안에서 각 서비스마다 kaniko가 ./gradlew bootJar를 처음부터
+                    // 새로 돌리면, 서비스 7개가 전부 모노레포 전체를 COPY + 풀 JDK 이미지
+                    // 언패킹 + 의존성 재해석을 반복하게 됨 — 이게 "Timeout waiting to lock
+                    // journal cache" 락 경합(gradle 캐시를 여러 프로세스가 동시에 잡으려 함)과
+                    // ephemeral-storage 초과(파드 Evicted, 1Gi/3Gi 둘 다 부족)의 진짜 원인이었음
+                    // (2026-09-14 실제 Jenkins 빌드에서 재현). Test 스테이지처럼 gradle
+                    // 컨테이너에서 jar를 한 번만 미리 빌드해두고, kaniko는 그 jar를 COPY만
+                    // 하도록 Dockerfile을 단순화해서 이 문제를 구조적으로 없앤다.
+                    def bootJarTasks = services.collect { ":services:${it}:bootJar" }.join(' ')
+                    container('gradle') {
+                        sh """
+                            chmod +x gradlew
+                            ./gradlew ${bootJarTasks} -x test --no-daemon
+                        """
+                    }
+
                     // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Trivy로 CRITICAL 스캔
                     // (걸리면 실패) -> 실배포일 때만 crane으로 그 tar를 그대로 ECR에 push.
                     // kaniko는 빌드만, crane은 push만 담당 — 스캔 통과 못 한 이미지는
                     // 애초에 push 코드 경로를 안 타서 물리적으로 못 올라감.
                     //
-                    // 서비스 개수만큼 병렬(parallel)로 돌렸었는데, 파드 안 kaniko/trivy
-                    // 컨테이너가 서비스별로 따로 있는 게 아니라 딱 1개씩만 있어서, 병렬
-                    // 실행 시 여러 gradlew 프로세스가 같은 /root/.gradle 캐시를 동시에
-                    // 잡으려다 "Timeout waiting to lock journal cache"로 충돌함(2026-09-14
-                    // 실제 Jenkins 빌드에서 재현). 순차 실행으로 바꿔서 캐시 경합을 원천
-                    // 차단한다. 서비스별 tar도 다음 서비스 빌드 전에 지워서 공유 workspace
-                    // 볼륨에 여러 이미지가 동시에 쌓여 ephemeral-storage 한도를 넘기지
-                    // 않게 한다(같은 빌드에서 trivy 컨테이너가 storage 초과로 Evicted됨).
+                    // jar가 이미 만들어져 있어서 kaniko는 COPY만 하면 되므로 캐시 경합이
+                    // 구조적으로 불가능함 — 그래도 디스크 여유를 위해 tar는 순차로 지우며 진행.
                     services.each { svc ->
                         def tarFile = "${svc}.tar"
                         def imageRef = "${env.IMAGE_REGISTRY}/${svc}:${imageTag}"
