@@ -1,3 +1,11 @@
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation project(':modules:common-core')
+
+    // 이 모듈에 의존하는 서비스가 spring-cloud-dependencies BOM을 별도로 임포트하지 않아도
+    // 버전이 해석되도록, BOM 대신 버전을 직접 명시한다 (spring-cloud 2025.1.2 기준 해석된 버전).
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:5.0.2'
 }

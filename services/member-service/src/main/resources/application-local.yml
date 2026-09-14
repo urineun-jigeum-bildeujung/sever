@@ -1,6 +1,9 @@
 server:
   port: 8082
 
+internal:
+  gateway-secret: ${INTERNAL_GATEWAY_SECRET}
+
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/member_db

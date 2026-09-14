@@ -34,4 +34,6 @@ dependencies {
 
     //openfeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    implementation project(':modules:common-security')
 }

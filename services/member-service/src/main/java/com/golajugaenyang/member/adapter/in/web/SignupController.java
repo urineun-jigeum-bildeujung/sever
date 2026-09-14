@@ -1,6 +1,6 @@
 package com.golajugaenyang.member.adapter.in.web;
 
-import com.golajugaenyang.member.adapter.in.web.auth.TemporaryAuthIdExtractor;
+import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.SignupRequest;
 import com.golajugaenyang.member.application.MemberService;
 import jakarta.validation.Valid;
@@ -22,10 +22,9 @@ public class SignupController {
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signup(
-        @RequestHeader(value = "Authorization", required = false) String authorization,
+        @AuthId Long authId,
         @Valid @RequestBody SignupRequest request
     ) {
-        Long authId = TemporaryAuthIdExtractor.extract(authorization);
         memberService.signUp(authId, request.nickname(), request.agreements());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
