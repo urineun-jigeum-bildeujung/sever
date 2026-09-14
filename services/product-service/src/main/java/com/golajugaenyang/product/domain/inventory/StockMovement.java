@@ -24,15 +24,19 @@ import java.time.OffsetDateTime;
     uniqueConstraints = @UniqueConstraint(
         name = "uq_stock_movement",
         columnNames = {"order_item_id", "movement_type"}),
-    indexes = @Index(name = "idx_stock_movements_product", columnList = "product_id"))
+    indexes = @Index(name = "idx_stock_movements_subject", columnList = "subject_type, subject_id"))
 public class StockMovement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "product_id", nullable = false)
-    private Long productId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subject_type", nullable = false, length = 20)
+    private StockSubjectType subjectType;
+
+    @Column(name = "subject_id", nullable = false)
+    private Long subjectId;
 
     @Column(name = "order_item_id", nullable = false)
     private Long orderItemId;
@@ -46,4 +50,17 @@ public class StockMovement {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    public static StockMovement of(
+        StockSubjectType subjectType, Long subjectId, Long orderItemId,
+        StockMovementType movementType, int quantity
+    ) {
+        StockMovement m = new StockMovement();
+        m.subjectType = subjectType;
+        m.subjectId = subjectId;
+        m.orderItemId = orderItemId;
+        m.movementType = movementType;
+        m.quantity = quantity;
+        return m;
+    }
 }

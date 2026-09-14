@@ -8,6 +8,7 @@ dependencies {
     implementation project(':modules:common-jpa')
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
+    implementation 'org.springframework.kafka:spring-kafka'
 
     implementation "io.github.openfeign.querydsl:querydsl-jpa:7.2"
     annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:7.2:jakarta"

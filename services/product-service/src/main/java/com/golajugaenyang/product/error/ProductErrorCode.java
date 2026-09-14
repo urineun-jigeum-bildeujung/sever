@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+
 @Getter
 @RequiredArgsConstructor
 public enum ProductErrorCode implements ErrorCode {
@@ -17,6 +18,18 @@ public enum ProductErrorCode implements ErrorCode {
         HttpStatus.NOT_FOUND,
         "PRODUCT_404_PRODUCT_NOT_FOUND",
         "상품이 존재하지 않습니다."),
+    INSUFFICIENT_STOCK(
+        HttpStatus.CONFLICT,
+        "PRODUCT_409_INSUFFICIENT_STOCK",
+        "재고가 부족한 상품이 있습니다."),
+    STOCK_MOVEMENT_CONFLICT(
+        HttpStatus.CONFLICT,
+        "PRODUCT_409_STOCK_MOVEMENT_CONFLICT",
+        "재고 반영 조건이 맞지 않습니다."),
+    STOCK_MOVEMENT_PRECONDITION_NOT_MET(
+        HttpStatus.CONFLICT,
+        "PRODUCT_409_STOCK_MOVEMENT_PRECONDITION_NOT_MET",
+        "선행 재고 처리 기록이 존재하지 않습니다."),
     ;
     private final HttpStatus httpStatus;
     private final String code;
