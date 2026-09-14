@@ -2,6 +2,7 @@ package com.golajugaenyang.product.domain.timedeal;
 
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import lombok.AccessLevel;
@@ -18,7 +19,11 @@ import jakarta.persistence.Id;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "time_deals")
+@Table(
+    name = "time_deals",
+    indexes = {
+        @Index(name = "idx_time_deals_status", columnList = "status")
+    })
 public class TimeDeal extends BaseTimeEntity {
 
     @Id
