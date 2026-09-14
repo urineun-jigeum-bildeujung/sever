@@ -53,7 +53,7 @@ spec:
         limits:
           cpu: "2"
           memory: 2Gi
-          ephemeral-storage: 2Gi
+          ephemeral-storage: 3Gi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command:
@@ -67,7 +67,11 @@ spec:
         limits:
           cpu: "2"
           memory: 2Gi
-          ephemeral-storage: 3Gi
+          # kaniko는 이미지 빌드마다 전체 파일시스템을 스냅샷 떠서 레이어 diff를
+          # 계산하는 구조라, jar만 COPY하는 지금도 순차로 7번 반복하면 예상보다
+          # 훨씬 디스크를 많이 씀 — 3Gi로도 trivy가 Evicted됐음(2026-09-14).
+          # 노드 여유가 대당 47GB라 넉넉하게 올려도 안전함.
+          ephemeral-storage: 5Gi
     - name: trivy
       image: aquasec/trivy:0.74.0 # 2026-09-10 기준 최신 안정 버전
       command:
@@ -82,10 +86,12 @@ spec:
         limits:
           cpu: "1"
           memory: 1Gi
-          # workspace-volume(emptyDir)을 파드 내 모든 컨테이너가 공유해서, 체크아웃한
-          # 소스 + gradle 빌드 산출물 + trivy DB(~113MB)까지 이 컨테이너 한도에 잡힘 —
-          # 1Gi로는 부족해서 파드가 Evicted됨(2026-09-14 실제로 겪음). 여유 있게 상향.
-          ephemeral-storage: 3Gi
+          # workspace-volume(emptyDir)을 파드 내 모든 컨테이너가 공유하는데, 로컬에서
+          # 실측한 workspace 자체 크기는 7개 서비스 jar까지 다 만들어도 180MB 수준이라
+          # 이것만으론 3Gi도 안 채움 — 그런데도 3Gi에서 Evicted가 재현됨(2026-09-14).
+          # kaniko의 스냅샷 오버헤드 등 정확한 원인은 더 봐야 하지만, 노드 여유가 대당
+          # 47GB라 일단 여유 있게 올려서 계속 막히지 않게 한다.
+          ephemeral-storage: 6Gi
     - name: crane
       image: gcr.io/go-containerregistry/crane:debug
       command:
