@@ -1,9 +1,9 @@
-package com.golajugaenyang.product.adapter.in.web;
+package com.golajugaenyang.product.adapter.in.web.product;
 
 import com.golajugaenyang.common.core.domain.CategoryCode;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductDetailResponse;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductListResponse;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductSearchResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductDetailResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductListResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductSearchResponse;
 import com.golajugaenyang.product.application.product.port.in.ProductDetailUseCase;
 import com.golajugaenyang.product.application.product.port.in.ProductSearchUseCase;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductDetailResult;
@@ -14,7 +14,6 @@ import com.golajugaenyang.product.application.product.port.in.dto.ProductSearchC
 import com.golajugaenyang.product.application.product.port.in.dto.ProductSearchResult;
 import com.golajugaenyang.product.config.ProductListProperties;
 import com.golajugaenyang.product.domain.product.ProductSortType;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;

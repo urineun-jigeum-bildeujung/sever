@@ -1,4 +1,4 @@
-package com.golajugaenyang.product.adapter.in.web.dto;
+package com.golajugaenyang.product.adapter.in.web.product.dto;
 
 import com.golajugaenyang.common.core.domain.CautionIngredientCode;
 import com.golajugaenyang.common.core.domain.Species;

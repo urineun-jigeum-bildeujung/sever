@@ -30,6 +30,10 @@ public enum ProductErrorCode implements ErrorCode {
         HttpStatus.CONFLICT,
         "PRODUCT_409_STOCK_MOVEMENT_PRECONDITION_NOT_MET",
         "선행 재고 처리 기록이 존재하지 않습니다."),
+    INVALID_TIME_DEAL_STATUS(
+        HttpStatus.BAD_REQUEST,
+        "PRODUCT_400_INVALID_TIME_DEAL_STATUS",
+        "지원하지 않는 타임딜 상태입니다."),
     ;
     private final HttpStatus httpStatus;
     private final String code;

@@ -1,4 +1,4 @@
-package com.golajugaenyang.product.adapter.in.web.dto;
+package com.golajugaenyang.product.adapter.in.web.product.dto;
 
 import com.golajugaenyang.product.application.product.port.in.dto.ProductListResult;
 import java.util.List;

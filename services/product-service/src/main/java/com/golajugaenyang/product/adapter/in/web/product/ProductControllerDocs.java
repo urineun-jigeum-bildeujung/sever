@@ -1,9 +1,9 @@
-package com.golajugaenyang.product.adapter.in.web;
+package com.golajugaenyang.product.adapter.in.web.product;
 
 import com.golajugaenyang.common.core.domain.CategoryCode;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductDetailResponse;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductListResponse;
-import com.golajugaenyang.product.adapter.in.web.dto.ProductSearchResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductDetailResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductListResponse;
+import com.golajugaenyang.product.adapter.in.web.product.dto.ProductSearchResponse;
 import com.golajugaenyang.product.domain.product.ProductSortType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
