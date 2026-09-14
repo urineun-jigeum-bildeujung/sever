@@ -124,6 +124,13 @@ spec:
                         if (env.CHANGE_ID) {
                             // PR 빌드: PR 대상 브랜치와의 공통 조상 커밋을 base로 사용
                             // (GHA의 github.event.pull_request.base.sha에 대응, 여긴 자동 제공값이 없어서 직접 계산)
+                            //
+                            // Declarative Checkout SCM은 PR 빌드에서 refs/pull/<N>/head만 fetch하고
+                            // 대상 브랜치(origin/${CHANGE_TARGET})는 로컬에 안 받아와서, 바로 merge-base를
+                            // 돌리면 "Not a valid object name"으로 실패함(2026-09-14 실제로 겪음).
+                            // merge-base 전에 대상 브랜치를 먼저 fetch해서 origin/${CHANGE_TARGET}이
+                            // 로컬에 존재하게 만든다.
+                            sh "git fetch --no-tags origin ${env.CHANGE_TARGET}:refs/remotes/origin/${env.CHANGE_TARGET}"
                             baseSha = sh(
                                 script: "git merge-base HEAD origin/${env.CHANGE_TARGET}",
                                 returnStdout: true
