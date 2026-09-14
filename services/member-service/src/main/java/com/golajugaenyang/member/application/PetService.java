@@ -2,7 +2,9 @@ package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.domain.entity.BreedMaster;
 import com.golajugaenyang.member.domain.entity.ConcernMaster;
 import com.golajugaenyang.member.domain.entity.Pet;
@@ -15,6 +17,8 @@ import com.golajugaenyang.member.domain.repository.PetConcernRepository;
 import com.golajugaenyang.member.domain.repository.PetRepository;
 import java.util.Arrays;
 import java.util.List;
+
+import com.golajugaenyang.member.error.MemberErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,5 +85,32 @@ public class PetService {
 
     public List<Pet> getPets(Long memberId) {
         return petRepo.findByMemberId(memberId);
+    }
+
+    public PetDetailResponse getPetDetail(Long memberId, Long petId){
+        Pet pet = petRepo.findById(petId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        if(!pet.getMemberId().equals(memberId)){
+            throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        BreedMaster breed = breedMasterRepo.findById(pet.getBreedId())
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        List<Long> concernIds = petConcernRepo.findByPetId(petId).stream()
+                .map(PetConcern::getConcernId)
+                .toList();
+        List<String> healthConcerns = concernMasterRepo.findByIdIn(concernIds).stream()
+                .map(ConcernMaster::getConcernCode)
+                .toList();
+
+        List<String> allergies = petAllergyRepo.findByPetId(petId).stream()
+                .map(pa -> pa.getAllergyCode().name())
+                .toList();
+
+        return new PetDetailResponse(  pet.getId(), pet.getName(), pet.getSpecies(), pet.getBreedId(), breed.getBreedName(),
+                pet.getAge(), pet.getBirthDate(), pet.getSex(), pet.isNeutered(), pet.getTargetBreedSize(),
+                pet.getWeight(), pet.getBcs(), healthConcerns, allergies, pet.getImage(), pet.isDefault());
     }
 }

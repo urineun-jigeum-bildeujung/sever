@@ -3,6 +3,7 @@ package com.golajugaenyang.member.adapter.in.web;
 import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetSummaryResponse;
 import com.golajugaenyang.member.application.MemberService;
@@ -13,11 +14,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -55,6 +52,15 @@ public class MemberController {
         List<PetSummaryResponse> response = petService.getPets(memberId).stream()
                 .map(pet -> new PetSummaryResponse(pet.getId(), pet.getName(), pet.getImage(), pet.isDefault()))
                 .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me/pets/{petId}")
+    public ResponseEntity<PetDetailResponse> getMyPet(
+            @AuthId Long authId,
+            @PathVariable Long petId){
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        PetDetailResponse response = petService.getPetDetail(memberId, petId);
         return ResponseEntity.ok(response);
     }
 
