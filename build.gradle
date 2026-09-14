@@ -1,3 +1,6 @@
+// 2026-09-14: review-service로 실배포 파이프라인(ECR push + gitops-value 갱신)을
+// 검증 완료 — 이 커밋은 build.gradle을 건드려서 detect-services.sh가 "전체 서비스
+// 변경"으로 인식하게 하고, 나머지 6개 서비스도 같은 경로로 실제 검증하기 위한 것.
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.0' apply false
