@@ -1,7 +1,6 @@
 package com.golajugaenyang.common.security.config;
 
 import com.golajugaenyang.common.security.filter.InternalGatewaySecurityFilter;
-import com.golajugaenyang.common.security.filter.InternalSecretFeignInterceptor;
 import com.golajugaenyang.common.security.resolver.AuthIdArgumentResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -52,12 +51,5 @@ public class CommonSecurityAutoConfiguration implements WebMvcConfigurer {
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         registration.addUrlPatterns("/*");
         return registration;
-    }
-
-    @Bean
-    public InternalSecretFeignInterceptor internalSecretFeignInterceptor(
-        @Value("${internal.gateway-secret}") String internalGatewaySecret
-    ) {
-        return new InternalSecretFeignInterceptor(internalGatewaySecret);
     }
 }
