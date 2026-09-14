@@ -6,6 +6,14 @@ def imageTag = ''
 def isRealDeploy = false
 
 pipeline {
+    // dev 브랜치에 짧은 시간 안에 push가 몰리면 두 빌드가 동시에 같은 gitops-value
+    // HEAD를 기준으로 clone해서, 먼저 push한 쪽 다음 push가 non-fast-forward로
+    // 실패할 수 있음(2026-09-13 CodeRabbit 리뷰로 발견). 같은 파이프라인의 빌드를
+    // 한 번에 하나씩만 돌게 줄 세워서 막는다.
+    options {
+        disableConcurrentBuilds()
+    }
+
     // Jenkins가 K8s 파드로 떠서 도커 데몬이 없음 — kaniko가 daemon 없이 이미지를 빌드함.
     // Detect Services/Update GitOps 스테이지의 git 명령어는 기본 컨테이너(jnlp, git 내장)에서
     // 실행되고, 나머지(테스트/빌드/스캔/push)는 각자 맞는 컨테이너를 지정해서 씀.
