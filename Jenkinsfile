@@ -364,7 +364,7 @@ spec:
                             git config user.email 'jenkins@petflow.local'
                             git config user.name 'jenkins-ci'
                             git add values/
-                            git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy ${services.join(", ")} @ ${imageTag}'
+                            git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy ${services.collect { it }.join(", ")} @ ${imageTag}'
                             git push
                         """
                     }
