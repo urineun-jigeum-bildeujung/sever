@@ -4,6 +4,7 @@ import com.golajugaenyang.member.adapter.out.persistence.mapper.PetMapper;
 import com.golajugaenyang.member.adapter.out.persistence.repository.PetJpaRepository;
 import com.golajugaenyang.member.domain.entity.Pet;
 import com.golajugaenyang.member.domain.repository.PetRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,6 +33,13 @@ public class PetAdapter implements PetRepository {
     @Override
     public boolean existsByMemberId(Long memberId){
         return petJpaRepo.existsByMemberId(memberId);
+    }
+
+    @Override
+    public List<Pet> findByMemberId(Long memberId) {
+        return petJpaRepo.findByMemberId(memberId).stream()
+            .map(PetMapper::toDomain)
+            .toList();
     }
 
     private boolean isDefaultPetConflict(DataIntegrityViolationException e) {

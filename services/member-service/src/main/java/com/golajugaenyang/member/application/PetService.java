@@ -78,4 +78,8 @@ public class PetService {
                 .filter(code -> code.getApplicableSpecies().contains(species))
                 .toList();
     }
+
+    public List<Pet> getPets(Long memberId) {
+        return petRepo.findByMemberId(memberId);
+    }
 }

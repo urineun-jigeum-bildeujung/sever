@@ -4,13 +4,16 @@ import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.PetSummaryResponse;
 import com.golajugaenyang.member.application.MemberService;
 import com.golajugaenyang.member.application.PetService;
 import com.golajugaenyang.member.domain.entity.Pet;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +47,15 @@ public class MemberController {
                 savedPet.getId(), savedPet.getName(), savedPet.getSpecies(), savedPet.isDefault(), savedPet.getBreedId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/me/pets")
+    public ResponseEntity<List<PetSummaryResponse>> getMyPets(@AuthId Long authId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        List<PetSummaryResponse> response = petService.getPets(memberId).stream()
+                .map(pet -> new PetSummaryResponse(pet.getId(), pet.getName(), pet.getImage(), pet.isDefault()))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
 }
