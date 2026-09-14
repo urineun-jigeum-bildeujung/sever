@@ -1,4 +1,4 @@
-package com.golajugaenyang.member.adapter.in.web.dto;
+package com.golajugaenyang.member.adapter.in.web.dto.request;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;

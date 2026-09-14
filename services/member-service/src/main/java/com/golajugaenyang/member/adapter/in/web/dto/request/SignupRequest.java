@@ -1,4 +1,4 @@
-package com.golajugaenyang.member.adapter.in.web.dto;
+package com.golajugaenyang.member.adapter.in.web.dto.request;
 
 import com.golajugaenyang.member.domain.entity.enums.AgreementType;
 import jakarta.validation.Valid;

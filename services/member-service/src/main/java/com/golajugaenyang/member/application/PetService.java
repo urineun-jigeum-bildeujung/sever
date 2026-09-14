@@ -1,7 +1,7 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
-import com.golajugaenyang.member.adapter.in.web.dto.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.domain.entity.ConcernMaster;
 import com.golajugaenyang.member.domain.entity.Pet;
 import com.golajugaenyang.member.domain.entity.PetAllergy;
