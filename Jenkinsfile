@@ -107,6 +107,29 @@ spec:
           cpu: 500m
           memory: 256Mi
           ephemeral-storage: 512Mi
+    - name: awscli
+      # kaniko는 AWS ECR 인증이 내장돼 있어서 --destination push가 바로 되지만,
+      # crane(go-containerregistry)은 그런 클라우드 자동인증이 없어서 crane push가
+      # 401 Unauthorized로 실패함(2026-09-14 실제 dev 빌드에서 재현). aws-cli로
+      # ECR 토큰을 직접 받아서 crane auth login에 넘겨주기 위한 컨테이너.
+      image: amazon/aws-cli:2.29.0
+      command:
+        - sleep
+      args:
+        - 99d
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+          ephemeral-storage: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+          ephemeral-storage: 256Mi
+      volumeMounts:
+      - mountPath: "/home/jenkins/agent"
+        name: "workspace-volume"
+        readOnly: false
 """
         }
     }
@@ -230,6 +253,20 @@ spec:
                             chmod +x gradlew
                             ./gradlew ${bootJarTasks} -x test --no-daemon
                         """
+                    }
+
+                    // crane은 kaniko와 달리 ECR 자동인증이 없어서 crane push가 401
+                    // Unauthorized로 실패함(2026-09-14 실제 dev 빌드에서 재현). 레지스트리
+                    // 하나당 로그인 한 번이면 되므로(서비스마다 반복할 필요 없음) 서비스
+                    // 루프 밖에서 딱 한 번만 로그인한다.
+                    if (isRealDeploy) {
+                        container('awscli') {
+                            sh "aws ecr get-login-password --region ap-northeast-2 > ecr-token.txt"
+                        }
+                        container('crane') {
+                            sh "crane auth login ${env.IMAGE_REGISTRY.split('/')[0]} --username AWS --password-stdin < ecr-token.txt"
+                        }
+                        sh "rm -f ecr-token.txt"
                     }
 
                     // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Trivy로 CRITICAL 스캔
