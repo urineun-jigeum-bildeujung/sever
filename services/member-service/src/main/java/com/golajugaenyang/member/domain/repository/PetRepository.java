@@ -6,4 +6,5 @@ public interface PetRepository {
 
     Pet save(Pet pet);
 
+    boolean existsByMemberId(Long memberId);
 }

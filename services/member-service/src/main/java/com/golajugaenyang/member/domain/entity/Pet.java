@@ -51,4 +51,9 @@ public class Pet {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+
+    public Pet withIsDefault(boolean isDefault) {
+        return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
+            targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
+    }
 }

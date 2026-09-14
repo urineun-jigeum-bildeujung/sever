@@ -1,8 +1,12 @@
 package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.AuthId;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
 import com.golajugaenyang.member.application.MemberService;
+import com.golajugaenyang.member.application.PetService;
+import com.golajugaenyang.member.domain.entity.Pet;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,9 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
-public class SignupController {
+public class MemberController {
 
     private final MemberService memberService;
+    private final PetService petService;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signup(
@@ -26,6 +31,19 @@ public class SignupController {
     ) {
         memberService.signUp(authId, request.nickname(), request.agreements());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/me/pets")
+    public ResponseEntity<PetRegisterResponse> registerPet(
+            @AuthId Long authId,
+            @Valid @RequestBody PetRegisterRequest request
+            ) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        Pet savedPet = petService.registerPet(memberId, request);
+        PetRegisterResponse response = new PetRegisterResponse(
+                savedPet.getId(), savedPet.getName(), savedPet.getSpecies(), savedPet.isDefault(), savedPet.getBreedId()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 }

@@ -25,9 +25,12 @@ public class PetService {
     private final ConcernMasterRepository concernMasterRepo;
 
     @Transactional
-    public Long registerPet(Long memberId, PetRegisterRequest request) {
+    public Pet registerPet(Long memberId, PetRegisterRequest request) {
+
+        boolean isDefault = !petRepo.existsByMemberId(memberId);
+
         Pet savedPet = petRepo.save(
-                new Pet(null, false, request.name(), request.sex(), request.isNeutered(),
+                new Pet(null, isDefault, request.name(), request.sex(), request.isNeutered(),
                         request.species(), request.age(), request.birthDate(), request.size(),
                         request.weight(), request.bcs(), request.image(), null,
                         memberId, request.breedId(), null, null)
@@ -54,8 +57,7 @@ public class PetService {
             petAllergyRepo.saveAll(petAllergies);
         }
 
-
-        return savedPet.getId();
+        return savedPet;
         }
 
 
