@@ -31,13 +31,10 @@ public class TimeDealListService implements TimeDealListUseCase {
     private final TimeDealListQueryRepository timeDealListQueryRepository;
     private final TimeDealListProperties timeDealListProperties;
 
-    private static final Set<TimeDealStatus> LISTABLE_STATUSES = EnumSet.of(
-        TimeDealStatus.ACTIVE, TimeDealStatus.SCHEDULED);
-
     @Override
     @Transactional(readOnly = true)
     public TimeDealListResult getTimeDeals(TimeDealStatus status) {
-        if (!LISTABLE_STATUSES.contains(status)) {
+        if (!TimeDealVisibility.isListable(status)) {
             throw new AppException(ProductErrorCode.INVALID_TIME_DEAL_STATUS);
         }
 

@@ -83,4 +83,21 @@ public record ProductDetailResult(
             imageUrls.stream().filter(url -> !url.equals(thumbnailUrl))
         ).collect(Collectors.toList());
     }
+
+    public ProductDetailResult withPricing(
+        BigDecimal price, BigDecimal originalPrice,
+        BigDecimal discountRate, boolean soldOut
+    ) {
+        return new ProductDetailResult(
+            productId, images, productName, price, originalPrice, discountRate,
+            avgRating, reviewCount, soldOut,
+            manufacturer, brandName, originCountry,
+            netQuantityValue, netQuantityUnit,
+            ingredients, feedingTarget, targetBreedSize,
+            targetAgeGroup, targetSpecies,
+            feedingMethod, allergenFlags, cautionFlags,
+            consumptionPeriodDisplay, shelfLifeAfterOpeningDays,
+            storageMethod
+        );
+    }
 }
