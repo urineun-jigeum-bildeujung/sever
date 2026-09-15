@@ -54,14 +54,15 @@ public class AuthService {
         String accessToken = jwtIssuer.generateAccessToken(authId, memberId);
         String refreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
         refreshTokenStore.save(authId, refreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
-        return new TokenPair(accessToken, refreshToken);
+        return new TokenPair(accessToken, refreshToken, memberId);
     }
 
-    public String issueLoginCode(Long authId, boolean isNewUser) {
+    public String issueLoginCode(Long authId) {
         TokenPair tokenPair = issueTokens(authId);
+        boolean needsSignup = tokenPair.memberId() == null;
 
         String nickname = null;
-        if(isNewUser){
+        if(needsSignup){
             try{
                 nickname = memberClient.getNicknameSuggestion().nickname();
             } catch (Exception e) {
@@ -71,7 +72,7 @@ public class AuthService {
         }
 
         LoginCodePayload payload = new LoginCodePayload(
-            tokenPair.accessToken(), tokenPair.refreshToken(), isNewUser, nickname
+            tokenPair.accessToken(), tokenPair.refreshToken(), nickname, needsSignup
         );
 
         String code = UUID.randomUUID().toString();

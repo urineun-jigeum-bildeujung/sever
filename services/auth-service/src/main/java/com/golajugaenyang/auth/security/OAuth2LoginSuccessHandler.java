@@ -28,7 +28,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
         Long authId = oAuth2User.getAuth().getId();
 
-        String code = authService.issueLoginCode(authId, oAuth2User.isNewUser());
+        String code = authService.issueLoginCode(authId);
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
             .queryParam("code", code)
