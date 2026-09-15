@@ -2,6 +2,9 @@ package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
+import com.golajugaenyang.member.adapter.out.client.AuthClient;
+import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
+import com.golajugaenyang.member.adapter.out.client.dto.TokenReissueRequest;
 import com.golajugaenyang.member.domain.entity.Agreement;
 import com.golajugaenyang.member.domain.entity.Member;
 import com.golajugaenyang.member.domain.entity.enums.AgreementType;
@@ -28,6 +31,7 @@ public class MemberService {
     private final MemberRepository memberRepo;
     private final AgreementRepository agreementRepo;
     private final NicknameGenerator nicknameGenerator;
+    private final AuthClient authClient;
 
     public String generateUniqueNickname() {
         String nickname;
@@ -38,7 +42,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void signUp(Long authId, String nickname, List<SignupRequest.AgreementItem> agreements) {
+    public TokenPairResponse signUp(Long authId, String nickname, List<SignupRequest.AgreementItem> agreements) {
         validateNoDuplicateAgreementTypes(agreements);
         validateRequiredAgreementsAgreed(agreements);
         alreadySignedAuthId(authId);
@@ -57,6 +61,8 @@ public class MemberService {
             .toList();
 
         agreementRepo.saveAll(agreementsToSave);
+
+        return authClient.reissueToken(new TokenReissueRequest(authId, savedMember.getId()));
     }
 
     public Long getMemberIdByAuthId(Long authId){
