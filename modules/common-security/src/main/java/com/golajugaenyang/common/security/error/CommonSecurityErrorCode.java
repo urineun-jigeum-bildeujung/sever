@@ -16,6 +16,10 @@ public enum CommonSecurityErrorCode implements ErrorCode {
     INVALID_INTERNAL_SECRET(
             HttpStatus.UNAUTHORIZED,
             "SECURITY_401_UNAUTHORIZED", "인증에 실패했습니다."
+    ),
+    MISSING_MEMBER_ID(
+            HttpStatus.FORBIDDEN,
+            "SECURITY_403_MISSING_MEMBER_ID", "회원가입이 필요합니다."
     );
 
     private final HttpStatus httpStatus;
