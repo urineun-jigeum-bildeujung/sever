@@ -29,6 +29,18 @@ public enum MemberErrorCode implements ErrorCode {
             HttpStatus.NOT_FOUND,
             "MEMBER_404_NOT_FOUND_PET", "반려동물을 찾을 수 없습니다."
     ),
+    INVALID_BREED(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_BREED", "존재하지 않는 품종입니다."
+    ),
+    INVALID_CONCERN(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_CONCERN", "존재하지 않는 관심사입니다."
+    ),
+    INVALID_ALLERGY(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_ALLERGY", "선택한 종에 해당하지 않는 알레르기입니다."
+    ),
     ALREADY_SIGNED_UP(
             HttpStatus.CONFLICT,
             "MEMBER_409_ALREADY_SIGNED_UP", "이미 등록되었습니다."

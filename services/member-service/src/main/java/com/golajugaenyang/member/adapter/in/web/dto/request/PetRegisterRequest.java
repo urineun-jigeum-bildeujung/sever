@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +19,7 @@ public record PetRegisterRequest(
     boolean isNeutered,
     @NotNull Species species,
     @NotNull @Positive Integer age,
-    LocalDate birthDate,
+    @PastOrPresent LocalDate birthDate,
     @NotNull TargetBreedSize size,
     @Positive double weight,
     @NotNull @Min(1) @Max(5) Integer bcs,
