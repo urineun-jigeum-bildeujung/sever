@@ -12,6 +12,7 @@ import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.auth.security.jwt.JwtIssuer;
 import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
 import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
+import feign.FeignException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -90,8 +91,7 @@ public class AuthService {
     private Long getMemberIdOrNull(Long authId){
         try{
             return memberClient.getMemberId(authId).memberId();
-        } catch (Exception e){
-            log.warn("회원 아이디 조회 실패, authId={}", authId, e);
+        } catch (FeignException.NotFound e){
             return null;
         }
     }
