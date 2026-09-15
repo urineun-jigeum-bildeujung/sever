@@ -80,6 +80,13 @@ public class AuthService {
         return code;
     }
 
+    public TokenPair reissueTokens(Long authId, Long memberId) {
+        String accessToken = jwtIssuer.generateAccessToken(authId, memberId);
+        String refreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
+        refreshTokenStore.save(authId, refreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
+        return new TokenPair(accessToken, refreshToken, memberId);
+    }
+
     public LoginCodePayload exchangeLoginCode(String code) {
         return loginCodeStore.consume(code)
             .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
