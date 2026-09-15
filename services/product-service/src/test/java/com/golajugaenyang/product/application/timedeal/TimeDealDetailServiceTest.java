@@ -67,12 +67,12 @@ public class TimeDealDetailServiceTest {
     @DisplayName("가격 관련 필드는 타임딜 값으로, 나머지는 기본 상세 조회 값을 그대로 사용한다.")
     void merges_time_deal_pricing_with_base_product_detail() {
         when(timeDealPricingRepository.findByTimeDealItemId(1L))
-            .thenReturn(Optional.of(
-                pricing(100, 10, 10, TimeDealItemStatus.ACTIVE, TimeDealStatus.ACTIVE)));
+            .thenReturn(Optional.of(pricing(100, 10, 10, TimeDealItemStatus.ACTIVE, TimeDealStatus.ACTIVE)));
         when(productDetailUseCase.getProductDetail(999L)).thenReturn(baseDetail());
 
         ProductDetailResult result = timeDealDetailService.getTimeDealDetail(1L);
 
+        assertThat(result.timeDealItemId()).isEqualTo(1L);
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(15000));
         assertThat(result.originalPrice()).isEqualByComparingTo(BigDecimal.valueOf(20000));
         assertThat(result.productName()).isEqualTo("상품명");
