@@ -1,7 +1,7 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
-import com.golajugaenyang.member.adapter.in.web.dto.SignupRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.domain.entity.Agreement;
 import com.golajugaenyang.member.domain.entity.Member;
 import com.golajugaenyang.member.domain.entity.enums.AgreementType;
@@ -57,6 +57,11 @@ public class MemberService {
             .toList();
 
         agreementRepo.saveAll(agreementsToSave);
+    }
+
+    public Long getMemberIdByAuthId(Long authId){
+        return memberRepo.findByAuthId(authId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND)).getId();
     }
 
     private void validateNoDuplicateAgreementTypes(List<SignupRequest.AgreementItem> agreements) {
