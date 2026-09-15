@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ConcernMasterRepository {
 
-    List<ConcernMaster> findByConcernCodeIn(List<String> concernCodes);
+    List<ConcernMaster> findByConcernCodeInAndSpecies(List<String> concernCodes, Species species);
 
     List<ConcernMaster> findBySpecies(Species species);
 

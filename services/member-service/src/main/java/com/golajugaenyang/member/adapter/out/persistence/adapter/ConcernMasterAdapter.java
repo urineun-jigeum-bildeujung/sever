@@ -16,8 +16,8 @@ public class ConcernMasterAdapter implements ConcernMasterRepository {
     private final ConcernMasterJpaRepository concernMasterJpaRepo;
 
     @Override
-    public List<ConcernMaster> findByConcernCodeIn(List<String> concernCodes) {
-        return concernMasterJpaRepo.findByConcernCodeIn(concernCodes).stream()
+    public List<ConcernMaster> findByConcernCodeInAndSpecies(List<String> concernCodes, Species species) {
+        return concernMasterJpaRepo.findByConcernCodeInAndSpecies(concernCodes, species).stream()
             .map(ConcernMasterMapper::toDomain)
             .toList();
     }

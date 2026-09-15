@@ -48,7 +48,7 @@ public class PetService {
         List<String> concernCodes = request.healthConcerns() == null ? List.of() : request.healthConcerns();
 
         if (!concernCodes.isEmpty()) {
-            List<ConcernMaster> concernMasters = concernMasterRepo.findByConcernCodeIn(concernCodes);
+            List<ConcernMaster> concernMasters = concernMasterRepo.findByConcernCodeInAndSpecies(concernCodes, request.species());
 
             List<PetConcern> petConcerns = concernMasters.stream()
                     .map(cm -> new PetConcern(null, savedPet.getId(), cm.getId()))
