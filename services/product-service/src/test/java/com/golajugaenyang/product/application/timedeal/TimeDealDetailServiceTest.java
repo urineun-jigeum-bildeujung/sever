@@ -104,7 +104,7 @@ public class TimeDealDetailServiceTest {
 
     private ProductDetailResult baseDetail() {
         return new ProductDetailResult(
-            999L, List.of("https://cdn.example.com/1.jpg"), "상품명",
+            999L, null, List.of("https://cdn.example.com/1.jpg"), "상품명",
             BigDecimal.valueOf(30000), BigDecimal.valueOf(30000), BigDecimal.ZERO,
             BigDecimal.valueOf(4.5), 10, false,
             "제조사", "브랜드", "한국", BigDecimal.valueOf(2), QuantityUnit.KG,

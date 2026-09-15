@@ -40,7 +40,7 @@ public class TimeDealDetailService implements TimeDealDetailUseCase {
         boolean soldOut = pricing.itemStatus() == TimeDealItemStatus.SOLD_OUT || remaining == 0;
 
         return baseDetail.withPricing(
-            pricing.discountedPrice(), pricing.normalPrice(),
+            timeDealItemId, pricing.discountedPrice(), pricing.normalPrice(),
             pricing.discountRate(), soldOut);
     }
 }
