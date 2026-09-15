@@ -10,7 +10,8 @@ public record TimeDealListItem(
     BigDecimal normalPrice,
     BigDecimal discountedPrice,
     BigDecimal discountRate,
-    BigDecimal dailyPrice,
+    BigDecimal unitPrice,
+    String unitLabel,
     StockBadge stockBadge
 ) {
 

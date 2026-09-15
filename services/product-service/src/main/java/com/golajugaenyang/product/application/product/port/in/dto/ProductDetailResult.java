@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 public record ProductDetailResult(
     Long productId,
+    Long timeDealItemId,
     List<String> images,
     String productName,
     BigDecimal price,
@@ -47,7 +48,7 @@ public record ProductDetailResult(
         List<String> carousel = buildCarousel(p.thumbnailUrl(), p.imageUrls());
 
         return new ProductDetailResult(
-            p.id(),
+            p.id(), null,
             carousel,
             p.productName(),
             p.price(),
@@ -82,5 +83,23 @@ public record ProductDetailResult(
             Stream.of(thumbnailUrl),
             imageUrls.stream().filter(url -> !url.equals(thumbnailUrl))
         ).collect(Collectors.toList());
+    }
+
+    public ProductDetailResult withPricing(
+        Long timeDealItemId, BigDecimal price, BigDecimal originalPrice,
+        BigDecimal discountRate, boolean soldOut
+    ) {
+        return new ProductDetailResult(
+            productId, timeDealItemId,
+            images, productName, price, originalPrice, discountRate,
+            avgRating, reviewCount, soldOut,
+            manufacturer, brandName, originCountry,
+            netQuantityValue, netQuantityUnit,
+            ingredients, feedingTarget, targetBreedSize,
+            targetAgeGroup, targetSpecies,
+            feedingMethod, allergenFlags, cautionFlags,
+            consumptionPeriodDisplay, shelfLifeAfterOpeningDays,
+            storageMethod
+        );
     }
 }

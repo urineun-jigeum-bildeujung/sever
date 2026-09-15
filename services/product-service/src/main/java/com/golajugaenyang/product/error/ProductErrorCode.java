@@ -34,6 +34,10 @@ public enum ProductErrorCode implements ErrorCode {
         HttpStatus.BAD_REQUEST,
         "PRODUCT_400_INVALID_TIME_DEAL_STATUS",
         "지원하지 않는 타임딜 상태입니다."),
+    TIME_DEAL_ITEM_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "PRODUCT_404_TIME_DEAL_ITEM_NOT_FOUND",
+        "타임딜 상품 정보가 존재하지 않습니다."),
     ;
     private final HttpStatus httpStatus;
     private final String code;

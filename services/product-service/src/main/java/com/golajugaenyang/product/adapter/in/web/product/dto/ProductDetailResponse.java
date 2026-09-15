@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 public record ProductDetailResponse(
     Long productId,
+    Long timeDealItemId,
     Summary summary,
     DetailInfo detailInfo
 ) {
@@ -96,7 +97,8 @@ public record ProductDetailResponse(
             r.storageMethod()
         );
 
-        return new ProductDetailResponse(r.productId(), summary, detailInfo);
+        return new ProductDetailResponse(
+            r.productId(), r.timeDealItemId(), summary, detailInfo);
     }
 
 }
