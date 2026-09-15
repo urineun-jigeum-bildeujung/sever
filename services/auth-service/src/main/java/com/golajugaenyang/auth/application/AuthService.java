@@ -49,8 +49,9 @@ public class AuthService {
     }
 
     public TokenPair issueTokens(Long authId) {
-        String accessToken = jwtIssuer.generateAccessToken(authId);
-        String refreshToken = jwtIssuer.generateRefreshToken(authId);
+        Long memberId = getMemberIdOrNull(authId);
+        String accessToken = jwtIssuer.generateAccessToken(authId, memberId);
+        String refreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
         refreshTokenStore.save(authId, refreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
         return new TokenPair(accessToken, refreshToken);
     }
@@ -84,5 +85,14 @@ public class AuthService {
 
     private String generateFallbackNickname() {
         return "user" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    private Long getMemberIdOrNull(Long authId){
+        try{
+            return memberClient.getMemberId(authId).memberId();
+        } catch (Exception e){
+            log.warn("회원 아이디 조회 실패, authId={}", authId, e);
+            return null;
+        }
     }
 }
