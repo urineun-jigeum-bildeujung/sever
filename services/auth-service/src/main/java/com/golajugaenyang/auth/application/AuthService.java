@@ -12,6 +12,7 @@ import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.auth.security.jwt.JwtIssuer;
 import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
 import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
+import feign.FeignException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -49,8 +50,9 @@ public class AuthService {
     }
 
     public TokenPair issueTokens(Long authId) {
-        String accessToken = jwtIssuer.generateAccessToken(authId);
-        String refreshToken = jwtIssuer.generateRefreshToken(authId);
+        Long memberId = getMemberIdOrNull(authId);
+        String accessToken = jwtIssuer.generateAccessToken(authId, memberId);
+        String refreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
         refreshTokenStore.save(authId, refreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
         return new TokenPair(accessToken, refreshToken);
     }
@@ -84,5 +86,13 @@ public class AuthService {
 
     private String generateFallbackNickname() {
         return "user" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    private Long getMemberIdOrNull(Long authId){
+        try{
+            return memberClient.getMemberId(authId).memberId();
+        } catch (FeignException.NotFound e){
+            return null;
+        }
     }
 }

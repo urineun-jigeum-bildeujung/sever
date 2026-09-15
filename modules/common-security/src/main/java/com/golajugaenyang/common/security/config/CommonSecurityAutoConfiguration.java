@@ -4,6 +4,7 @@ import com.golajugaenyang.common.security.filter.HeaderAuthenticationEntryPoint;
 import com.golajugaenyang.common.security.filter.HeaderAuthenticationFilter;
 import com.golajugaenyang.common.security.filter.InternalGatewaySecurityFilter;
 import com.golajugaenyang.common.security.resolver.AuthIdArgumentResolver;
+import com.golajugaenyang.common.security.resolver.MemberIdArgumentResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -46,9 +47,15 @@ public class CommonSecurityAutoConfiguration implements WebMvcConfigurer {
         return new AuthIdArgumentResolver();
     }
 
+    @Bean
+    public MemberIdArgumentResolver memberIdArgumentResolver() {
+        return new MemberIdArgumentResolver();
+    }
+
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers){
         resolvers.add(authIdArgumentResolver());
+        resolvers.add(memberIdArgumentResolver());
     }
 
     @Bean

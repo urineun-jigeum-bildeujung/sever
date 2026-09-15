@@ -19,6 +19,8 @@ public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
 
     private static final String AUTH_ID_HEADER = "X-Auth-Id";
     private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
+    private static final String MEMBER_ID_HEADER = "X-Member-Id";
+    private static final String MEMBER_ID_CLAIM = "memberId";
 
     private final String internalGatewaySecret;
 
@@ -35,7 +37,7 @@ public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
             .filter(JwtAuthenticationToken.class::isInstance)
             .cast(JwtAuthenticationToken.class)
             .map(JwtAuthenticationToken::getToken)
-            .map(jwt -> withAuthIdHeader(sanitizedExchange, jwt))
+            .map(jwt -> withClaimHeaders(sanitizedExchange, jwt))
             .defaultIfEmpty(sanitizedExchange)
             .flatMap(chain::filter);
     }
@@ -45,19 +47,23 @@ public class JwtClaimForwardingFilter implements GlobalFilter, Ordered {
             .headers(headers -> {
                 headers.remove(AUTH_ID_HEADER);
                 headers.remove(INTERNAL_SECRET_HEADER);
+                headers.remove(MEMBER_ID_HEADER);
             })
             .build();
 
         return exchange.mutate().request(strippedRequest).build();
     }
 
-    private ServerWebExchange withAuthIdHeader(ServerWebExchange exchange, Jwt jwt) {
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-            .header(AUTH_ID_HEADER, jwt.getSubject())
-            .header(INTERNAL_SECRET_HEADER, internalGatewaySecret)
-            .build();
+    private ServerWebExchange withClaimHeaders(ServerWebExchange exchange, Jwt jwt) {
+        ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate()
+                .header(AUTH_ID_HEADER, jwt.getSubject())
+                .header(INTERNAL_SECRET_HEADER, internalGatewaySecret);
+        String memberId = jwt.getClaimAsString(MEMBER_ID_CLAIM);
+        if(memberId != null){
+            requestBuilder.header(MEMBER_ID_HEADER, memberId);
+        }
 
-        return exchange.mutate().request(mutatedRequest).build();
+        return exchange.mutate().request(requestBuilder.build()).build();
     }
 
     @Override
