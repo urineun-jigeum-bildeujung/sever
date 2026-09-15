@@ -26,12 +26,12 @@ public class TimeDealListQueryRepositoryImpl implements TimeDealListQueryReposit
         return queryFactory
             .select(Projections.constructor(TimeDealListRowProjection.class,
                 timeDeal.id, timeDeal.name, timeDeal.startAt, timeDeal.endAt,
-                timeDealItem.id, product.id,
-                product.thumbnailUrl, product.productName,
+                timeDealItem.id, product.id, product.thumbnailUrl, product.productName,
                 timeDealItem.normalPrice,
                 timeDealItem.discountedPrice, timeDealItem.discountRate,
-                timeDealItem.quantityLimit,
-                timeDealItem.reservedQuantity, timeDealItem.soldQuantity,
+                product.normalizedQuantityValue, product.normalizedQuantityUnit,
+                timeDealItem.quantityLimit, timeDealItem.reservedQuantity,
+                timeDealItem.soldQuantity,
                 timeDealItem.itemStatus))
             .from(timeDealItem)
             .join(timeDeal).on(timeDealItem.dealId.eq(timeDeal.id))

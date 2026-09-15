@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.golajugaenyang.common.core.domain.QuantityUnit;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.product.application.timedeal.port.in.dto.StockBadge;
 import com.golajugaenyang.product.application.timedeal.port.in.dto.TimeDealListResult;
@@ -106,12 +107,25 @@ public class TimeDealListServiceTest {
         assertThat(result.deals().getFirst().items()).hasSize(2);
     }
 
+    @Test
+    @DisplayName("할인가 기준으로 단가를 계산한다.")
+    void calculates_unit_price_based_on_discounted_price() {
+        TimeDealListService service =
+            new TimeDealListService(timeDealListQueryRepository, properties);
+        when(timeDealListQueryRepository.findItemsByDealStatus(TimeDealStatus.ACTIVE))
+            .thenReturn(List.of(row(100, 0, 0, TimeDealItemStatus.ACTIVE)));
+
+        TimeDealListResult result = service.getTimeDeals(TimeDealStatus.ACTIVE);
+
+        assertThat(result.deals().getFirst().items().getFirst().unitPrice()).isNotNull();
+    }
+
     private TimeDealListRowProjection row(
         int limit, int reserved, int sold, TimeDealItemStatus itemStatus) {
         return new TimeDealListRowProjection(
             1L, "딜 이름", OffsetDateTime.now(), OffsetDateTime.now().plusHours(1),
             1L, 100L, "https://cdn.example.com/1.jpg", "상품명",
             BigDecimal.valueOf(20000), BigDecimal.valueOf(15000), BigDecimal.valueOf(25),
-            limit, reserved, sold, itemStatus);
+            BigDecimal.valueOf(500), QuantityUnit.G, limit, reserved, sold, itemStatus);
     }
 }

@@ -28,7 +28,8 @@ public record TimeDealListResponse(
         BigDecimal normalPrice,
         BigDecimal discountedPrice,
         BigDecimal discountRate,
-        BigDecimal dailyPrice,
+        BigDecimal unitPrice,
+        String unitLabel,
         String stockBadge
     ) {
 
@@ -42,7 +43,7 @@ public record TimeDealListResponse(
                     .map(i -> new ItemResponse(
                         i.productId(), i.timeDealItemId(), i.thumbnailUrl(), i.productName(),
                         i.normalPrice(), i.discountedPrice(), i.discountRate(),
-                        i.dailyPrice(), i.stockBadge().name()))
+                        i.unitPrice(), i.unitLabel(), i.stockBadge().name()))
                     .toList()))
             .toList();
         return new TimeDealListResponse(deals, result.serverTime());

@@ -2,6 +2,7 @@ package com.golajugaenyang.product.application.timedeal;
 
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.core.pricing.PriceCalculator;
 import com.golajugaenyang.product.application.timedeal.port.in.TimeDealListUseCase;
 import com.golajugaenyang.product.application.timedeal.port.in.dto.StockBadge;
 import com.golajugaenyang.product.application.timedeal.port.in.dto.TimeDealGroup;
@@ -13,11 +14,10 @@ import com.golajugaenyang.product.config.TimeDealListProperties;
 import com.golajugaenyang.product.domain.timedeal.TimeDealItemStatus;
 import com.golajugaenyang.product.domain.timedeal.TimeDealStatus;
 import com.golajugaenyang.product.error.ProductErrorCode;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,6 +61,14 @@ public class TimeDealListService implements TimeDealListUseCase {
     }
 
     private TimeDealListItem toItem(TimeDealListRowProjection row) {
+
+        BigDecimal unitPrice = PriceCalculator
+            .unitPrice(row.discountedPrice(), row.normalizedQuantityValue());
+
+        String unitLabel = row.normalizedQuantityUnit() != null
+            ? row.normalizedQuantityUnit().getSymbol()
+            : null;
+
         int remaining = Math.max(
             row.quantityLimit() - row.reservedQuantity() - row.soldQuantity(), 0);
         StockBadge badge = resolveStockBadge(row.itemStatus(), remaining, row.quantityLimit());
@@ -68,8 +76,7 @@ public class TimeDealListService implements TimeDealListUseCase {
         return new TimeDealListItem(
             row.productId(), row.timeDealItemId(), row.thumbnailUrl(), row.productName(),
             row.normalPrice(), row.discountedPrice(), row.discountRate(),
-            null, // TODO: dailyPrice는 데이터 소스 확정 전까지 null
-            badge
+            unitPrice, unitLabel, badge
         );
     }
 
