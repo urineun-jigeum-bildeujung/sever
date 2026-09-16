@@ -25,11 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderCreationTransactionSupport {
 
-    private static final Duration RESERVATION_TTL = Duration.ofMinutes(15);
     private static final BigDecimal FIXED_SHIPPING_FEE = BigDecimal.valueOf(3000);
 
     private final ProductCatalogPort productCatalogPort;
     private final OrderRepositoryPort orderRepositoryPort;
+    private final OrderReservationProperties reservationProperties;
 
     @Transactional(readOnly = true)
     public CreateOrderResult findExistingResult(String idempotencyKey) {
@@ -59,7 +59,7 @@ public class OrderCreationTransactionSupport {
         DeliveryAddress deliveryAddress = DeliveryAddress.placeholder(command.addressId());
         Order order = Order.createPending(
             orderRepositoryPort.generateOrderNumber(), command.idempotencyKey(), command.memberId(),
-            deliveryAddress, command.deliveryNote(), RESERVATION_TTL);
+            deliveryAddress, command.deliveryNote(), reservationProperties.ttl());
 
         BigDecimal productAmount = BigDecimal.ZERO;
         for (CreateOrderCommand.Item requested : command.items()) {
