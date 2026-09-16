@@ -21,13 +21,13 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
     private final EntityManager entityManager;
 
     @Override
-    public boolean existsByIdempotencyKey(String idempotencyKey) {
-        return orderJpaRepository.existsByIdempotencyKey(idempotencyKey);
+    public boolean existsByMemberIdAndIdempotencyKey(Long memberId, String idempotencyKey) {
+        return orderJpaRepository.existsByMemberIdAndIdempotencyKey(memberId, idempotencyKey);
     }
 
     @Override
-    public Order findByIdempotencyKey(String idempotencyKey) {
-        return orderJpaRepository.findByIdempotencyKey(idempotencyKey);
+    public Order findByMemberIdAndIdempotencyKey(Long memberId, String idempotencyKey) {
+        return orderJpaRepository.findByMemberIdAndIdempotencyKey(memberId, idempotencyKey);
     }
 
     @Override

@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OrderJpaRepository extends JpaRepository<Order, Long> {
 
-    boolean existsByIdempotencyKey(String idempotencyKey);
+    boolean existsByMemberIdAndIdempotencyKey(Long memberId, String idempotencyKey);
 
-    Order findByIdempotencyKey(String idempotencyKey);
+    Order findByMemberIdAndIdempotencyKey(Long memberId, String idempotencyKey);
 }

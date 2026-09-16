@@ -6,13 +6,14 @@ import com.golajugaenyang.order.application.order.port.in.dto.CreateOrderResult;
 import com.golajugaenyang.order.application.order.port.out.OrderRepositoryPort;
 import com.golajugaenyang.order.application.order.port.out.ProductCatalogPort;
 import com.golajugaenyang.order.application.order.port.out.dto.CatalogItem;
+import com.golajugaenyang.order.application.order.port.out.dto.CatalogKey;
 import com.golajugaenyang.order.application.order.port.out.dto.ReservationItem;
+import com.golajugaenyang.order.config.OrderReservationProperties;
 import com.golajugaenyang.order.domain.order.DeliveryAddress;
 import com.golajugaenyang.order.domain.order.Order;
 import com.golajugaenyang.order.domain.order.OrderItem;
 import com.golajugaenyang.order.error.OrderErrorCode;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,11 +33,12 @@ public class OrderCreationTransactionSupport {
     private final OrderReservationProperties reservationProperties;
 
     @Transactional(readOnly = true)
-    public CreateOrderResult findExistingResult(String idempotencyKey) {
-        if (!orderRepositoryPort.existsByIdempotencyKey(idempotencyKey)) {
+    public CreateOrderResult findExistingResult(Long memberId, String idempotencyKey) {
+        if (!orderRepositoryPort.existsByMemberIdAndIdempotencyKey(memberId, idempotencyKey)) {
             return null;
         }
-        Order existing = orderRepositoryPort.findByIdempotencyKey(idempotencyKey);
+        Order existing = orderRepositoryPort.findByMemberIdAndIdempotencyKey(
+            memberId, idempotencyKey);
         return CreateOrderResult.from(existing, false);
     }
 
@@ -52,10 +54,11 @@ public class OrderCreationTransactionSupport {
             .toList();
 
         List<CatalogItem> catalogItems = productCatalogPort.lookup(productIds, dealItemIds);
-        Map<Long, CatalogItem> catalogByReferenceId = catalogItems.stream()
-            .collect(Collectors.toMap(CatalogItem::referenceId, c -> c));
+        Map<CatalogKey, CatalogItem> catalogByKey = catalogItems.stream()
+            .collect(
+                Collectors.toMap(c ->
+                    new CatalogKey(c.isTimeDeal(), c.referenceId()), c -> c));
 
-        // TODO: 추후 member-service 연동 필요
         DeliveryAddress deliveryAddress = DeliveryAddress.placeholder(command.addressId());
         Order order = Order.createPending(
             orderRepositoryPort.generateOrderNumber(), command.idempotencyKey(), command.memberId(),
@@ -63,9 +66,10 @@ public class OrderCreationTransactionSupport {
 
         BigDecimal productAmount = BigDecimal.ZERO;
         for (CreateOrderCommand.Item requested : command.items()) {
-            Long referenceId =
-                requested.isTimeDeal() ? requested.dealItemId() : requested.productId();
-            CatalogItem catalog = catalogByReferenceId.get(referenceId);
+            CatalogKey key = requested.isTimeDeal()
+                ? new CatalogKey(true, requested.dealItemId())
+                : new CatalogKey(false, requested.productId());
+            CatalogItem catalog = catalogByKey.get(key);
             if (catalog == null) {
                 throw new AppException(OrderErrorCode.PRODUCT_NOT_FOUND);
             }
