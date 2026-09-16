@@ -117,8 +117,8 @@ public class OrderItem extends BaseTimeEntity {
         item.categoryCodeSnapshot = CategoryCode.valueOf(catalog.categoryCode());
         item.replenishableSnapshot = catalog.replenishable();
         item.quantity = quantity;
-        item.unitPrice = catalog.unitPrice().setScale(0, RoundingMode.HALF_UP);
-        item.unitDiscountAmount = catalog.unitDiscountAmount().setScale(0, RoundingMode.HALF_UP);
+        item.unitPrice = catalog.unitPrice().setScale(2, RoundingMode.HALF_UP);
+        item.unitDiscountAmount = catalog.unitDiscountAmount().setScale(2, RoundingMode.HALF_UP);
         item.unitQuantityValueSnapshot = catalog.netQuantityValue();
         item.unitQuantityUnitSnapshot = QuantityUnit.fromSymbol(catalog.netQuantityUnit());
         item.quantityDimensionSnapshot = QuantityDimension.valueOf(catalog.quantityDimension());

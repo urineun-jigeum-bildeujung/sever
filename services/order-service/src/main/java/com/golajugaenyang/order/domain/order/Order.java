@@ -134,8 +134,8 @@ public class Order extends BaseTimeEntity {
     }
 
     public void applyAmounts(BigDecimal productAmount, BigDecimal shippingFee) {
-        this.productAmount = productAmount.setScale(0, RoundingMode.HALF_UP);
-        this.shippingFee = shippingFee.setScale(0, RoundingMode.HALF_UP);
+        this.productAmount = productAmount.setScale(2, RoundingMode.HALF_UP);
+        this.shippingFee = shippingFee.setScale(2, RoundingMode.HALF_UP);
         this.totalAmount = this.productAmount.add(this.shippingFee);
     }
 
