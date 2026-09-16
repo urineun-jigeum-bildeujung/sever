@@ -20,3 +20,7 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+order:
+  reservation:
+    ttl: 15m
