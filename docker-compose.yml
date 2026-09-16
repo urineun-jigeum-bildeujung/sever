@@ -9,6 +9,8 @@ services:
     profiles: ["all", "gateway"]
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       AUTH_SERVICE_HOST: auth-service
@@ -27,9 +29,13 @@ services:
     depends_on: [postgres]
     ports:
       - "8081:8081"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
+      REDIS_HOST: redis
+      MEMBER_SERVICE_HOST: member-service
 
   member-service:
     build:
@@ -39,6 +45,8 @@ services:
     depends_on: [postgres]
     ports:
       - "8082:8082"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
@@ -51,6 +59,8 @@ services:
     depends_on: [postgres, kafka]
     ports:
       - "8083:8083"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
@@ -61,12 +71,16 @@ services:
       context: .
       dockerfile: services/order-service/Dockerfile
     profiles: ["all", "order"]
-    depends_on: [postgres, kafka]
+    depends_on: [postgres, kafka, redis]
     ports:
       - "8084:8084"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
+      REDIS_HOST: redis
+      PRODUCT_SERVICE_HOST: product-service
 
   payment-service:
     build:
@@ -76,6 +90,8 @@ services:
     depends_on: [postgres, kafka]
     ports:
       - "8085:8085"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
@@ -88,6 +104,8 @@ services:
     depends_on: [postgres, kafka]
     ports:
       - "8086:8086"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
@@ -100,6 +118,8 @@ services:
     depends_on: [postgres, kafka]
     ports:
       - "8087:8087"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres

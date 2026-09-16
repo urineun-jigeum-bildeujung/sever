@@ -33,7 +33,7 @@ spring:
             - id: order-service
               uri: http://${ORDER_SERVICE_HOST:localhost}:8084
               predicates:
-                - Path=/api/v1/orders/**
+                - Path=/api/v1/orders/**,/api/v1/carts/**
             - id: payment-service
               uri: http://${PAYMENT_SERVICE_HOST:localhost}:8085
               predicates:
