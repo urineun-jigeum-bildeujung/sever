@@ -6,6 +6,7 @@ import com.golajugaenyang.member.adapter.in.web.dto.request.AddressUpdateRequest
 import com.golajugaenyang.member.adapter.in.web.dto.response.AddressSnapshotResponse;
 import com.golajugaenyang.member.domain.entity.Address;
 import com.golajugaenyang.member.domain.repository.AddressRepository;
+import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,12 @@ import java.util.List;
 public class AddressService {
 
     private final AddressRepository addressRepo;
+    private final MemberRepository memberRepo;
 
     @Transactional
     public Address registerAddress(Long memberId, AddressRegisterRequest request){
+        memberRepo.lockForUpdate(memberId);
+
         boolean isFirstAddress = !addressRepo.existsByMemberId(memberId);
         boolean isDefault = isFirstAddress || request.isDefault();
 
@@ -54,6 +58,8 @@ public class AddressService {
 
     @Transactional
     public void updateAddress(Long memberId, Long addressId, AddressUpdateRequest request) {
+        memberRepo.lockForUpdate(memberId);
+
         Address address = addressRepo.findById(addressId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_ADDRESS));
 
@@ -76,6 +82,8 @@ public class AddressService {
 
     @Transactional
     public void deleteAddress(Long memberId, Long addressId) {
+        memberRepo.lockForUpdate(memberId);
+
         Address address = addressRepo.findById(addressId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_ADDRESS));
 

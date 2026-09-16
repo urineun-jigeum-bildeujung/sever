@@ -61,5 +61,10 @@ public class MemberAdapter implements MemberRepository {
                 .map(MemberMapper::toDomain);
     }
 
+    @Override
+    public void lockForUpdate(Long memberId){
+        memberJpaRepo.findByIdForUpdate(memberId);
+    }
+
 }
 
