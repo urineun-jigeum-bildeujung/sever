@@ -1,5 +1,6 @@
 package com.golajugaenyang.auth.adapter.in.web;
 
+import com.golajugaenyang.auth.adapter.in.web.request.TokenReissueRequest;
 import com.golajugaenyang.auth.application.AuthService;
 import com.golajugaenyang.auth.application.recods.TokenPair;
 import lombok.RequiredArgsConstructor;
