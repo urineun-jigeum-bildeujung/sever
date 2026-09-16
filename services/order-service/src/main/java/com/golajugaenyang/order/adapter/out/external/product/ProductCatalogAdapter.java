@@ -8,8 +8,10 @@ import com.golajugaenyang.order.adapter.out.external.product.dto.TimeDealInterna
 import com.golajugaenyang.order.application.order.port.out.ProductCatalogPort;
 import com.golajugaenyang.order.application.order.port.out.dto.CatalogItem;
 import com.golajugaenyang.order.error.OrderErrorCode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -41,11 +43,17 @@ public class ProductCatalogAdapter implements ProductCatalogPort {
 
             return CompletableFuture.allOf(productsFuture, dealsFuture)
                 .thenApply(v -> {
-                    List<CatalogItem> merged = new java.util.ArrayList<>(productsFuture.join());
+                    List<CatalogItem> merged = new ArrayList<>(productsFuture.join());
                     merged.addAll(dealsFuture.join());
                     return merged;
                 })
                 .join();
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RestClientException) {
+                throw new AppException(OrderErrorCode.PRODUCT_SERVICE_UNAVAILABLE);
+            }
+            throw e;
         } catch (RestClientException e) {
             throw new AppException(OrderErrorCode.PRODUCT_SERVICE_UNAVAILABLE);
         }
