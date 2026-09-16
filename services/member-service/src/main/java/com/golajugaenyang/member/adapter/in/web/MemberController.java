@@ -6,6 +6,8 @@ import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetSummaryResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.SignupResponse;
+import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
 import com.golajugaenyang.member.application.MemberService;
 import com.golajugaenyang.member.application.PetService;
 import com.golajugaenyang.member.domain.entity.Pet;
@@ -25,12 +27,13 @@ public class MemberController {
     private final PetService petService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(
+    public ResponseEntity<SignupResponse> signup(
         @AuthId Long authId,
         @Valid @RequestBody SignupRequest request
     ) {
-        memberService.signUp(authId, request.nickname(), request.agreements());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        TokenPairResponse tokenPair = memberService.signUp(authId, request.nickname(), request.agreements());
+        SignupResponse response = new SignupResponse(tokenPair.accessToken(), tokenPair.refreshToken());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/me/pets")

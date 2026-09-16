@@ -1,5 +1,5 @@
 jwt:
-  jwks-uri: http://${AUTH_SERVICE_HOST:localhost}:8081/oauth2/jwks
+  jwks-uri: ${AUTH_SERVICE_URL:http://localhost:8081}/oauth2/jwks
 
 internal:
   gateway-secret: ${INTERNAL_GATEWAY_SECRET}
