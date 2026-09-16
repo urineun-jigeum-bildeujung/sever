@@ -1,9 +1,12 @@
 package com.golajugaenyang.member.application;
 
+import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.AddressRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AddressDetailResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.AddressSnapshotResponse;
 import com.golajugaenyang.member.domain.entity.Address;
 import com.golajugaenyang.member.domain.repository.AddressRepository;
+import com.golajugaenyang.member.error.MemberErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +47,18 @@ public class AddressService {
 
     public List<Address> getMyAddresses(Long memberId) {
         return addressRepo.findAllByMemberId(memberId);
+    }
+
+    public AddressSnapshotResponse getAddressSnapshot(Long memberId, Long addressId){
+        Address address = addressRepo.findById(addressId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_ADDRESS));
+
+        if(!address.getMemberId().equals(memberId)){
+            throw new AppException(MemberErrorCode.NOT_FOUND_ADDRESS);
+        }
+
+        return new AddressSnapshotResponse(address.getAddressName(), address.getReceiver(), address.getReceiverPhone(),
+                address.getZipCode(), address.getAddress(), address.getAddressDetail(), address.getDeliveryNote());
     }
 
 }

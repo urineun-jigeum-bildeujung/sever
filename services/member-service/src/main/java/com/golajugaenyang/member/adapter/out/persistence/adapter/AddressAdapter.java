@@ -39,4 +39,10 @@ public class AddressAdapter implements AddressRepository {
                 .toList();
     }
 
+    @Override
+    public Optional<Address> findById(Long addressId) {
+        return addressJpaRepo.findById(addressId)
+                .map(AddressMapper::toDomain);
+    }
+
 }

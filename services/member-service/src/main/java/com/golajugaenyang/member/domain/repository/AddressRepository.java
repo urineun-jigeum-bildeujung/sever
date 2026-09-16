@@ -14,4 +14,6 @@ public interface AddressRepository {
     Optional<Address> findDefaultByMemberId(Long memberId);
 
     List<Address> findAllByMemberId(Long memberId);
+
+    Optional<Address> findById(Long AddressId);
 }

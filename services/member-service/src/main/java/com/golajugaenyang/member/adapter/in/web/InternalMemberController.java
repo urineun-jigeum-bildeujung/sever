@@ -32,7 +32,7 @@ public class InternalMemberController {
     public AddressSnapshotResponse getAddress(
             @PathVariable Long memberId,
             @PathVariable Long addressId){
-        return addressService.getAddress(memberId, addressId);
+        return addressService.getAddressSnapshot(memberId, addressId);
     }
 
 }

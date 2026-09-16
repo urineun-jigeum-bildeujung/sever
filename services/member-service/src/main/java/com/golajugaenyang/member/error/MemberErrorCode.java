@@ -25,6 +25,10 @@ public enum MemberErrorCode implements ErrorCode {
             HttpStatus.NOT_FOUND,
             "MEMBER_404_NOT_FOUND", "회원을 찾을 수 없습니다."
     ),
+    NOT_FOUND_ADDRESS(
+            HttpStatus.NOT_FOUND,
+            "MEMBER_404_NOT_FOUND_ADDRESS", "배송지를 찾을 수 없습니다."
+    ),
     NOT_FOUND_PET(
             HttpStatus.NOT_FOUND,
             "MEMBER_404_NOT_FOUND_PET", "반려동물을 찾을 수 없습니다."
