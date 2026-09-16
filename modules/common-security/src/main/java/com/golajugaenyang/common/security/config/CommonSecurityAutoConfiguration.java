@@ -37,7 +37,7 @@ public class CommonSecurityAutoConfiguration implements WebMvcConfigurer {
             .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HeaderAuthenticationEntryPoint()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/internal/**").permitAll()
+                .requestMatchers("/internal/**", "/actuator/**").permitAll()
                 .anyRequest().authenticated())
             .build();
     }
