@@ -1,9 +1,12 @@
 package com.golajugaenyang.member.adapter.out.persistence.adapter;
 
+import com.golajugaenyang.member.adapter.out.persistence.entity.AddressJpaEntity;
 import com.golajugaenyang.member.adapter.out.persistence.mapper.AddressMapper;
 import com.golajugaenyang.member.adapter.out.persistence.repository.AddressJpaRepository;
 import com.golajugaenyang.member.domain.entity.Address;
 import com.golajugaenyang.member.domain.repository.AddressRepository;
+
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,13 @@ public class AddressAdapter implements AddressRepository {
     @Override
     public Optional<Address> findDefaultByMemberId(Long memberId){
         return addressJpaRepo.findByMemberIdAndIsDefaultTrue(memberId).map(AddressMapper::toDomain);
+    }
+
+    @Override
+    public List<Address> findAllByMemberId(Long memberId){
+        return addressJpaRepo.findAllByMemberId(memberId).stream()
+                .map(AddressMapper::toDomain)
+                .toList();
     }
 
 }

@@ -1,6 +1,8 @@
 package com.golajugaenyang.member.domain.repository;
 
 import com.golajugaenyang.member.domain.entity.Address;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface AddressRepository {
@@ -10,4 +12,6 @@ public interface AddressRepository {
     boolean existsByMemberId(Long memberId);
 
     Optional<Address> findDefaultByMemberId(Long memberId);
+
+    List<Address> findAllByMemberId(Long memberId);
 }
