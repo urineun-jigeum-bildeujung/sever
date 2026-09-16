@@ -45,4 +45,9 @@ public class AddressAdapter implements AddressRepository {
                 .map(AddressMapper::toDomain);
     }
 
+    @Override
+    public void deleteById(Long addressId) {
+        addressJpaRepo.deleteById(addressId);
+    }
+
 }

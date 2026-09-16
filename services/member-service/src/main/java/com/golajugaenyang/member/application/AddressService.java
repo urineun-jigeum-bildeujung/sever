@@ -74,6 +74,22 @@ public class AddressService {
         addressRepo.save(mergeWithRequest(address, addressId, memberId, request, isDefault));
     }
 
+    @Transactional
+    public void deleteAddress(Long memberId, Long addressId) {
+        Address address = addressRepo.findById(addressId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_ADDRESS));
+
+        if (!address.getMemberId().equals(memberId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_ADDRESS);
+        }
+
+        if (address.isDefault() && addressRepo.findAllByMemberId(memberId).size() > 1) {
+            throw new AppException(MemberErrorCode.LAST_DEFAULT_ADDRESS);
+        }
+
+        addressRepo.deleteById(addressId);
+    }
+
     private Address mergeWithRequest(Address existing, Long addressId, Long memberId,
                                       AddressUpdateRequest request, boolean isDefault) {
         return new Address(

@@ -52,4 +52,12 @@ public class AddressController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{addressId}")
+    public ResponseEntity<Void> deleteAddress(
+            @MemberId Long memberId,
+            @PathVariable Long addressId) {
+        addressService.deleteAddress(memberId, addressId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

@@ -16,4 +16,6 @@ public interface AddressRepository {
     List<Address> findAllByMemberId(Long memberId);
 
     Optional<Address> findById(Long AddressId);
+
+    void deleteById(Long addressId);
 }
