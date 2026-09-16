@@ -6,6 +6,7 @@ import com.golajugaenyang.order.application.order.port.in.dto.CreateOrderResult;
 import com.golajugaenyang.order.application.order.port.out.InventoryReservationPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -18,13 +19,23 @@ public class CreateOrderService implements CreateOrderUseCase {
 
     @Override
     public CreateOrderResult createOrder(CreateOrderCommand command) {
-        CreateOrderResult existingResult = transactionSupport
-            .findExistingResult(command.idempotencyKey());
+        CreateOrderResult existingResult =
+            transactionSupport.findExistingResult(command.memberId(), command.idempotencyKey());
         if (existingResult != null) {
             return existingResult;
         }
 
-        PendingOrderCreation pending = transactionSupport.persistPendingOrder(command);
+        PendingOrderCreation pending;
+        try {
+            pending = transactionSupport.persistPendingOrder(command);
+        } catch (DataIntegrityViolationException dup) {
+            CreateOrderResult racedResult =
+                transactionSupport.findExistingResult(command.memberId(), command.idempotencyKey());
+            if (racedResult != null) {
+                return racedResult;
+            }
+            throw dup;
+        }
 
         try {
             inventoryReservationPort.reserveBulk(pending.reservationItems());
