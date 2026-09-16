@@ -5,7 +5,7 @@ internal:
   gateway-secret: ${INTERNAL_GATEWAY_SECRET}
 
 auth-service:
-  url: http://${AUTH_SERVICE_HOST:localhost}:8081
+  url: ${AUTH_SERVICE_URL:http://localhost:8081}
 
 spring:
   datasource:
