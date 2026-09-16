@@ -52,6 +52,10 @@ public enum MemberErrorCode implements ErrorCode {
     ALREADY_HAVE_NICKNAME(
             HttpStatus.CONFLICT,
             "MEMBER_409_ALREADY_HAVE_NICKNAME", "중복된 닉네임입니다."
+    ),
+    LAST_DEFAULT_ADDRESS(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_LAST_DEFAULT_ADDRESS", "다른 배송지를 기본으로 설정해야 기본 배송지를 해제할 수 있습니다."
     );
 
 

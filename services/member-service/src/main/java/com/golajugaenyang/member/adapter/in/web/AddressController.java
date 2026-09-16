@@ -2,6 +2,7 @@ package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.MemberId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.AddressRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.AddressUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AddressDetailResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AddressRegisterResponse;
 import com.golajugaenyang.member.application.AddressService;
@@ -40,6 +41,15 @@ public class AddressController {
                         address.getDeliveryNote(), address.isDefault()))
                 .toList();
         return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{addressId}")
+    public ResponseEntity<Void> editAddress(
+            @MemberId Long memberId,
+            @PathVariable Long addressId,
+            @Valid @RequestBody AddressUpdateRequest request){
+        addressService.updateAddress(memberId, addressId, request);
+        return ResponseEntity.noContent().build();
     }
 
 }
