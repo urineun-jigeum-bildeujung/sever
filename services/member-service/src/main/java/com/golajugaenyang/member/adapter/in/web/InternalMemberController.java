@@ -1,13 +1,12 @@
 package com.golajugaenyang.member.adapter.in.web;
 
+import com.golajugaenyang.member.adapter.in.web.dto.response.AddressSnapshotResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.MemberIdResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.NicknameResponse;
+import com.golajugaenyang.member.application.AddressService;
 import com.golajugaenyang.member.application.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/internal/v1/members")
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalMemberController {
 
     private final MemberService memberService;
+    private final AddressService addressService;
 
     @GetMapping("/nickname")
     public NicknameResponse getNickname(){
@@ -26,6 +26,13 @@ public class InternalMemberController {
     public MemberIdResponse getMemberId(@RequestParam Long authId){
         Long memberId = memberService.getMemberIdByAuthId(authId);
         return new MemberIdResponse(memberId);
+    }
+
+    @GetMapping("/{memberId}/addresses/{addressId}")
+    public AddressSnapshotResponse getAddress(
+            @PathVariable Long memberId,
+            @PathVariable Long addressId){
+        return addressService.getAddressSnapshot(memberId, addressId);
     }
 
 }

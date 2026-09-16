@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.domain.entity;
 
 import java.time.Instant;
+
 import lombok.Getter;
 
 @Getter

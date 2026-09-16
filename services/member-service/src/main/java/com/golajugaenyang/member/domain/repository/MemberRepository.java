@@ -12,4 +12,6 @@ public interface MemberRepository {
     boolean existsByAuthId(Long authId);
 
     Optional<Member> findByAuthId(Long authId);
+
+    void lockForUpdate(Long memberId);
 }
