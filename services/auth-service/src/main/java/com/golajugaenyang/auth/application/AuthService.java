@@ -81,10 +81,18 @@ public class AuthService {
     }
 
     public TokenPair reissueTokens(Long authId, Long memberId) {
+        validateMemberOwnership(authId, memberId);
         String accessToken = jwtIssuer.generateAccessToken(authId, memberId);
         String refreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
         refreshTokenStore.save(authId, refreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
         return new TokenPair(accessToken, refreshToken, memberId);
+    }
+
+    private void validateMemberOwnership(Long authId, Long memberId) {
+        Long actualMemberId = memberClient.getMemberId(authId).memberId();
+        if (!memberId.equals(actualMemberId)) {
+            throw new AppException(AuthErrorCode.MEMBER_ID_MISMATCH);
+        }
     }
 
     public LoginCodePayload exchangeLoginCode(String code) {
