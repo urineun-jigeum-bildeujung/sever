@@ -6,7 +6,7 @@ import com.golajugaenyang.auth.application.recods.LoginCodePayload;
 import com.golajugaenyang.auth.application.recods.TokenPair;
 import com.golajugaenyang.auth.domain.entity.Auth;
 import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
-import com.golajugaenyang.auth.domain.exception.AuthErrorCode;
+import com.golajugaenyang.auth.domain.error.AuthErrorCode;
 import com.golajugaenyang.auth.domain.repository.AuthRepository;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.auth.security.jwt.JwtIssuer;

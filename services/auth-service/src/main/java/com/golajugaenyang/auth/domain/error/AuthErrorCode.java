@@ -1,4 +1,4 @@
-package com.golajugaenyang.auth.domain.exception;
+package com.golajugaenyang.auth.domain.error;
 
 import com.golajugaenyang.common.core.exception.ErrorCode;
 import lombok.Getter;

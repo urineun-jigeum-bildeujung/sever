@@ -1,5 +1,6 @@
 package com.golajugaenyang.auth.adapter.in.web;
 
+import com.golajugaenyang.auth.adapter.in.web.request.TokenExchangeRequest;
 import com.golajugaenyang.auth.application.AuthService;
 import com.golajugaenyang.auth.application.recods.LoginCodePayload;
 import lombok.RequiredArgsConstructor;
