@@ -4,6 +4,9 @@ server:
 internal:
   gateway-secret: ${INTERNAL_GATEWAY_SECRET}
 
+auth-service:
+  url: http://${AUTH_SERVICE_HOST:localhost}:8081
+
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/member_db

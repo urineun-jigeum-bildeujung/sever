@@ -11,10 +11,12 @@ public class AddressMapper {
             jpaEntity.getId(),
             jpaEntity.getAddressName(),
             jpaEntity.getReceiver(),
+            jpaEntity.getReceiverPhone(),
+            jpaEntity.getZipCode(),
             jpaEntity.getAddress(),
             jpaEntity.getAddressDetail(),
             jpaEntity.isDefault(),
-            jpaEntity.getDeliveryNode(),
+            jpaEntity.getDeliveryNote(),
             jpaEntity.getCreatedAt(),
             jpaEntity.getUpdatedAt(),
             jpaEntity.getMemberId()
@@ -27,10 +29,12 @@ public class AddressMapper {
             .id(domain.getId())
             .addressName(domain.getAddressName())
             .receiver(domain.getReceiver())
+            .receiverPhone(domain.getReceiverPhone())
+            .zipCode(domain.getZipCode())
             .address(domain.getAddress())
             .addressDetail(domain.getAddressDetail())
             .isDefault(domain.isDefault())
-            .deliveryNode(domain.getDeliveryNode())
+            .deliveryNote(domain.getDeliveryNote())
             .memberId(domain.getMemberId())
             .build();
     }

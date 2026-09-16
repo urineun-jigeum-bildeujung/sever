@@ -32,6 +32,12 @@ public class AddressJpaEntity extends BaseTimeEntity {
     private String receiver;
 
     @Column(nullable = false)
+    private String receiverPhone;
+
+    @Column(nullable = false)
+    private String zipCode;
+
+    @Column(nullable = false)
     private String address;
 
     @Column(nullable = false)
@@ -39,7 +45,7 @@ public class AddressJpaEntity extends BaseTimeEntity {
 
     private boolean isDefault;
 
-    private String deliveryNode;
+    private String deliveryNote;
 
     @Column(nullable = false)
     private Long memberId;
