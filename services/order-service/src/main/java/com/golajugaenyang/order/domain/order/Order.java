@@ -12,9 +12,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +44,8 @@ import lombok.NoArgsConstructor;
 public class Order extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orders_seq")
+    @SequenceGenerator(name = "orders_seq", sequenceName = "orders_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "order_number", nullable = false, length = 30)
@@ -57,8 +62,8 @@ public class Order extends BaseTimeEntity {
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_type", nullable = false, length = 20)
-    private OrderType orderType;
+    @Column(name = "purchase_type", nullable = false, length = 20)
+    private PurchaseType purchaseType;
 
     @Column(name = "ordered_at", nullable = false)
     private OffsetDateTime orderedAt = OffsetDateTime.now();
@@ -87,8 +92,52 @@ public class Order extends BaseTimeEntity {
     @Column(name = "delivery_note", length = 200)
     private String deliveryNote;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @Column(name = "reservation_expires_at")
+    private OffsetDateTime reservationExpiresAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reservation_status", nullable = false, length = 20)
+    private ReservationStatus reservationStatus = ReservationStatus.REQUESTED;
+
+    @Column(name = "reservation_resolved_at")
+    private OffsetDateTime reservationResolvedAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    public static Order createPending(
+        String orderNumber,
+        String idempotencyKey,
+        Long memberId,
+        DeliveryAddress deliveryAddress,
+        String deliveryNote,
+        Duration reservationTtl
+    ) {
+        Order order = new Order();
+        order.orderNumber = orderNumber;
+        order.idempotencyKey = idempotencyKey;
+        order.memberId = memberId;
+        order.purchaseType = PurchaseType.ONE_TIME;
+        order.deliveryAddress = deliveryAddress;
+        order.deliveryNote = deliveryNote;
+        order.orderStatus = OrderStatus.PENDING;
+        order.orderedAt = OffsetDateTime.now();
+        order.reservationExpiresAt = order.orderedAt.plus(reservationTtl);
+        order.productAmount = BigDecimal.ZERO;
+        order.shippingFee = BigDecimal.ZERO;
+        order.totalAmount = BigDecimal.ZERO;
+        return order;
+    }
+
+    public void applyAmounts(BigDecimal productAmount, BigDecimal shippingFee) {
+        this.productAmount = productAmount.setScale(0, RoundingMode.HALF_UP);
+        this.shippingFee = shippingFee.setScale(0, RoundingMode.HALF_UP);
+        this.totalAmount = this.productAmount.add(this.shippingFee);
+    }
 
     public boolean isClaimableForReturn() {
         return deliveredAt != null
@@ -107,5 +156,28 @@ public class Order extends BaseTimeEntity {
 
     public List<OrderItem> getItems() {
         return Collections.unmodifiableList(items);
+    }
+
+    public void confirmReservation() {
+        if (!this.reservationStatus.canTransitTo(ReservationStatus.CONFIRMED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 예약 상태 %s에서 CONFIRMED로 전이할 수 없습니다."
+                    .formatted(getId(), this.reservationStatus));
+        }
+        this.reservationStatus = ReservationStatus.CONFIRMED;
+        this.reservationResolvedAt = OffsetDateTime.now();
+    }
+
+    public void failReservation() {
+        if (!this.reservationStatus.canTransitTo(ReservationStatus.FAILED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 예약 상태 %s에서 FAILED로 전이할 수 없습니다."
+                    .formatted(getId(), this.reservationStatus));
+        }
+        this.reservationStatus = ReservationStatus.FAILED;
+        this.reservationResolvedAt = OffsetDateTime.now();
+        if (this.orderStatus.canTransitTo(OrderStatus.CANCELLED)) {
+            this.orderStatus = OrderStatus.CANCELLED;
+        }
     }
 }
