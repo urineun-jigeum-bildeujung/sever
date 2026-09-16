@@ -35,4 +35,13 @@ public enum QuantityUnit {
             case COUNT -> EA;
         };
     }
+
+    public static QuantityUnit fromSymbol(String symbol) {
+        for (QuantityUnit unit : values()) {
+            if (unit.symbol.equals(symbol)) {
+                return unit;
+            }
+        }
+        throw new IllegalArgumentException("지원하지 않는 수량 단위입니다: " + symbol);
+    }
 }
