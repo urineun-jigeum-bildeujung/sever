@@ -18,4 +18,7 @@ public record CartItemResult(
     OffsetDateTime dealEndAt
 ) {
 
+    public static final String REASON_NOT_FOUND = "NOT_FOUND";
+    public static final String REASON_DEAL_ENDED = "DEAL_ENDED";
+    public static final String REASON_TEMPORARILY_UNAVAILABLE = "TEMPORARILY_UNAVAILABLE";
 }

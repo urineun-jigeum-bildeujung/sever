@@ -75,12 +75,8 @@ public class CartService implements
         CartCatalogLookupResult lookup = itemType == CartItemType.NORMAL
             ? productCatalogPort.lookup(List.of(itemId), List.of())
             : productCatalogPort.lookup(List.of(), List.of(itemId));
-
-        boolean unreachable = itemType == CartItemType.NORMAL
-            ? lookup.unreachableProductIds().contains(itemId)
-            : lookup.unreachableTimeDealItemIds().contains(itemId);
         
-        if (unreachable) {
+        if (lookup.isUnreachable(itemType, itemId)) {
             throw new AppException(OrderErrorCode.PRODUCT_SERVICE_UNAVAILABLE);
         }
 
@@ -118,9 +114,11 @@ public class CartService implements
         for (Map.Entry<CartItemKey, Integer> entry : storedItems.entrySet()) {
             CartItemKey key = entry.getKey();
             int quantity = entry.getValue();
+            boolean unreachable = lookup.isUnreachable(key.itemType(), key.itemId());
+
             CartItemResult result = key.itemType() == CartItemType.NORMAL
-                ? toResult(key, quantity, lookup.products().get(key.itemId()))
-                : toResult(key, quantity, lookup.timeDealItems().get(key.itemId()));
+                ? toResult(key, quantity, lookup.products().get(key.itemId()), unreachable)
+                : toResult(key, quantity, lookup.timeDealItems().get(key.itemId()), unreachable);
             items.add(result);
             if (result.available()) {
                 totalAmount = totalAmount.add(result.subtotal());
@@ -130,7 +128,11 @@ public class CartService implements
         return new CartResult(memberId, items, totalAmount);
     }
 
-    private CartItemResult toResult(CartItemKey key, int quantity, ProductSummary summary) {
+    private CartItemResult toResult(
+        CartItemKey key, int quantity, ProductSummary summary, boolean unreachable) {
+        if (unreachable) {
+            return unavailable(key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+        }
         if (summary == null || !summary.purchasable()) {
             return unavailable(key, quantity,
                 summary == null ? "NOT_FOUND" : summary.availability());
@@ -145,7 +147,11 @@ public class CartService implements
         );
     }
 
-    private CartItemResult toResult(CartItemKey key, int quantity, TimeDealSummary summary) {
+    private CartItemResult toResult(
+        CartItemKey key, int quantity, TimeDealSummary summary, boolean unreachable) {
+        if (unreachable) {
+            return unavailable(key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+        }
         if (summary == null || !summary.purchasable() || isDealEnded(summary)) {
             String reason = summary == null ? "NOT_FOUND"
                 : isDealEnded(summary) ? "DEAL_ENDED" : summary.availability();
