@@ -24,8 +24,17 @@ public class OrderOutboxPoller {
 
     @Scheduled(fixedDelay = 1000)
     public void publishPending() {
-        List<OrderOutbox> pending = outboxJpaRepository.findByStatusOrderByCreatedAtAsc(
-            OutboxStatus.PENDING, PageRequest.of(0, BATCH_SIZE));
-        pending.forEach(publisher::publish);
+        List<Long> candidateIds = outboxJpaRepository
+            .findByStatusAndClaimedAtIsNullOrderByCreatedAtAsc(
+                OutboxStatus.PENDING, PageRequest.of(0, BATCH_SIZE))
+            .stream().map(OrderOutbox::getId).toList();
+
+        for (Long id : candidateIds) {
+            try {
+                publisher.claimAndPublish(id);
+            } catch (RuntimeException e) {
+                log.warn("[OrderOutbox] 발행 재시도 대상. outboxId={}, reason={}", id, e.getMessage());
+            }
+        }
     }
 }
