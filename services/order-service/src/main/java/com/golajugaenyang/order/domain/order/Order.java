@@ -180,4 +180,19 @@ public class Order extends BaseTimeEntity {
             this.orderStatus = OrderStatus.CANCELLED;
         }
     }
+
+    public void markPaid(OffsetDateTime paidAt) {
+        if (!this.orderStatus.canTransitTo(OrderStatus.PAID)) {
+            return;
+        }
+        this.orderStatus = OrderStatus.PAID;
+        this.paidAt = paidAt;
+    }
+
+    public void cancelDueToPaymentFailure() {
+        if (!this.orderStatus.canTransitTo(OrderStatus.CANCELLED)) {
+            return;
+        }
+        this.orderStatus = OrderStatus.CANCELLED;
+    }
 }
