@@ -45,15 +45,12 @@ public class AddressService {
     }
 
     public AddressSnapshotResponse getAddressSnapshot(Long memberId, Long addressId){
-        Address address = addressRepo.findById(addressId)
-                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_ADDRESS));
-
-        if(!address.getMemberId().equals(memberId)){
-            throw new AppException(MemberErrorCode.NOT_FOUND_ADDRESS);
-        }
-
-        return new AddressSnapshotResponse(address.getAddressName(), address.getReceiver(), address.getReceiverPhone(),
-                address.getZipCode(), address.getAddress(), address.getAddressDetail(), address.getDeliveryNote());
+        return addressRepo.findById(addressId)
+                .filter(address -> address.getMemberId().equals(memberId))
+                .map(address -> new AddressSnapshotResponse(
+                        address.getAddressName(), address.getReceiver(), address.getReceiverPhone(),
+                        address.getZipCode(), address.getAddress(), address.getAddressDetail(), address.getDeliveryNote()))
+                .orElse(null);
     }
 
     @Transactional
