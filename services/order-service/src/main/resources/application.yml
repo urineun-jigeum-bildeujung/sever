@@ -10,6 +10,8 @@ spring:
       hibernate:
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 100
+        type:
+          json_format_mapper: com.golajugaenyang.order.config.OrderJacksonJsonFormatMapper
 
 management:
   endpoints:
