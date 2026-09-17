@@ -15,6 +15,11 @@ public enum OrderErrorCode implements ErrorCode {
         "ORDER_404_CART_ITEM_NOT_FOUND",
         "장바구니에 해당 상품이 존재하지 않습니다."
     ),
+    ORDER_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "ORDER_404_ORDER_NOT_FOUND",
+        "요청한 주문을 찾을 수 없습니다."
+    ),
     PRODUCT_NOT_PURCHASABLE(
         HttpStatus.CONFLICT,
         "ORDER_409_PRODUCT_NOT_PURCHASABLE",
