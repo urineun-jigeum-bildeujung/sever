@@ -1,5 +1,7 @@
 package com.golajugaenyang.gateway.config;
 
+import com.golajugaenyang.gateway.security.TokenBlacklistCache;
+import com.golajugaenyang.gateway.security.TokenBlacklistValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,12 +44,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.jwks-uri}") String jwksUri) {
+    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.jwks-uri}") String jwksUri, TokenBlacklistCache blacklistCache) {
         NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSetUri(jwksUri).build();
 
         OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
             JwtValidators.createDefault(),
-            new AccessTokenTypeValidator()
+            new AccessTokenTypeValidator(),
+            new TokenBlacklistValidator(blacklistCache)
         );
         decoder.setJwtValidator(validator);
 
