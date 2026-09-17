@@ -18,10 +18,19 @@ public class JwtVerifier {
 
     private static final String TOKEN_TYPE_CLAIM = "tokenType";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
+    private static final String ACCESS_TOKEN_TYPE = "access";
 
     private final JwtKeyProvider jwtKeyProvider;
 
     public Optional<JWTClaimsSet> verifyRefreshToken(String token) {
+        return verify(token, REFRESH_TOKEN_TYPE);
+    }
+
+    public Optional<JWTClaimsSet> verifyAccessToken(String token) {
+        return verify(token, ACCESS_TOKEN_TYPE);
+    }
+
+    private Optional<JWTClaimsSet> verify(String token, String expectedTokenType) {
         try {
             SignedJWT signedJWT = SignedJWT.parse(token);
 
@@ -34,7 +43,7 @@ public class JwtVerifier {
                 return Optional.empty();
             }
 
-            if (!REFRESH_TOKEN_TYPE.equals(claimsSet.getClaim(TOKEN_TYPE_CLAIM))) {
+            if (!expectedTokenType.equals(claimsSet.getClaim(TOKEN_TYPE_CLAIM))) {
                 return Optional.empty();
             }
 

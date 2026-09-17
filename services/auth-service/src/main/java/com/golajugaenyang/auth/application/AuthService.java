@@ -8,11 +8,8 @@ import com.golajugaenyang.auth.domain.entity.Auth;
 import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
 import com.golajugaenyang.auth.domain.error.AuthErrorCode;
 import com.golajugaenyang.auth.domain.repository.AuthRepository;
-import com.golajugaenyang.auth.security.jwt.JwtVerifier;
+import com.golajugaenyang.auth.security.jwt.*;
 import com.golajugaenyang.common.core.exception.AppException;
-import com.golajugaenyang.auth.security.jwt.JwtIssuer;
-import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
-import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
 import com.nimbusds.jwt.JWTClaimsSet;
 import feign.FeignException;
 import java.util.Optional;
@@ -33,6 +30,7 @@ public class AuthService {
     private final LoginCodeStore loginCodeStore;
     private final MemberClient memberClient;
     private final JwtVerifier jwtVerifier;
+    private final TokenBlacklistPublisher blacklistPublisher;
 
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
@@ -98,15 +96,26 @@ public class AuthService {
 
     public TokenPair refreshTokens(String refreshToken) {
         JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyRefreshToken(refreshToken)
-                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
 
         Long authId = Long.valueOf(jwtClaimsSet.getSubject());
 
         if (!refreshTokenStore.isValid(authId, refreshToken)) {
-            throw new AppException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+            throw new AppException(AuthErrorCode.INVALID_TOKEN);
         }
 
         return issueTokens(authId);
+    }
+
+    public void logout(Long authId, String accessToken) {
+        refreshTokenStore.delete(authId);
+
+        JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyAccessToken(accessToken)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
+
+        long ttlSeconds = (jwtClaimsSet.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
+
+        blacklistPublisher.publish(accessToken, ttlSeconds);
     }
 
     private void validateMemberOwnership(Long authId, Long memberId) {
