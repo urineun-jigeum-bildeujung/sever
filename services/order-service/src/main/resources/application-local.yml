@@ -22,6 +22,13 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: order-service.order-status-consumer
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: RECORD
 
 product-service:
   base-url: http://${PRODUCT_SERVICE_HOST:localhost}:8083

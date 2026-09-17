@@ -2,11 +2,13 @@ package com.golajugaenyang.order.adapter.out.persistence.order;
 
 
 import com.golajugaenyang.order.application.order.port.out.OrderRepositoryPort;
+import com.golajugaenyang.order.application.order.port.out.dto.PurchaseRecord;
 import com.golajugaenyang.order.domain.order.Order;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
         DateTimeFormatter.BASIC_ISO_DATE;
 
     private final OrderJpaRepository orderJpaRepository;
+    private final OrderItemJpaRepository orderItemJpaRepository;
     private final EntityManager entityManager;
 
     @Override
@@ -35,6 +38,25 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
         return orderJpaRepository.findById(id)
             .orElseThrow(() -> new IllegalStateException(
                 "대상 주문을 찾을 수 없습니다. orderId=" + id));
+    }
+
+    @Override
+    public Order findByIdOrNull(Long id) {
+        return orderJpaRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public Order findByOrderItemIdOrNull(Long orderItemId) {
+        return orderItemJpaRepository.findOrderByOrderItemId(orderItemId).orElse(null);
+    }
+
+    @Override
+    public List<PurchaseRecord> findPurchases(Long memberId, Long productId) {
+        return orderItemJpaRepository.findPurchases(memberId, productId).stream()
+            .map(p -> new PurchaseRecord(
+                p.orderId(), p.orderItemId(), p.orderStatus().name(),
+                p.confirmedAt(), p.itemStatus().name(), p.orderedAt()))
+            .toList();
     }
 
     @Override
