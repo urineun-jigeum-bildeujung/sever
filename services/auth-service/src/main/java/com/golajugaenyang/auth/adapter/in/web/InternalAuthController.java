@@ -1,7 +1,7 @@
 package com.golajugaenyang.auth.adapter.in.web;
 
 import com.golajugaenyang.auth.adapter.in.web.request.PhoneInternalConfirmRequest;
-import com.golajugaenyang.auth.adapter.in.web.request.TokenReissueRequest;
+import com.golajugaenyang.auth.adapter.in.web.request.TokenInternalReissueRequest;
 import com.golajugaenyang.auth.adapter.in.web.response.PhoneInternalConfirmResponse;
 import com.golajugaenyang.auth.application.AuthService;
 import com.golajugaenyang.auth.application.PhoneVerificationService;
@@ -19,7 +19,7 @@ public class InternalAuthController {
     private final PhoneVerificationService phoneVerificationService;
 
     @PostMapping("/token/reissue")
-    public TokenPair reissueToken(@RequestBody TokenReissueRequest request) {
+    public TokenPair reissueToken(@RequestBody TokenInternalReissueRequest request) {
         return authService.reissueTokens(request.authId(), request.memberId());
     }
 
