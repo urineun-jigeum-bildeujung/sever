@@ -18,6 +18,7 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
         DateTimeFormatter.BASIC_ISO_DATE;
 
     private final OrderJpaRepository orderJpaRepository;
+    private final OrderItemJpaRepository orderItemJpaRepository;
     private final EntityManager entityManager;
 
     @Override
@@ -37,6 +38,15 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
                 "대상 주문을 찾을 수 없습니다. orderId=" + id));
     }
 
+    @Override
+    public Order findByIdOrNull(Long id) {
+        return orderJpaRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public Order findByOrderItemIdOrNull(Long orderItemId) {
+        return orderItemJpaRepository.findOrderByOrderItemId(orderItemId).orElse(null);
+    }
     @Override
     public Order save(Order order) {
         return orderJpaRepository.save(order);

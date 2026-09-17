@@ -10,6 +10,10 @@ public interface OrderRepositoryPort {
 
     Order findById(Long id);
 
+    Order findByIdOrNull(Long id);
+
+    Order findByOrderItemIdOrNull(Long orderItemId);
+
     Order save(Order order);
 
     String generateOrderNumber();
