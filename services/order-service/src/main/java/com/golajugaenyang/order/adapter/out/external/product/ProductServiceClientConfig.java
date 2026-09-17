@@ -1,10 +1,13 @@
 package com.golajugaenyang.order.adapter.out.external.product;
 
+import com.golajugaenyang.order.adapter.out.external.common.InternalGatewaySecretInterceptor;
+import com.golajugaenyang.order.adapter.out.external.inventory.client.InventoryInternalApiClient;
 import com.golajugaenyang.order.adapter.out.external.product.client.ProductInternalApiClient;
 import com.golajugaenyang.order.adapter.out.external.product.client.TimeDealInternalApiClient;
 import java.net.http.HttpClient;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +22,10 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class ProductServiceClientConfig {
 
     @Bean
-    public RestClient productServiceRestClient(ProductServiceProperties properties) {
+    public RestClient productServiceRestClient(
+        ProductServiceProperties properties,
+        @Value("${internal.gateway-secret}") String internalGatewaySecret
+    ) {
         HttpClient jdkHttpClient = HttpClient.newBuilder()
             .connectTimeout(properties.connectTimeout())
             .build();
@@ -30,6 +36,7 @@ public class ProductServiceClientConfig {
         return RestClient.builder()
             .baseUrl(properties.baseUrl())
             .requestFactory(requestFactory)
+            .requestInterceptor(new InternalGatewaySecretInterceptor(internalGatewaySecret))
             .build();
     }
 
@@ -51,6 +58,16 @@ public class ProductServiceClientConfig {
             .builderFor(RestClientAdapter.create(productServiceRestClient))
             .build();
         return factory.createClient(TimeDealInternalApiClient.class);
+    }
+
+    @Bean
+    public InventoryInternalApiClient inventoryInternalApiClient(
+        RestClient productServiceRestClient
+    ) {
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory
+            .builderFor(RestClientAdapter.create(productServiceRestClient))
+            .build();
+        return factory.createClient(InventoryInternalApiClient.class);
     }
 
     @Bean(destroyMethod = "close")

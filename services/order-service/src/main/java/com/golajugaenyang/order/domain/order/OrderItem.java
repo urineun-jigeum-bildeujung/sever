@@ -4,6 +4,7 @@ import com.golajugaenyang.common.core.domain.CategoryCode;
 import com.golajugaenyang.common.core.domain.QuantityDimension;
 import com.golajugaenyang.common.core.domain.QuantityUnit;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
+import com.golajugaenyang.order.application.order.port.out.dto.CatalogItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,8 +16,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,7 +34,8 @@ import lombok.NoArgsConstructor;
 public class OrderItem extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_items_seq")
+    @SequenceGenerator(name = "order_items_seq", sequenceName = "order_items_id_seq", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,6 +56,9 @@ public class OrderItem extends BaseTimeEntity {
 
     @Column(name = "product_name_snapshot", nullable = false, length = 200)
     private String productNameSnapshot;
+
+    @Column(name = "thumbnail_url_snapshot", length = 500)
+    private String thumbnailUrlSnapshot;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category_code_snapshot", nullable = false, length = 30)
@@ -99,6 +106,27 @@ public class OrderItem extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "normalized_quantity_unit_snapshot", nullable = false, length = 10)
     private QuantityUnit normalizedQuantityUnitSnapshot;
+
+    public static OrderItem fromCatalogSnapshot(CatalogItem catalog, int quantity) {
+        OrderItem item = new OrderItem();
+        item.productId = catalog.productId();
+        item.dealItemId = catalog.isTimeDeal() ? catalog.dealItemId() : null;
+        item.productGroupIdSnapshot = catalog.productGroupId();
+        item.productNameSnapshot = catalog.productName();
+        item.thumbnailUrlSnapshot = catalog.thumbnailUrl();
+        item.categoryCodeSnapshot = CategoryCode.valueOf(catalog.categoryCode());
+        item.replenishableSnapshot = catalog.replenishable();
+        item.quantity = quantity;
+        item.unitPrice = catalog.unitPrice().setScale(2, RoundingMode.HALF_UP);
+        item.unitDiscountAmount = catalog.unitDiscountAmount().setScale(2, RoundingMode.HALF_UP);
+        item.unitQuantityValueSnapshot = catalog.netQuantityValue();
+        item.unitQuantityUnitSnapshot = QuantityUnit.fromSymbol(catalog.netQuantityUnit());
+        item.quantityDimensionSnapshot = QuantityDimension.valueOf(catalog.quantityDimension());
+        item.normalizedQuantityValueSnapshot = catalog.normalizedQuantityValue();
+        item.normalizedQuantityUnitSnapshot =
+            QuantityUnit.fromSymbol(catalog.normalizedQuantityUnit());
+        return item;
+    }
 
 
     public int effectiveQuantity() {

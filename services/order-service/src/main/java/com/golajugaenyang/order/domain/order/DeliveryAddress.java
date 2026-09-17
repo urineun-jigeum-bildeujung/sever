@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DeliveryAddress {
 
+    @Column(name = "address_id")
+    private Long addressId;
+
     @Column(name = "address_name", nullable = false, length = 50)
     private String addressName;
 
@@ -22,4 +25,12 @@ public class DeliveryAddress {
     @Column(name = "address_detail", length = 100)
     private String addressDetail;
 
+    public static DeliveryAddress placeholder(Long addressId) {
+        DeliveryAddress deliveryAddress = new DeliveryAddress();
+        deliveryAddress.addressId = addressId;
+        deliveryAddress.addressName = "임시 배송지";
+        deliveryAddress.receiver = "미확인";
+        deliveryAddress.address = "member-service 연동 전 임시 값 (addressId=" + addressId + ")";
+        return deliveryAddress;
+    }
 }
