@@ -3,6 +3,7 @@ package com.golajugaenyang.gateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -12,6 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 
 
 @Configuration
@@ -19,6 +21,18 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
 
     @Bean
+    @Order(1)
+    public SecurityWebFilterChain publicFilterChain(ServerHttpSecurity http) {
+        return http
+            .securityMatcher(ServerWebExchangeMatchers.pathMatchers(
+                "/api/v1/auths/token/exchange", "/api/v1/auths/token/refresh"))
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .authorizeExchange(exchange -> exchange.anyExchange().permitAll())
+            .build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, ReactiveJwtDecoder jwtDecoder) {
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
