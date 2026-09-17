@@ -8,10 +8,12 @@ import com.golajugaenyang.auth.domain.entity.Auth;
 import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
 import com.golajugaenyang.auth.domain.error.AuthErrorCode;
 import com.golajugaenyang.auth.domain.repository.AuthRepository;
+import com.golajugaenyang.auth.security.jwt.JwtVerifier;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.auth.security.jwt.JwtIssuer;
 import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
 import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
+import com.nimbusds.jwt.JWTClaimsSet;
 import feign.FeignException;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +32,7 @@ public class AuthService {
     private final RefreshTokenStore refreshTokenStore;
     private final LoginCodeStore loginCodeStore;
     private final MemberClient memberClient;
+    private final JwtVerifier jwtVerifier;
 
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
@@ -88,16 +91,29 @@ public class AuthService {
         return new TokenPair(accessToken, refreshToken, memberId);
     }
 
+    public LoginCodePayload exchangeLoginCode(String code) {
+        return loginCodeStore.consume(code)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
+    }
+
+    public TokenPair refreshTokens(String refreshToken) {
+        JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyRefreshToken(refreshToken)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        Long authId = Long.valueOf(jwtClaimsSet.getSubject());
+
+        if (!refreshTokenStore.isValid(authId, refreshToken)) {
+            throw new AppException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        return issueTokens(authId);
+    }
+
     private void validateMemberOwnership(Long authId, Long memberId) {
         Long actualMemberId = memberClient.getMemberId(authId).memberId();
         if (!memberId.equals(actualMemberId)) {
             throw new AppException(AuthErrorCode.MEMBER_ID_MISMATCH);
         }
-    }
-
-    public LoginCodePayload exchangeLoginCode(String code) {
-        return loginCodeStore.consume(code)
-            .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
     }
 
     private String generateFallbackNickname() {

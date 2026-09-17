@@ -11,12 +11,17 @@ public enum AuthErrorCode implements ErrorCode {
 
     INVALID_LOGIN_CODE(
         HttpStatus.BAD_REQUEST,
-        "AUTH_400",
+        "AUTH_400_INVALID_LOGIN_CODE",
         "유효하지 않거나 만료된 로그인 코드입니다."
+    ),
+    INVALID_REFRESH_TOKEN(
+            HttpStatus.BAD_REQUEST,
+            "AUTH_400_INVALID_REFRESH_TOKEN",
+            "유효하지 않은 인증입니다."
     ),
     MEMBER_ID_MISMATCH(
         HttpStatus.FORBIDDEN,
-        "AUTH_403",
+        "AUTH_403_MEMBER_ID_MISMATCH",
         "정보가 일치하지 않습니다."
     );
 

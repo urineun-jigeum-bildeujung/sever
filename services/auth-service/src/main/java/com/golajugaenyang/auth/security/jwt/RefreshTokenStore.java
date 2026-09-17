@@ -16,4 +16,8 @@ public class RefreshTokenStore {
     public void save(Long memberId, String refreshToken, long ttlSeconds) {
         redisTemplate.opsForValue().set(KEY_PREFIX + memberId, refreshToken, Duration.ofSeconds(ttlSeconds));
     }
+
+    public boolean isValid(Long authId, String refreshToken) {
+        return refreshToken.equals(redisTemplate.opsForValue().get(KEY_PREFIX + authId));
+    }
 }
