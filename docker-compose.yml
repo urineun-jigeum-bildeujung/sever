@@ -81,6 +81,7 @@ services:
       DB_HOST: postgres
       REDIS_HOST: redis
       PRODUCT_SERVICE_HOST: product-service
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   payment-service:
     build:
