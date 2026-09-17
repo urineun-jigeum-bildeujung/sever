@@ -20,4 +20,8 @@ public class RefreshTokenStore {
     public boolean isValid(Long authId, String refreshToken) {
         return refreshToken.equals(redisTemplate.opsForValue().get(KEY_PREFIX + authId));
     }
+
+    public void delete(Long authId) {
+        redisTemplate.delete(KEY_PREFIX + authId);
+    }
 }
