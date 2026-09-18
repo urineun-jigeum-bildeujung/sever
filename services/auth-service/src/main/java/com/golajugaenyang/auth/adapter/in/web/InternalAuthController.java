@@ -19,7 +19,7 @@ public class InternalAuthController {
     private final PhoneVerificationService phoneVerificationService;
 
     @PostMapping("/token/reissue")
-    public TokenPair reissueToken(@RequestBody TokenInternalReissueRequest request) {
+    public TokenPair reissueToken(@Valid @RequestBody TokenInternalReissueRequest request) {
         return authService.reissueTokens(request.authId(), request.memberId());
     }
 

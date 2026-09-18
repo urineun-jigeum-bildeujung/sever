@@ -1,5 +1,10 @@
 package com.golajugaenyang.auth.adapter.in.web.request;
 
-public record TokenInternalReissueRequest(Long authId, Long memberId) {
+import jakarta.validation.constraints.NotNull;
+
+public record TokenInternalReissueRequest(
+        @NotNull Long authId,
+        @NotNull Long memberId
+) {
 
 }
