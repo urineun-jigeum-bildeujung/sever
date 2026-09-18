@@ -55,10 +55,21 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         if (!securityProtocol.isBlank()) {
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
-            props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
-            props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTrustStoreLocation);
-            props.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, sslTrustStoreType);
+            if (securityProtocol.startsWith("SASL")) {
+                if (saslMechanism.isBlank() || saslJaasConfig.isBlank()) {
+                    throw new IllegalStateException(
+                        "spring.kafka.security.protocol=" + securityProtocol
+                            + " 이지만 sasl.mechanism/sasl.jaas.config가 비어있습니다.");
+                }
+                props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
+                props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
+            }
+            if (!sslTrustStoreLocation.isBlank()) {
+                props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTrustStoreLocation);
+            }
+            if (!sslTrustStoreType.isBlank()) {
+                props.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, sslTrustStoreType);
+            }
         }
         return new DefaultKafkaConsumerFactory<>(props);
     }
