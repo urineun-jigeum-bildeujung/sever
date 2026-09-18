@@ -3,6 +3,7 @@ package com.golajugaenyang.member.adapter.in.web;
 import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.*;
@@ -63,6 +64,19 @@ public class MemberController {
             @PathVariable Long petId){
         Long memberId = memberService.getMemberIdByAuthId(authId);
         PetDetailResponse response = petService.getPetDetail(memberId, petId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/me/pets/{petId}")
+    public ResponseEntity<PetRegisterResponse> updatePet(
+            @AuthId Long authId,
+            @PathVariable Long petId,
+            @Valid @RequestBody PetUpdateRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        Pet updatedPet = petService.updatePet(memberId, petId, request);
+        PetRegisterResponse response = new PetRegisterResponse(
+                updatedPet.getId(), updatedPet.getName(), updatedPet.getSpecies(), updatedPet.isDefault(), updatedPet.getBreedId()
+        );
         return ResponseEntity.ok(response);
     }
 

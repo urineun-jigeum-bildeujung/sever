@@ -32,4 +32,9 @@ public class PetAllergyAdapter implements PetAllergyRepository {
                 .map(PetAllergyMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteByPetId(Long petId) {
+        petAllergyJpaRepo.deleteByPetId(petId);
+    }
 }

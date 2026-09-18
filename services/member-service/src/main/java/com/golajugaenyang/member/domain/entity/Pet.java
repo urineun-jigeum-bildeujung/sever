@@ -56,4 +56,27 @@ public class Pet {
         return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
             targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
     }
+
+    public Pet update(String name, Sex sex, Boolean isNeutered, Species species, Integer age,
+        LocalDate birthDate, TargetBreedSize size, Double weight, Integer bcs, String image, Long breedId) {
+        return new Pet(
+            id,
+            isDefault,
+            name != null ? name : this.name,
+            sex != null ? sex : this.sex,
+            isNeutered != null ? isNeutered : this.isNeutered,
+            species != null ? species : this.species,
+            age != null ? age : this.age,
+            birthDate != null ? birthDate : this.birthDate,
+            size != null ? size : this.targetBreedSize,
+            weight != null ? weight : this.weight,
+            bcs != null ? bcs : this.bcs,
+            image != null ? image : this.image,
+            deletedAt,
+            memberId,
+            breedId != null ? breedId : this.breedId,
+            createdAt,
+            updatedAt
+        );
+    }
 }

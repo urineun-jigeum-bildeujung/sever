@@ -8,4 +8,6 @@ public interface PetAllergyRepository {
     List<PetAllergy> saveAll(List<PetAllergy> petAllergies);
 
     List<PetAllergy> findByPetId(Long petId);
+
+    void deleteByPetId(Long petId);
 }
