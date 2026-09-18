@@ -10,6 +10,4 @@ public record PetHealthOptionsResponse(
     public record CategoryOption(String category, List<String> items) {
     }
 
-    public record AllergyOption(String code, String displayName) {
-    }
 }

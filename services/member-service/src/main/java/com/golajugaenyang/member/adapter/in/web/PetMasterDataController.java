@@ -4,7 +4,7 @@ import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.member.adapter.in.web.dto.response.BreedResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetHealthOptionsResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetHealthOptionsResponse.AllergyOption;
+import com.golajugaenyang.member.adapter.in.web.dto.response.AllergyOption;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetHealthOptionsResponse.CategoryOption;
 import com.golajugaenyang.member.application.PetService;
 import com.golajugaenyang.member.domain.entity.ConcernMaster;

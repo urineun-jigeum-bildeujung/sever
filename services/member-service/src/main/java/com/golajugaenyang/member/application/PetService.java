@@ -4,6 +4,7 @@ import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.response.AllergyOption;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.domain.entity.BreedMaster;
 import com.golajugaenyang.member.domain.entity.ConcernMaster;
@@ -82,33 +83,6 @@ public class PetService {
         }
     }
 
-    private List<ConcernMaster> validateConcerns(List<String> concernCodes, Species species) {
-        if (concernCodes.isEmpty()) {
-            return List.of();
-        }
-
-        List<ConcernMaster> concernMasters = concernMasterRepo.findByConcernCodeInAndSpecies(concernCodes, species);
-
-        Set<String> foundCodes = concernMasters.stream()
-                .map(ConcernMaster::getConcernCode)
-                .collect(Collectors.toSet());
-
-        if (!foundCodes.containsAll(concernCodes)) {
-            throw new AppException(MemberErrorCode.INVALID_CONCERN);
-        }
-
-        return concernMasters;
-    }
-
-    private void validateAllergies(List<AllergenCode> allergyCodes, Species species) {
-        boolean allApplicable = allergyCodes.stream()
-                .allMatch(code -> code.getApplicableSpecies().contains(species));
-
-        if (!allApplicable) {
-            throw new AppException(MemberErrorCode.INVALID_ALLERGY);
-        }
-    }
-
     public List<BreedMaster> getBreeds(Species species) {
         return breedMasterRepo.findBySpecies(species);
     }
@@ -145,12 +119,40 @@ public class PetService {
                 .map(ConcernMaster::getConcernCode)
                 .toList();
 
-        List<String> allergies = petAllergyRepo.findByPetId(petId).stream()
-                .map(pa -> pa.getAllergyCode().name())
+        List<AllergyOption> allergies = petAllergyRepo.findByPetId(petId).stream()
+                .map(pa -> new AllergyOption(pa.getAllergyCode().name(), pa.getAllergyCode().getDisplayName()))
                 .toList();
 
         return new PetDetailResponse(  pet.getId(), pet.getName(), pet.getSpecies(), pet.getBreedId(), breed.getBreedName(),
                 pet.getAge(), pet.getBirthDate(), pet.getSex(), pet.isNeutered(), pet.getTargetBreedSize(),
                 pet.getWeight(), pet.getBcs(), healthConcerns, allergies, pet.getImage(), pet.isDefault());
     }
+
+    private List<ConcernMaster> validateConcerns(List<String> concernCodes, Species species) {
+        if (concernCodes.isEmpty()) {
+            return List.of();
+        }
+
+        List<ConcernMaster> concernMasters = concernMasterRepo.findByConcernCodeInAndSpecies(concernCodes, species);
+
+        Set<String> foundCodes = concernMasters.stream()
+                .map(ConcernMaster::getConcernCode)
+                .collect(Collectors.toSet());
+
+        if (!foundCodes.containsAll(concernCodes)) {
+            throw new AppException(MemberErrorCode.INVALID_CONCERN);
+        }
+
+        return concernMasters;
+    }
+
+    private void validateAllergies(List<AllergenCode> allergyCodes, Species species) {
+        boolean allApplicable = allergyCodes.stream()
+                .allMatch(code -> code.getApplicableSpecies().contains(species));
+
+        if (!allApplicable) {
+            throw new AppException(MemberErrorCode.INVALID_ALLERGY);
+        }
+    }
+
 }
