@@ -36,4 +36,8 @@ public class Member {
     public Member withPhone(String phone, Carrier carrier) {
         return new Member(id, nickname, profileImage, name, birth, phone, carrier, createdAt, updatedAt, authId);
     }
+
+    public Member update(String nickname, String name, LocalDate birth, String image) {
+        return new Member(id, nickname, image, name, birth, phone, carrier, createdAt, updatedAt, authId);
+    }
 }

@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.AuthId;
+import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
@@ -80,5 +81,14 @@ public class MemberController {
         Long memberId = memberService.getMemberIdByAuthId(authId);
         MemberMyProfileResponse response = memberService.getMyProfile(authId, memberId);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<Void> updateProfile(
+            @AuthId Long authId,
+            @Valid @RequestBody MemberProfileUpdateRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        memberService.updateProfile(memberId, request);
+        return ResponseEntity.noContent().build();
     }
 }

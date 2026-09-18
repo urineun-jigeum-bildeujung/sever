@@ -1,13 +1,13 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.MemberMyProfileResponse;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
 import com.golajugaenyang.member.adapter.out.client.dto.*;
 import com.golajugaenyang.member.domain.entity.Member;
-import com.golajugaenyang.member.domain.entity.enums.Carrier;
 import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
 import java.util.List;
@@ -62,5 +62,12 @@ public class MemberService {
 
         return new MemberMyProfileResponse(member.getNickname(), member.getName(), member.getBirth(),
                 member.getPhone(), member.getProfileImage(), response.email());
+    }
+
+    public void updateProfile(Long memberId, MemberProfileUpdateRequest request) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
+
+        memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
     }
 }
