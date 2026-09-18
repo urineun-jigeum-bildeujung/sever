@@ -1,10 +1,7 @@
 package com.golajugaenyang.member.adapter.out.client;
 
 import com.golajugaenyang.common.security.config.InternalFeignClientConfig;
-import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmRequest;
-import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmResponse;
-import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
-import com.golajugaenyang.member.adapter.out.client.dto.TokenReissueRequest;
+import com.golajugaenyang.member.adapter.out.client.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,4 +14,7 @@ public interface AuthClient {
 
     @PostMapping("/internal/v1/auths/phone/verify-confirm")
     PhoneConfirmResponse verifyPhoneCode(@RequestBody PhoneConfirmRequest request);
+
+    @PostMapping("/internal/v1/auths/member/me/email")
+    MemberMyEmailResponse getMyEmail(@RequestBody MemberMyEmailRequest request);
 }

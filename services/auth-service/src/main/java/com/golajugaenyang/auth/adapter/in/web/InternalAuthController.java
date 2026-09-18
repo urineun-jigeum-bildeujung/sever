@@ -1,7 +1,9 @@
 package com.golajugaenyang.auth.adapter.in.web;
 
+import com.golajugaenyang.auth.adapter.in.web.request.MemberMyEmailRequest;
 import com.golajugaenyang.auth.adapter.in.web.request.PhoneInternalConfirmRequest;
 import com.golajugaenyang.auth.adapter.in.web.request.TokenInternalReissueRequest;
+import com.golajugaenyang.auth.adapter.in.web.response.MemberMyEmailResponse;
 import com.golajugaenyang.auth.adapter.in.web.response.PhoneInternalConfirmResponse;
 import com.golajugaenyang.auth.application.AuthService;
 import com.golajugaenyang.auth.application.PhoneVerificationService;
@@ -28,5 +30,11 @@ public class InternalAuthController {
             @Valid @RequestBody PhoneInternalConfirmRequest request) {
         boolean verified = phoneVerificationService.confirmCode(request.phone(), request.code());
         return new PhoneInternalConfirmResponse(verified);
+    }
+
+    @PostMapping("/member/me/email")
+    public MemberMyEmailResponse getMyEmail(@Valid @RequestBody MemberMyEmailRequest request) {
+        String email = authService.getMyEmail(request.authId());
+        return new MemberMyEmailResponse(email);
     }
 }

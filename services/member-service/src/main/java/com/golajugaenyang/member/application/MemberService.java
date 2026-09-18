@@ -3,11 +3,9 @@ package com.golajugaenyang.member.application;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.response.MemberMyProfileResponse;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
-import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmRequest;
-import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmResponse;
-import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
-import com.golajugaenyang.member.adapter.out.client.dto.TokenReissueRequest;
+import com.golajugaenyang.member.adapter.out.client.dto.*;
 import com.golajugaenyang.member.domain.entity.Member;
 import com.golajugaenyang.member.domain.entity.enums.Carrier;
 import com.golajugaenyang.member.domain.repository.MemberRepository;
@@ -56,4 +54,13 @@ public class MemberService {
         memberRepo.save(member.withPhone(request.phone(), request.carrier()));
     }
 
+    public MemberMyProfileResponse getMyProfile(Long authId, Long memberId) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
+
+        MemberMyEmailResponse response = authClient.getMyEmail(new MemberMyEmailRequest(authId));
+
+        return new MemberMyProfileResponse(member.getNickname(), member.getName(), member.getBirth(),
+                member.getPhone(), member.getProfileImage(), response.email());
+    }
 }

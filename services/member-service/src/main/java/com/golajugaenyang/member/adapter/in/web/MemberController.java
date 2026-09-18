@@ -4,10 +4,7 @@ import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetSummaryResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.SignupResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.*;
 import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
 import com.golajugaenyang.member.application.MemberService;
 import com.golajugaenyang.member.application.PetService;
@@ -75,5 +72,13 @@ public class MemberController {
         Long memberId = memberService.getMemberIdByAuthId(authId);
         memberService.registerPhone(memberId, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MemberMyProfileResponse> getMyProfile(
+            @AuthId Long authId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        MemberMyProfileResponse response = memberService.getMyProfile(authId, memberId);
+        return ResponseEntity.ok(response);
     }
 }

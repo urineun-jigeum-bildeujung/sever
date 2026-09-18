@@ -125,6 +125,12 @@ public class AuthService {
         blacklistPublisher.publish(accessToken, ttlSeconds);
     }
 
+    public String getMyEmail(Long authId) {
+        Auth auth = authRepository.findById(authId)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_AUTH));
+        return auth.getSocialEmail();
+    }
+
     private void validateMemberOwnership(Long authId, Long memberId) {
         Long actualMemberId = memberClient.getMemberId(authId).memberId();
         if (!memberId.equals(actualMemberId)) {
