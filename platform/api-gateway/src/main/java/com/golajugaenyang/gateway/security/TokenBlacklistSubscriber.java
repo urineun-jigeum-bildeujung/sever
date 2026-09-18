@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 public class TokenBlacklistSubscriber {
@@ -31,22 +32,22 @@ public class TokenBlacklistSubscriber {
 
     @EventListener(ApplicationReadyEvent.class)
     public void subscribe() {
-        recoverFromRedis();
+        recoverFromRedis().block();
 
         listenerContainer.receive(ChannelTopic.of(CHANNEL))
             .doOnNext(message -> handle(message.getMessage()))
             .subscribe();
     }
 
-    private void recoverFromRedis() {
-        reactiveRedisTemplate.scan(ScanOptions.scanOptions().match(KEY_PREFIX + "*").build())
+    private Mono<Void> recoverFromRedis() {
+        return reactiveRedisTemplate.scan(ScanOptions.scanOptions().match(KEY_PREFIX + "*").build())
             .flatMap(key -> reactiveRedisTemplate.getExpire(key)
                 .filter(ttl -> !ttl.isNegative() && !ttl.isZero())
                 .doOnNext(ttl -> {
                     String token = key.substring(KEY_PREFIX.length());
                     blacklistCache.blacklist(token, ttl.getSeconds());
                 }))
-            .subscribe();
+            .then();
     }
 
     private void handle(String message) {
