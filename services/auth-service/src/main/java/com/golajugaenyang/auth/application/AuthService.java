@@ -6,12 +6,11 @@ import com.golajugaenyang.auth.application.recods.LoginCodePayload;
 import com.golajugaenyang.auth.application.recods.TokenPair;
 import com.golajugaenyang.auth.domain.entity.Auth;
 import com.golajugaenyang.auth.domain.entity.enums.AuthStatus;
-import com.golajugaenyang.auth.domain.exception.AuthErrorCode;
+import com.golajugaenyang.auth.domain.error.AuthErrorCode;
 import com.golajugaenyang.auth.domain.repository.AuthRepository;
+import com.golajugaenyang.auth.security.jwt.*;
 import com.golajugaenyang.common.core.exception.AppException;
-import com.golajugaenyang.auth.security.jwt.JwtIssuer;
-import com.golajugaenyang.auth.security.jwt.LoginCodeStore;
-import com.golajugaenyang.auth.security.jwt.RefreshTokenStore;
+import com.nimbusds.jwt.JWTClaimsSet;
 import feign.FeignException;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +29,8 @@ public class AuthService {
     private final RefreshTokenStore refreshTokenStore;
     private final LoginCodeStore loginCodeStore;
     private final MemberClient memberClient;
+    private final JwtVerifier jwtVerifier;
+    private final TokenBlacklistPublisher blacklistPublisher;
 
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
@@ -88,16 +89,47 @@ public class AuthService {
         return new TokenPair(accessToken, refreshToken, memberId);
     }
 
+    public LoginCodePayload exchangeLoginCode(String code) {
+        return loginCodeStore.consume(code)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
+    }
+
+    public TokenPair refreshTokens(String refreshToken) {
+        JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyRefreshToken(refreshToken)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
+
+        Long authId = Long.valueOf(jwtClaimsSet.getSubject());
+        Long memberId = getMemberIdOrNull(authId);
+
+        String newAccessToken = jwtIssuer.generateAccessToken(authId, memberId);
+        String newRefreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
+
+        boolean rotated = refreshTokenStore.rotate(
+            authId, refreshToken, newRefreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
+
+        if (!rotated) {
+            throw new AppException(AuthErrorCode.INVALID_TOKEN);
+        }
+
+        return new TokenPair(newAccessToken, newRefreshToken, memberId);
+    }
+
+    public void logout(Long authId, String accessToken) {
+        JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyAccessToken(accessToken)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
+
+        refreshTokenStore.delete(authId);
+
+        long ttlSeconds = (jwtClaimsSet.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
+
+        blacklistPublisher.publish(accessToken, ttlSeconds);
+    }
+
     private void validateMemberOwnership(Long authId, Long memberId) {
         Long actualMemberId = memberClient.getMemberId(authId).memberId();
         if (!memberId.equals(actualMemberId)) {
             throw new AppException(AuthErrorCode.MEMBER_ID_MISMATCH);
         }
-    }
-
-    public LoginCodePayload exchangeLoginCode(String code) {
-        return loginCodeStore.consume(code)
-            .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_LOGIN_CODE));
     }
 
     private String generateFallbackNickname() {
