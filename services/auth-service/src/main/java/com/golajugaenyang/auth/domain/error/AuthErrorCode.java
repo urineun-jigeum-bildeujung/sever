@@ -23,6 +23,11 @@ public enum AuthErrorCode implements ErrorCode {
         HttpStatus.FORBIDDEN,
         "AUTH_403_MEMBER_ID_MISMATCH",
         "정보가 일치하지 않습니다."
+    ),
+    TOO_MANY_REQUESTS(
+        HttpStatus.TOO_MANY_REQUESTS,
+        "AUTH_429_TOO_MANY_REQUESTS",
+        "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
     );
 
     private final HttpStatus httpStatus;
