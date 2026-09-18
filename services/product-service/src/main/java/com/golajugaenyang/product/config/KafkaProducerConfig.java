@@ -48,10 +48,21 @@ public class KafkaProducerConfig {
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         if (!securityProtocol.isBlank()) {
             configProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-            configProps.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
-            configProps.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
-            configProps.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTrustStoreLocation);
-            configProps.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, sslTrustStoreType);
+            if (securityProtocol.startsWith("SASL")) {
+                if (saslMechanism.isBlank() || saslJaasConfig.isBlank()) {
+                    throw new IllegalStateException(
+                        "spring.kafka.security.protocol=" + securityProtocol
+                            + " 이지만 sasl.mechanism/sasl.jaas.config가 비어있습니다.");
+                }
+                configProps.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
+                configProps.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
+            }
+            if (!sslTrustStoreLocation.isBlank()) {
+                configProps.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, sslTrustStoreLocation);
+            }
+            if (!sslTrustStoreType.isBlank()) {
+                configProps.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, sslTrustStoreType);
+            }
         }
         return new DefaultKafkaProducerFactory<>(configProps);
     }
