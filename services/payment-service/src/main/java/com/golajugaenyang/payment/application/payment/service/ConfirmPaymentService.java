@@ -28,14 +28,18 @@ public class ConfirmPaymentService implements ConfirmPaymentUseCase {
         // Phase 1: 로컬 조회
         Payment payment = transactionSupport.findConfirmable(command.orderId(), command.memberId());
 
-        if (payment.getPaymentStatus() == PaymentStatus.DONE) {
-            return ConfirmPaymentResult.from(payment);
-        }
         if (command.amount().compareTo(payment.getAmount()) != 0) {
             throw new AppException(PaymentErrorCode.AMOUNT_MISMATCH);
         }
 
+        if (payment.getPaymentStatus() == PaymentStatus.DONE) {
+            return ConfirmPaymentResult.from(payment);
+        }
+
         OrderPaymentContext orderContext = orderLookupPort.lookup(payment.getOrderId());
+        if (payment.getPaymentStatus() == PaymentStatus.APPROVED) {
+            return transactionSupport.finalizeApproved(payment.getId(), orderContext);
+        }
 
         // Phase 2: 원격 결제 승인
         TossConfirmResult tossResult;
