@@ -6,9 +6,9 @@ import com.golajugaenyang.payment.application.payment.port.in.dto.RequestPayment
 import com.golajugaenyang.payment.application.payment.port.out.PaymentRepositoryPort;
 import com.golajugaenyang.payment.application.payment.port.out.dto.OrderPaymentContext;
 import com.golajugaenyang.payment.domain.payment.Payment;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,21 +20,18 @@ public class PaymentRequestTransactionSupport {
 
     @Transactional
     public RequestPaymentResult persistPaymentRequest(
-        RequestPaymentCommand command,
-        OrderPaymentContext orderContext
-    ) {
-        Payment payment;
-        try {
-            payment = paymentRepositoryPort.save(
-                Payment.requestFor(
-                    command.orderId(), orderContext.orderNumber(),
-                    command.memberId(), orderContext.totalAmount()));
-        } catch (DataIntegrityViolationException dup) {
-            payment = paymentRepositoryPort
-                .findByOrderId(command.orderId()).orElseThrow(() -> dup);
-        }
+        RequestPaymentCommand command, OrderPaymentContext orderContext) {
+        Payment payment = paymentRepositoryPort.save(
+            Payment.requestFor(
+                command.orderId(), orderContext.orderNumber(),
+                command.memberId(), orderContext.totalAmount()));
         return new RequestPaymentResult(
             orderContext.orderNumber(), payment.getAmount(),
             orderContext.orderName(), UUID.randomUUID().toString());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Payment> findExistingPayment(Long orderId) {
+        return paymentRepositoryPort.findByOrderId(orderId);
     }
 }

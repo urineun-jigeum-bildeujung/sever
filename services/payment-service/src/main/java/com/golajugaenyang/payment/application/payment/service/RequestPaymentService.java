@@ -7,8 +7,11 @@ import com.golajugaenyang.payment.application.payment.port.in.dto.RequestPayment
 import com.golajugaenyang.payment.application.payment.port.in.dto.RequestPaymentResult;
 import com.golajugaenyang.payment.application.payment.port.out.OrderLookupPort;
 import com.golajugaenyang.payment.application.payment.port.out.dto.OrderPaymentContext;
+import com.golajugaenyang.payment.domain.payment.Payment;
 import com.golajugaenyang.payment.error.PaymentErrorCode;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,17 +23,23 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 
     @Override
     public RequestPaymentResult requestPayment(RequestPaymentCommand command) {
-
         OrderPaymentContext orderContext = orderLookupPort.lookup(command.orderId());
 
         if (!orderContext.memberId().equals(command.memberId())) {
             throw new AppException(PaymentErrorCode.ORDER_OWNER_MISMATCH);
         }
-
         if (!"PENDING".equals(orderContext.orderStatus())) {
             throw new AppException(PaymentErrorCode.ORDER_NOT_PAYABLE);
         }
 
-        return transactionSupport.persistPaymentRequest(command, orderContext);
+        try {
+            return transactionSupport.persistPaymentRequest(command, orderContext);
+        } catch (DataIntegrityViolationException dup) {
+            Payment existing = transactionSupport
+                .findExistingPayment(command.orderId()).orElseThrow(() -> dup);
+            return new RequestPaymentResult(
+                orderContext.orderNumber(), existing.getAmount(),
+                orderContext.orderName(), UUID.randomUUID().toString());
+        }
     }
 }
