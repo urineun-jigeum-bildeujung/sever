@@ -50,7 +50,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
-      AUTH_SERVICE_URL: auth-service
+      AUTH_SERVICE_HOST: auth-service
 
   product-service:
     build:
