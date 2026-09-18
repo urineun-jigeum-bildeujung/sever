@@ -23,12 +23,19 @@ public class InternalFeignClientConfig {
     // Feign 기본 클라이언트(feign.Client.Default)는 생성자로 SSLSocketFactory를 받는
     // 방식으로 TLS를 구성한다 — 이 SSLSocketFactory가 "내 인증서를 상대에게 제시"
     // (client auth)와 "상대 인증서가 우리 CA가 발급한 게 맞는지 검증"(trust)을 둘 다
-    // 담당한다. 이 서비스가 서버로서 쓰는 것과 같은 internal-mtls 번들
-    // (application.yml의 spring.ssl.bundle.pem.internal-mtls)을 그대로 재사용한다.
+    // 담당한다. 이 서비스가 서버로서 쓰는 것과 같은 internalmtls 번들
+    // (application.yml의 spring.ssl.bundle.pem.internalmtls)을 그대로 재사용한다.
+    //
+    // 번들 이름에 하이픈을 쓰지 않는 이유(2026-09-18, 실제 Pod 크래시로 발견):
+    // spring.ssl.bundle.pem.<이름>은 Map<String,...> 동적 키라서, 환경변수가 "_"를
+    // "."로 변환할 때 "internal-mtls"의 하이픈이 "internal"+"mtls" 두 단계 경로로
+    // 잘못 쪼개져 NoSuchSslBundleException이 남. context-path처럼 고정 스키마
+    // 프로퍼티는 relaxed binding이 하이픈을 복원해주지만, 맵의 동적 키는 안 되는
+    // Spring Boot의 알려진 한계라 구분자 없는 이름으로 우회.
     @Bean
     @ConditionalOnProperty(name = "internal.mtls.enabled", havingValue = "true")
     public Client internalMtlsFeignClient(SslBundles sslBundles) {
-        var sslBundle = sslBundles.getBundle("internal-mtls");
+        var sslBundle = sslBundles.getBundle("internalmtls");
         return new Client.Default(sslBundle.createSslContext().getSocketFactory(), null);
     }
 }
