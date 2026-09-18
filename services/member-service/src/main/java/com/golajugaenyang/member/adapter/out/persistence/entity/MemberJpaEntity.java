@@ -6,6 +6,7 @@ import com.golajugaenyang.member.domain.entity.enums.Carrier;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,8 @@ public class MemberJpaEntity extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     private Carrier carrier;
+
+    private LocalDateTime deletedAt;
 
     @Column(nullable = false)
     private Long authId;

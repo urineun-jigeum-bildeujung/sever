@@ -17,4 +17,7 @@ public interface AuthClient {
 
     @PostMapping("/internal/v1/auths/member/me/email")
     MemberMyEmailResponse getMyEmail(@RequestBody MemberMyEmailRequest request);
+
+    @PostMapping("/internal/v1/auths/member/withdraw")
+    void withdraw(@RequestBody MemberWithdrawRequest request);
 }

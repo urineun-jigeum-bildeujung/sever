@@ -9,9 +9,9 @@ public interface MemberRepository {
 
     Member save(Member member);
 
-    boolean existsByAuthId(Long authId);
-
     Optional<Member> findByAuthId(Long authId);
+
+    Optional<Member> findByAuthIdIncludingDeleted(Long authId);
 
     Optional<Member> findById(Long memberId);
 

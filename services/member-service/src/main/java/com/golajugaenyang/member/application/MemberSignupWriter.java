@@ -31,12 +31,13 @@ public class MemberSignupWriter {
     public Member persistSignup(Long authId, String nickname, List<SignupRequest.AgreementItem> agreements) {
         validateNoDuplicateAgreementTypes(agreements);
         validateRequiredAgreementsAgreed(agreements);
-        alreadySignedAuthId(authId);
         checkUniqueNickname(nickname);
 
-        Member savedMember = memberRepo.save(
-            new Member(null, nickname, null, null, null, null, null, null, null, authId)
-        );
+        Member savedMember = memberRepo.findByAuthIdIncludingDeleted(authId)
+            .map(existing -> reactivateOrReject(existing, nickname))
+            .orElseGet(() -> memberRepo.save(
+                new Member(null, nickname, null, null, null, null, null, null, null, null, authId)
+            ));
 
         LocalDateTime now = LocalDateTime.now();
         List<Agreement> agreementsToSave = agreements.stream()
@@ -77,10 +78,11 @@ public class MemberSignupWriter {
         }
     }
 
-    private void alreadySignedAuthId(Long authId){
-        if(memberRepo.existsByAuthId(authId)){
+    private Member reactivateOrReject(Member existing, String nickname) {
+        if (existing.getDeletedAt() == null) {
             throw new AppException(MemberErrorCode.ALREADY_SIGNED_UP);
         }
+        return memberRepo.save(existing.reactivate(nickname));
     }
 
     private void checkUniqueNickname(String nickname){

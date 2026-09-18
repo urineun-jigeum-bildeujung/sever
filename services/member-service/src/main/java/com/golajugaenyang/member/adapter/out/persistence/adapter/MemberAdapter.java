@@ -36,11 +36,6 @@ public class MemberAdapter implements MemberRepository {
         }
     }
 
-    @Override
-    public boolean existsByAuthId(Long authId){
-        return memberJpaRepo.existsByAuthId(authId);
-    }
-
     private AppException toAppException(DataIntegrityViolationException e) {
         String constraintName = e.getCause() instanceof ConstraintViolationException cve
             ? cve.getConstraintName()
@@ -57,13 +52,19 @@ public class MemberAdapter implements MemberRepository {
 
     @Override
     public Optional<Member> findByAuthId(Long authId){
+        return memberJpaRepo.findByAuthIdAndDeletedAtIsNull(authId)
+                .map(MemberMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Member> findByAuthIdIncludingDeleted(Long authId){
         return memberJpaRepo.findByAuthId(authId)
                 .map(MemberMapper::toDomain);
     }
 
     @Override
     public Optional<Member> findById(Long memberId){
-        return memberJpaRepo.findById(memberId)
+        return memberJpaRepo.findByIdAndDeletedAtIsNull(memberId)
                 .map(MemberMapper::toDomain);
     }
 

@@ -70,4 +70,13 @@ public class MemberService {
 
         memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
     }
+
+    public void withdraw(Long authId, Long memberId, String accessToken) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND));
+
+        memberRepo.save(member.delete());
+
+        authClient.withdraw(new MemberWithdrawRequest(authId, accessToken));
+    }
 }

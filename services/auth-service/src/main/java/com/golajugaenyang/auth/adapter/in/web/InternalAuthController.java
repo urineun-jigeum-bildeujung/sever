@@ -1,6 +1,7 @@
 package com.golajugaenyang.auth.adapter.in.web;
 
 import com.golajugaenyang.auth.adapter.in.web.request.MemberMyEmailRequest;
+import com.golajugaenyang.auth.adapter.in.web.request.MemberWithdrawRequest;
 import com.golajugaenyang.auth.adapter.in.web.request.PhoneInternalConfirmRequest;
 import com.golajugaenyang.auth.adapter.in.web.request.TokenInternalReissueRequest;
 import com.golajugaenyang.auth.adapter.in.web.response.MemberMyEmailResponse;
@@ -36,5 +37,10 @@ public class InternalAuthController {
     public MemberMyEmailResponse getMyEmail(@Valid @RequestBody MemberMyEmailRequest request) {
         String email = authService.getMyEmail(request.authId());
         return new MemberMyEmailResponse(email);
+    }
+
+    @PostMapping("/member/withdraw")
+    public void withdraw(@Valid @RequestBody MemberWithdrawRequest request) {
+        authService.withdraw(request.authId(), request.accessToken());
     }
 }

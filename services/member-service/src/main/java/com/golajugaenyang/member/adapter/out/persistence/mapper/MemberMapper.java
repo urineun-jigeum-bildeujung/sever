@@ -15,6 +15,7 @@ public class MemberMapper {
             jpaEntity.getBirth(),
             jpaEntity.getPhone(),
             jpaEntity.getCarrier(),
+            jpaEntity.getDeletedAt(),
             jpaEntity.getCreatedAt(),
             jpaEntity.getUpdatedAt(),
             jpaEntity.getAuthId()
@@ -31,6 +32,7 @@ public class MemberMapper {
             .birth(domain.getBirth())
             .phone(domain.getPhone())
             .carrier(domain.getCarrier())
+            .deletedAt(domain.getDeletedAt())
             .authId(domain.getAuthId())
             .build();
     }

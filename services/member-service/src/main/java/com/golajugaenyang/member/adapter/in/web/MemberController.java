@@ -114,4 +114,14 @@ public class MemberController {
         memberService.updateProfile(memberId, request);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> withdraw(
+            @AuthId Long authId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        String accessToken = authorizationHeader.replaceFirst("Bearer ", "");
+        memberService.withdraw(authId, memberId, accessToken);
+        return ResponseEntity.noContent().build();
+    }
 }

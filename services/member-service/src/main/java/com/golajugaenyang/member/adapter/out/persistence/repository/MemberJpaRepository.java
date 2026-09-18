@@ -13,9 +13,11 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, Long
 
     boolean existsByNickname(String nickname);
 
-    boolean existsByAuthId(Long authId);
-
     Optional<MemberJpaEntity> findByAuthId(Long authId);
+
+    Optional<MemberJpaEntity> findByAuthIdAndDeletedAtIsNull(Long authId);
+
+    Optional<MemberJpaEntity> findByIdAndDeletedAtIsNull(Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from MemberJpaEntity m where m.id = :memberId")

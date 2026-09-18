@@ -35,7 +35,11 @@ public class AuthService {
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
         if (existingAuth.isPresent()) {
-            return new AuthLoginResult(existingAuth.get(), false);
+            Auth auth = existingAuth.get();
+            if (auth.getStatus() == AuthStatus.DELETED) {
+                auth = authRepository.save(auth.withStatus(AuthStatus.ACTIVE));
+            }
+            return new AuthLoginResult(auth, false);
         }
 
         try {
@@ -129,6 +133,20 @@ public class AuthService {
         Auth auth = authRepository.findById(authId)
                 .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_AUTH));
         return auth.getSocialEmail();
+    }
+
+    public void withdraw(Long authId, String accessToken) {
+        Auth auth = authRepository.findById(authId)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_AUTH));
+
+        authRepository.save(auth.withStatus(AuthStatus.DELETED));
+
+        refreshTokenStore.delete(authId);
+
+        jwtVerifier.verifyAccessToken(accessToken).ifPresent(claims -> {
+            long ttlSeconds = (claims.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
+            blacklistPublisher.publish(accessToken, ttlSeconds);
+        });
     }
 
     private void validateMemberOwnership(Long authId, Long memberId) {
