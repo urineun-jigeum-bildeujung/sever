@@ -20,7 +20,7 @@ public record PetDetailResponse(
     double weight,
     int bcs,
     List<String> healthConcerns,
-    List<String> allergies,
+    List<AllergyOption> allergies,
     String image,
     boolean isDefault
 ) {
