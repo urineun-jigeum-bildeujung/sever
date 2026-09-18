@@ -52,6 +52,11 @@ public class Pet {
         this.updatedAt = updatedAt;
     }
 
+    public Pet delete() {
+        return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
+            targetBreedSize, weight, bcs, image, LocalDateTime.now(), memberId, breedId, createdAt, updatedAt);
+    }
+
     public Pet withIsDefault(boolean isDefault) {
         return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
             targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);

@@ -120,6 +120,24 @@ public class PetService {
         return petRepo.save(updatedPet);
     }
 
+    @Transactional
+    public void deletePet(Long memberId, Long petId) {
+        Pet pet = petRepo.findById(petId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        if (!pet.getMemberId().equals(memberId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        petRepo.save(pet.delete());
+
+        if (pet.isDefault()) {
+            petRepo.findByMemberId(memberId).stream()
+                    .findFirst()
+                    .ifPresent(nextDefault -> petRepo.save(nextDefault.withIsDefault(true)));
+        }
+    }
+
     private void validateBreed(Long breedId, Species species) {
         BreedMaster breed = breedMasterRepo.findById(breedId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.INVALID_BREED));

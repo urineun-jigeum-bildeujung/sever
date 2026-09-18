@@ -34,12 +34,12 @@ public class PetAdapter implements PetRepository {
 
     @Override
     public boolean existsByMemberId(Long memberId){
-        return petJpaRepo.existsByMemberId(memberId);
+        return petJpaRepo.existsByMemberIdAndDeletedAtIsNull(memberId);
     }
 
     @Override
     public List<Pet> findByMemberId(Long memberId) {
-        return petJpaRepo.findByMemberId(memberId).stream()
+        return petJpaRepo.findByMemberIdAndDeletedAtIsNull(memberId).stream()
             .map(PetMapper::toDomain)
             .toList();
     }
@@ -51,7 +51,7 @@ public class PetAdapter implements PetRepository {
 
     @Override
     public Optional<Pet> findById(Long petId){
-        return petJpaRepo.findById(petId)
+        return petJpaRepo.findByIdAndDeletedAtIsNull(petId)
                 .map(PetMapper::toDomain);
     }
 }

@@ -80,6 +80,15 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/me/pets/{petId}")
+    public ResponseEntity<Void> deletePet(
+            @AuthId Long authId,
+            @PathVariable Long petId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        petService.deletePet(memberId, petId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/me/phone")
     public ResponseEntity<Void> registerPhone(
             @AuthId Long authId,
