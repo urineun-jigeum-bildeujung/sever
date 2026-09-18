@@ -115,10 +115,10 @@ public class AuthService {
     }
 
     public void logout(Long authId, String accessToken) {
-        refreshTokenStore.delete(authId);
-
         JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyAccessToken(accessToken)
                 .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
+
+        refreshTokenStore.delete(authId);
 
         long ttlSeconds = (jwtClaimsSet.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
 
