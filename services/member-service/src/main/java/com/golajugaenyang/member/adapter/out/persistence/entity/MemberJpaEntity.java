@@ -2,13 +2,9 @@ package com.golajugaenyang.member.adapter.out.persistence.entity;
 
 
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import com.golajugaenyang.member.domain.entity.enums.Carrier;
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -41,6 +37,9 @@ public class MemberJpaEntity extends BaseTimeEntity {
     private LocalDate birth;
 
     private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private Carrier carrier;
 
     @Column(nullable = false)
     private Long authId;

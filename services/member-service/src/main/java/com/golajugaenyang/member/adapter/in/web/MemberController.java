@@ -2,6 +2,7 @@ package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
@@ -67,4 +68,12 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/me/phone")
+    public ResponseEntity<Void> registerPhone(
+            @AuthId Long authId,
+            @Valid @RequestBody PhoneRegisterRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        memberService.registerPhone(memberId, request);
+        return ResponseEntity.noContent().build();
+    }
 }

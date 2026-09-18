@@ -13,5 +13,7 @@ public interface MemberRepository {
 
     Optional<Member> findByAuthId(Long authId);
 
+    Optional<Member> findById(Long memberId);
+
     void lockForUpdate(Long memberId);
 }

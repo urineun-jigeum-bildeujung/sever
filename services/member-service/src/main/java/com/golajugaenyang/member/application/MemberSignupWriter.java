@@ -35,7 +35,7 @@ public class MemberSignupWriter {
         checkUniqueNickname(nickname);
 
         Member savedMember = memberRepo.save(
-            new Member(null, nickname, null, null, null, null, null, null, authId)
+            new Member(null, nickname, null, null, null, null, null, null, null, authId)
         );
 
         LocalDateTime now = LocalDateTime.now();

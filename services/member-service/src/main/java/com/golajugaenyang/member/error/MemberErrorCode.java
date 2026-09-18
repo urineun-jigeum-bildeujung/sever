@@ -56,6 +56,10 @@ public enum MemberErrorCode implements ErrorCode {
     LAST_DEFAULT_ADDRESS(
             HttpStatus.BAD_REQUEST,
             "MEMBER_400_LAST_DEFAULT_ADDRESS", "다른 배송지를 기본으로 설정해야 기본 배송지를 해제할 수 있습니다."
+    ),
+    INVALID_PHONE_CODE(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_PHONE_CODE", "인증번호가 유효하지 않습니다."
     );
 
 

@@ -1,11 +1,15 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
+import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmRequest;
+import com.golajugaenyang.member.adapter.out.client.dto.PhoneConfirmResponse;
 import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
 import com.golajugaenyang.member.adapter.out.client.dto.TokenReissueRequest;
 import com.golajugaenyang.member.domain.entity.Member;
+import com.golajugaenyang.member.domain.entity.enums.Carrier;
 import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
 import java.util.List;
@@ -38,4 +42,18 @@ public class MemberService {
         return memberRepo.findByAuthId(authId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND)).getId();
     }
+
+    public void registerPhone(Long memberId, PhoneRegisterRequest request) {
+        Member member = memberRepo.findById(memberId)
+                .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
+
+        PhoneConfirmResponse response = authClient.verifyPhoneCode(new PhoneConfirmRequest(request.phone(), request.code()));
+
+        if (!response.verified()) {
+            throw new AppException(MemberErrorCode.INVALID_PHONE_CODE);
+        }
+
+        memberRepo.save(member.withPhone(request.phone(), request.carrier()));
+    }
+
 }
