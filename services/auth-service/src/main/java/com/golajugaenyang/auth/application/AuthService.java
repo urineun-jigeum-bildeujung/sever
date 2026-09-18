@@ -99,12 +99,19 @@ public class AuthService {
                 .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
 
         Long authId = Long.valueOf(jwtClaimsSet.getSubject());
+        Long memberId = getMemberIdOrNull(authId);
 
-        if (!refreshTokenStore.isValid(authId, refreshToken)) {
+        String newAccessToken = jwtIssuer.generateAccessToken(authId, memberId);
+        String newRefreshToken = jwtIssuer.generateRefreshToken(authId, memberId);
+
+        boolean rotated = refreshTokenStore.rotate(
+            authId, refreshToken, newRefreshToken, jwtIssuer.getRefreshTokenExpirationSeconds());
+
+        if (!rotated) {
             throw new AppException(AuthErrorCode.INVALID_TOKEN);
         }
 
-        return issueTokens(authId);
+        return new TokenPair(newAccessToken, newRefreshToken, memberId);
     }
 
     public void logout(Long authId, String accessToken) {
