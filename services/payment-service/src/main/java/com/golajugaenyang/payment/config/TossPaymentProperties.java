@@ -12,6 +12,13 @@ public record TossPaymentProperties(
 ) {
 
     public TossPaymentProperties {
+        if (baseUrl == null || !baseUrl.startsWith("https://")) {
+            throw new IllegalStateException(
+                "toss-payments.base-url must use https://. 현재 값: " + baseUrl);
+        }
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException("toss-payments.secret-key must not be blank");
+        }
         if (connectTimeout == null) {
             connectTimeout = Duration.ofSeconds(2);
         }
