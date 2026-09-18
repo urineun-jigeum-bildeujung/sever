@@ -154,6 +154,33 @@ public class CartServiceTest {
             assertThat(item.available()).isFalse();
             assertThat(item.unavailableReason()).isEqualTo(CartItemResult.REASON_DEAL_ENDED);
         }
+
+        @Test
+        @DisplayName("품절 등으로 구매 불가능하지만 상품 정보는 존재하는 상품도 이름/썸네일/가격을 포함해 반환한다.")
+        void getCart_includes_product_info_when_item_exists_but_not_purchasable() {
+            CartItemKey key = new CartItemKey(CartItemType.NORMAL, PRODUCT_ID);
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 2));
+
+            ProductSummary summary = new ProductSummary(
+                PRODUCT_ID, "품절된 상품", "http://thumbnail",
+                BigDecimal.valueOf(1000), BigDecimal.valueOf(1000), BigDecimal.ZERO,
+                false, "SOLD_OUT"
+            );
+            given(productCatalogPort.lookup(List.of(PRODUCT_ID), List.of()))
+                .willReturn(new CartCatalogLookupResult(
+                    Map.of(PRODUCT_ID, summary), Map.of(), List.of(), List.of(), List.of(), List.of()));
+
+            CartResult result = cartService.getCart(MEMBER_ID);
+
+            CartItemResult item = result.items().getFirst();
+            assertThat(item.available()).isFalse();
+            assertThat(item.unavailableReason()).isEqualTo("SOLD_OUT");
+            assertThat(item.productName()).isEqualTo("품절된 상품");
+            assertThat(item.thumbnailUrl()).isEqualTo("http://thumbnail");
+            assertThat(item.price()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+            assertThat(item.subtotal()).isNull();
+            assertThat(result.totalAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
     }
 
     @Nested
