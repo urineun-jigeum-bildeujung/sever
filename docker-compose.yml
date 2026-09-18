@@ -50,6 +50,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
+      AUTH_SERVICE_URL: auth-service
 
   product-service:
     build:
@@ -96,6 +97,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      ORDER_SERVICE_HOST: order-service
 
   review-service:
     build:
