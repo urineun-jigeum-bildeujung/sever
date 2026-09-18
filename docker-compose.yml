@@ -71,7 +71,7 @@ services:
     build:
       context: .
       dockerfile: services/order-service/Dockerfile
-    profiles: ["all", "order"]
+    profiles: ["all", "order", "payment"]
     depends_on: [postgres, kafka, redis]
     ports:
       - "8084:8084"
@@ -89,7 +89,7 @@ services:
       context: .
       dockerfile: services/payment-service/Dockerfile
     profiles: ["all", "payment"]
-    depends_on: [postgres, kafka]
+    depends_on: [postgres, kafka, order-service]
     ports:
       - "8085:8085"
     env_file:
