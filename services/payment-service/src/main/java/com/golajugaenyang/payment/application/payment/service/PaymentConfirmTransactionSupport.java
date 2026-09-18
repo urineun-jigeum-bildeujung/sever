@@ -2,6 +2,7 @@ package com.golajugaenyang.payment.application.payment.service;
 
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.payment.application.payment.port.in.dto.ConfirmPaymentResult;
 import com.golajugaenyang.payment.application.payment.port.out.EventOutboxPort;
 import com.golajugaenyang.payment.application.payment.port.out.PaymentRepositoryPort;
 import com.golajugaenyang.payment.application.payment.port.out.dto.OrderPaymentContext;
@@ -37,15 +38,24 @@ public class PaymentConfirmTransactionSupport {
     }
 
     @Transactional
-    public void recordSuccess(
-        Long paymentId, TossConfirmResult tossResult, OrderPaymentContext orderContext) {
+    public void recordApproved(Long paymentId, TossConfirmResult tossResult) {
         Payment payment = paymentRepositoryPort.findById(paymentId);
-        if (payment.getPaymentStatus() == PaymentStatus.DONE) {
+        if (payment.getPaymentStatus() != PaymentStatus.READY) {
             return;
         }
-        payment.confirmSuccess(
+        payment.recordApproval(
             tossResult.paymentKey(), tossResult.method(), tossResult.approvedAt());
+    }
+
+    @Transactional
+    public ConfirmPaymentResult finalizeApproved(Long paymentId, OrderPaymentContext orderContext) {
+        Payment payment = paymentRepositoryPort.findById(paymentId);
+        if (payment.getPaymentStatus() == PaymentStatus.DONE) {
+            return ConfirmPaymentResult.from(payment);
+        }
+        payment.finalizeApproval();
         enqueueItemEvents(orderContext, "payment.completed");
+        return ConfirmPaymentResult.from(payment);
     }
 
     @Transactional

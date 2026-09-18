@@ -67,9 +67,7 @@ public class ConfirmPaymentService implements ConfirmPaymentUseCase {
         }
 
         // Phase 3: 로컬 커밋
-        transactionSupport.recordSuccess(payment.getId(), tossResult, orderContext);
-        return new ConfirmPaymentResult(
-            payment.getId(), payment.getOrderNumber(), PaymentStatus.DONE.name(),
-            payment.getAmount(), tossResult.method(), tossResult.approvedAt());
+        transactionSupport.recordApproved(payment.getId(), tossResult);
+        return transactionSupport.finalizeApproved(payment.getId(), orderContext);
     }
 }

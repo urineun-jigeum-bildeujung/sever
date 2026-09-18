@@ -8,11 +8,13 @@ import lombok.Getter;
 @Getter
 public enum PaymentStatus {
     READY,
+    APPROVED,
     DONE,
     FAILED;
 
     private static final Map<PaymentStatus, Set<PaymentStatus>> ALLOWED = Map.of(
-        READY, EnumSet.of(DONE, FAILED),
+        READY, EnumSet.of(APPROVED, FAILED),
+        APPROVED, EnumSet.of(DONE),
         DONE, EnumSet.noneOf(PaymentStatus.class),
         FAILED, EnumSet.noneOf(PaymentStatus.class)
     );

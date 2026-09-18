@@ -79,25 +79,36 @@ public class Payment extends BaseTimeEntity {
         return payment;
     }
 
-    public void confirmSuccess(
-        String paymentKey, String method, OffsetDateTime approvedAt) {
-        if (!this.paymentStatus.canTransitTo(PaymentStatus.DONE)) {
-            throw new IllegalStateException(
-                "id=%d, 현재 상태 %s에서 DONE으로 전이할 수 없습니다.".formatted(getId(), this.paymentStatus));
+    public void recordApproval(String paymentKey, String method, OffsetDateTime approvedAt) {
+        if (!this.paymentStatus.canTransitTo(PaymentStatus.APPROVED)) {
+            throw new IllegalStateException("id=%d, 현재 상태 %s에서 APPROVED로 전이할 수 없습니다."
+                .formatted(getId(), this.paymentStatus));
         }
         this.paymentKey = paymentKey;
         this.method = method;
         this.approvedAt = approvedAt;
+        this.paymentStatus = PaymentStatus.APPROVED;
+    }
+
+    public void finalizeApproval() {
+        if (this.paymentStatus == PaymentStatus.DONE) {
+            return;
+        }
+        if (!this.paymentStatus.canTransitTo(PaymentStatus.DONE)) {
+            throw new IllegalStateException("id=%d, 현재 상태 %s에서 DONE으로 전이할 수 없습니다."
+                .formatted(getId(), this.paymentStatus));
+        }
         this.paymentStatus = PaymentStatus.DONE;
     }
 
     public void confirmFailure(String paymentKey, String reason) {
         if (!this.paymentStatus.canTransitTo(PaymentStatus.FAILED)) {
-            throw new IllegalStateException(
-                "id=%d, 현재 상태 %s에서 FAILED로 전이할 수 없습니다.".formatted(getId(), this.paymentStatus));
+            throw new IllegalStateException("id=%d, 현재 상태 %s에서 FAILED로 전이할 수 없습니다."
+                .formatted(getId(), this.paymentStatus));
         }
         this.paymentKey = paymentKey;
         this.failReason = reason;
         this.paymentStatus = PaymentStatus.FAILED;
     }
+
 }
