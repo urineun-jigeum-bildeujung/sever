@@ -12,6 +12,7 @@ services:
     env_file:
       - .env
     environment:
+      REDIS_HOST: redis
       SPRING_PROFILES_ACTIVE: local
       AUTH_SERVICE_HOST: auth-service
       MEMBER_SERVICE_HOST: member-service

@@ -75,7 +75,7 @@ public class CartService implements
         CartCatalogLookupResult lookup = itemType == CartItemType.NORMAL
             ? productCatalogPort.lookup(List.of(itemId), List.of())
             : productCatalogPort.lookup(List.of(), List.of(itemId));
-        
+
         if (lookup.isUnreachable(itemType, itemId)) {
             throw new AppException(OrderErrorCode.PRODUCT_SERVICE_UNAVAILABLE);
         }
@@ -130,13 +130,25 @@ public class CartService implements
 
     private CartItemResult toResult(
         CartItemKey key, int quantity, ProductSummary summary, boolean unreachable) {
+
         if (unreachable) {
-            return unavailable(key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+            return unavailableWithoutInfo(
+                key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
         }
-        if (summary == null || !summary.purchasable()) {
-            return unavailable(key, quantity,
-                summary == null ? "NOT_FOUND" : summary.availability());
+
+        if (summary == null) {
+            return unavailableWithoutInfo(key, quantity, CartItemResult.REASON_NOT_FOUND);
         }
+
+        if (!summary.purchasable()) {
+            return unavailableWithInfo(
+                key, quantity, summary.availability(),
+                summary.productName(), summary.thumbnailUrl(),
+                summary.price(), summary.originalPrice(), summary.discountRate(),
+                null
+            );
+        }
+
         BigDecimal subtotal = summary.price().multiply(BigDecimal.valueOf(quantity));
 
         return new CartItemResult(
@@ -149,14 +161,28 @@ public class CartService implements
 
     private CartItemResult toResult(
         CartItemKey key, int quantity, TimeDealSummary summary, boolean unreachable) {
+
         if (unreachable) {
-            return unavailable(key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+            return unavailableWithoutInfo(
+                key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
         }
-        if (summary == null || !summary.purchasable() || isDealEnded(summary)) {
-            String reason = summary == null ? "NOT_FOUND"
-                : isDealEnded(summary) ? "DEAL_ENDED" : summary.availability();
-            return unavailable(key, quantity, reason);
+
+        if (summary == null) {
+            return unavailableWithoutInfo(key, quantity, CartItemResult.REASON_NOT_FOUND);
         }
+
+        boolean dealEnded = isDealEnded(summary);
+
+        if (!summary.purchasable() || dealEnded) {
+            String reason = dealEnded ? CartItemResult.REASON_DEAL_ENDED : summary.availability();
+            return unavailableWithInfo(
+                key, quantity, reason,
+                summary.productName(), summary.thumbnailUrl(),
+                summary.discountedPrice(), summary.normalPrice(), summary.discountRate(),
+                summary.dealEndAt()
+            );
+        }
+
         BigDecimal subtotal = summary.discountedPrice().multiply(BigDecimal.valueOf(quantity));
 
         return new CartItemResult(
@@ -172,11 +198,23 @@ public class CartService implements
             && summary.dealEndAt().isBefore(OffsetDateTime.now());
     }
 
-    private CartItemResult unavailable(CartItemKey key, int quantity, String reason) {
+    private CartItemResult unavailableWithoutInfo(CartItemKey key, int quantity, String reason) {
         return new CartItemResult(
             key.itemType().name(), key.itemId(), quantity, false, reason,
-            null, null, null, null,
-            null, null, null
+            null, null, null, null, null, null, null
+        );
+    }
+
+    private CartItemResult unavailableWithInfo(
+        CartItemKey key, int quantity, String reason,
+        String productName, String thumbnailUrl,
+        BigDecimal price, BigDecimal originalPrice, BigDecimal discountRate,
+        OffsetDateTime dealEndAt
+    ) {
+        return new CartItemResult(
+            key.itemType().name(), key.itemId(), quantity, false, reason,
+            productName, thumbnailUrl, price, originalPrice, discountRate,
+            null, dealEndAt
         );
     }
 }
