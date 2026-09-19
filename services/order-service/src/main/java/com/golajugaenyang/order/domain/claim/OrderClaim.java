@@ -18,6 +18,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -62,4 +63,27 @@ public class OrderClaim extends BaseTimeEntity {
 
     @Column(name = "completed_at")
     private Instant completedAt;
+
+    public static OrderClaim request(
+        Long orderId, ClaimType claimType, String reason, List<String> imageUrls) {
+        OrderClaim claim = new OrderClaim();
+        claim.orderId = orderId;
+        claim.claimType = claimType;
+        claim.claimStatus = ClaimStatus.REQUESTED;
+        claim.reason = reason;
+        if (imageUrls != null) {
+            claim.imageUrls.addAll(imageUrls);
+        }
+        claim.requestedAt = Instant.now();
+        return claim;
+    }
+
+    public void addItem(OrderClaimItem item) {
+        items.add(item);
+        item.assignTo(this);
+    }
+
+    public List<OrderClaimItem> getItems() {
+        return Collections.unmodifiableList(items);
+    }
 }

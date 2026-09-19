@@ -34,4 +34,15 @@ public class OrderClaimItem {
 
     @Column(nullable = false)
     private int quantity;
+
+    public static OrderClaimItem of(Long orderItemId, int quantity) {
+        OrderClaimItem item = new OrderClaimItem();
+        item.orderItemId = orderItemId;
+        item.quantity = quantity;
+        return item;
+    }
+
+    void assignTo(OrderClaim claim) {
+        this.claim = claim;
+    }
 }
