@@ -1,7 +1,9 @@
 package com.golajugaenyang.common.storage;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -14,6 +16,9 @@ public class PresignedUploadIssuer {
 
     private static final String PENDING_TAG = "status=pending";
     private static final Duration SIGNATURE_DURATION = Duration.ofMinutes(10);
+
+    private static final Pattern SAFE_OWNER_ID = Pattern.compile("^[A-Za-z0-9_-]+$");
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
 
     private final S3Presigner presigner;
 
@@ -32,7 +37,10 @@ public class PresignedUploadIssuer {
      * 동일한 x-amz-tagging: status=pending 헤더를 보내야 한다.
      */
     public PresignedUpload issue(String ownerId, String extension) {
-        String key = "%s/%s/%s.%s".formatted(prefix, ownerId, UUID.randomUUID(), extension);
+        validateOwnerId(ownerId);
+        String normalizedExtension = validateExtension(extension);
+
+        String key = "%s/%s/%s.%s".formatted(prefix, ownerId, UUID.randomUUID(), normalizedExtension);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -49,5 +57,19 @@ public class PresignedUploadIssuer {
 
         String fileUrl = cloudfrontDomain + "/" + key;
         return new PresignedUpload(presigned.url().toString(), fileUrl);
+    }
+
+    private void validateOwnerId(String ownerId) {
+        if (ownerId == null || !SAFE_OWNER_ID.matcher(ownerId).matches()) {
+            throw new IllegalArgumentException("허용되지 않는 ownerId 값입니다: " + ownerId);
+        }
+    }
+
+    private String validateExtension(String extension) {
+        String normalized = extension == null ? "" : extension.toLowerCase();
+        if (!ALLOWED_EXTENSIONS.contains(normalized)) {
+            throw new IllegalArgumentException("허용되지 않는 확장자입니다: " + extension);
+        }
+        return normalized;
     }
 }
