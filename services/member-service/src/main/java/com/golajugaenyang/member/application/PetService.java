@@ -3,6 +3,7 @@ package com.golajugaenyang.member.application;
 import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AllergyOption;
@@ -38,6 +39,7 @@ public class PetService {
     private final ConcernMasterRepository concernMasterRepo;
     private final BreedMasterRepository breedMasterRepo;
     private final MemberRepository memberRepo;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     @Transactional
     public Pet registerPet(Long memberId, PetRegisterRequest request) {
@@ -74,6 +76,10 @@ public class PetService {
                     .map(code -> new PetAllergy(null, code, savedPet.getId()))
                     .toList();
             petAllergyRepo.saveAll(petAllergies);
+        }
+
+        if (request.image() != null) {
+            objectTagConfirmer.confirm(request.image());
         }
 
         return savedPet;
@@ -126,6 +132,10 @@ public class PetService {
         Pet updatedPet = pet.update(request.name(), request.sex(), request.isNeutered(), request.species(),
                 request.age(), request.birthDate(), request.size(), request.weight(), request.bcs(),
                 request.image(), request.breedId());
+
+        if (request.image() != null) {
+            objectTagConfirmer.confirm(request.image());
+        }
 
         return petRepo.save(updatedPet);
     }

@@ -19,6 +19,7 @@ dependencies {
 
     implementation project(':modules:common-jpa')
     implementation project(':modules:common-security')
+    implementation project(':modules:common-storage')
     runtimeOnly 'org.postgresql:postgresql'
 
     //openfeign

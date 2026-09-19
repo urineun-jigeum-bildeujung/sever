@@ -1,10 +1,14 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
+import com.golajugaenyang.common.storage.PresignedUpload;
+import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.MemberMyProfileResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.ProfileImageUploadResponse;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
 import com.golajugaenyang.member.adapter.out.client.dto.*;
 import com.golajugaenyang.member.domain.entity.Member;
@@ -22,6 +26,8 @@ public class MemberService {
     private final NicknameGenerator nicknameGenerator;
     private final AuthClient authClient;
     private final MemberSignupWriter memberSignupWriter;
+    private final PresignedUploadIssuer presignedUploadIssuer;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     public String generateUniqueNickname() {
         String nickname;
@@ -69,6 +75,15 @@ public class MemberService {
                 .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
 
         memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
+
+        if (request.image() != null) {
+            objectTagConfirmer.confirm(request.image());
+        }
+    }
+
+    public ProfileImageUploadResponse issueProfileImageUploadUrl(Long memberId, String extension) {
+        PresignedUpload upload = presignedUploadIssuer.issue("member-" + memberId, extension);
+        return new ProfileImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
     }
 
     public void withdraw(Long authId, Long memberId, String accessToken) {
