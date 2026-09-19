@@ -1,0 +1,7 @@
+dependencies {
+    api project(':modules:common-core')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation 'software.amazon.awssdk:s3:2.29.52'
+}
