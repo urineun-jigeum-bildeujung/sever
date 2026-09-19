@@ -14,6 +14,7 @@ import com.golajugaenyang.member.domain.entity.PetAllergy;
 import com.golajugaenyang.member.domain.entity.PetConcern;
 import com.golajugaenyang.member.domain.repository.BreedMasterRepository;
 import com.golajugaenyang.member.domain.repository.ConcernMasterRepository;
+import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.domain.repository.PetAllergyRepository;
 import com.golajugaenyang.member.domain.repository.PetConcernRepository;
 import com.golajugaenyang.member.domain.repository.PetRepository;
@@ -36,9 +37,12 @@ public class PetService {
     private final PetAllergyRepository petAllergyRepo;
     private final ConcernMasterRepository concernMasterRepo;
     private final BreedMasterRepository breedMasterRepo;
+    private final MemberRepository memberRepo;
 
     @Transactional
     public Pet registerPet(Long memberId, PetRegisterRequest request) {
+
+        memberRepo.lockForUpdate(memberId);
 
         validateBreed(request.breedId(), request.species());
 
@@ -128,6 +132,8 @@ public class PetService {
 
     @Transactional
     public void deletePet(Long memberId, Long petId) {
+        memberRepo.lockForUpdate(memberId);
+
         Pet pet = petRepo.findById(petId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
 
