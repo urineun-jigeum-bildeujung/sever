@@ -54,4 +54,10 @@ public class PetAdapter implements PetRepository {
         return petJpaRepo.findByIdAndDeletedAtIsNull(petId)
                 .map(PetMapper::toDomain);
     }
+
+    @Override
+    public Optional<Pet> findByIdForUpdate(Long petId){
+        return petJpaRepo.findByIdAndDeletedAtIsNullForUpdate(petId)
+                .map(PetMapper::toDomain);
+    }
 }

@@ -77,7 +77,7 @@ public class PetService {
 
     @Transactional
     public Pet updatePet(Long memberId, Long petId, PetUpdateRequest request) {
-        Pet pet = petRepo.findById(petId)
+        Pet pet = petRepo.findByIdForUpdate(petId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
 
         if (!pet.getMemberId().equals(memberId)) {
