@@ -195,4 +195,24 @@ public class Order extends BaseTimeEntity {
         }
         this.orderStatus = OrderStatus.CANCELLED;
     }
+
+    public void confirmPurchase(OffsetDateTime confirmedAt) {
+        if (!this.orderStatus.canTransitTo(OrderStatus.CONFIRMED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 상태 %s에서는 구매 확정할 수 없습니다.".formatted(getId(), this.orderStatus));
+        }
+        this.orderStatus = OrderStatus.CONFIRMED;
+        this.confirmedAt = confirmedAt;
+    }
+
+    public void cancelAll() {
+        if (!isCancellable()) {
+            throw new IllegalStateException(
+                "id=%d, 현재 상태 %s에서는 취소할 수 없습니다.".formatted(getId(), this.orderStatus));
+        }
+        for (OrderItem item : items) {
+            item.cancelFully();
+        }
+        this.orderStatus = OrderStatus.CANCELLED;
+    }
 }

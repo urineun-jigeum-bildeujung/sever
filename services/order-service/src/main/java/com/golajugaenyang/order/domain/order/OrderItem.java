@@ -83,6 +83,9 @@ public class OrderItem extends BaseTimeEntity {
     @Column(name = "item_status", nullable = false, length = 20)
     private OrderItemStatus itemStatus = OrderItemStatus.PAID;
 
+    @Column(name = "active_claim_status", length = 20)
+    private String activeClaimStatus;
+
     @Column(name = "cancelled_quantity", nullable = false)
     private int cancelledQuantity;
 
@@ -143,5 +146,17 @@ public class OrderItem extends BaseTimeEntity {
 
     void assignTo(Order o) {
         this.order = o;
+    }
+
+    public void updateActiveClaimStatus(String claimStatus) {
+        this.activeClaimStatus = claimStatus;
+    }
+
+    public void cancelFully() {
+        if (effectiveQuantity() <= 0) {
+            throw new IllegalStateException("id=%d, 취소할 수 있는 수량이 없습니다.".formatted(getId()));
+        }
+        this.cancelledQuantity = this.quantity;
+        this.itemStatus = OrderItemStatus.CANCELLED;
     }
 }
