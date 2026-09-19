@@ -30,10 +30,10 @@ public class CancelOrderService implements CancelOrderUseCase {
         }
 
         order.cancelAll();
-        order.getItems().forEach(item ->
-            eventOutboxPort.enqueue(
-                item.getId(), "order.item-cancelled",
-                OrderItemReservationMapper.toCancelledPayload(order.getId(), item)));
+        order.getItems().forEach(item -> eventOutboxPort.enqueue(
+            order.getId(),
+            "order.item-cancelled",
+            OrderItemReservationMapper.toCancelledPayload(order.getId(), item)));
     }
 
 }
