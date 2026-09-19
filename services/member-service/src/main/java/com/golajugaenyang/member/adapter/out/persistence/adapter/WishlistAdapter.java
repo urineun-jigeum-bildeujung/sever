@@ -7,6 +7,7 @@ import com.golajugaenyang.member.domain.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -19,6 +20,13 @@ public class WishlistAdapter implements WishlistRepository {
     public Optional<Wishlist> findByMemberIdAndProductId(Long memberId, Long productId) {
         return wishlistJpaRepo.findByMemberIdAndProductId(memberId, productId)
                 .map(WishlistMapper::toDomain);
+    }
+
+    @Override
+    public List<Wishlist> findByMemberId(Long memberId) {
+        return wishlistJpaRepo.findByMemberId(memberId).stream()
+                .map(WishlistMapper::toDomain)
+                .toList();
     }
 
     @Override
