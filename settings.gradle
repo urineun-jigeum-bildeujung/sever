@@ -3,6 +3,7 @@ rootProject.name = 'golajugaenyang-server'
 include 'modules:common-core'
 include 'modules:common-jpa'
 include 'modules:common-security'
+include 'modules:common-storage'
 include 'modules:common-event'
 include 'modules:common-test'
 
