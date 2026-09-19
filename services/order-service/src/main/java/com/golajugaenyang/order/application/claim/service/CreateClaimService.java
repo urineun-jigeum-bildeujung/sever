@@ -8,6 +8,7 @@ import com.golajugaenyang.order.application.claim.port.out.ClaimRepositoryPort;
 import com.golajugaenyang.order.application.claim.port.out.OrderItemClaimStatusPort;
 import com.golajugaenyang.order.application.claim.port.out.OrderLookupPort;
 import com.golajugaenyang.order.application.claim.port.out.dto.ClaimableOrder;
+import com.golajugaenyang.order.domain.claim.ClaimStatus;
 import com.golajugaenyang.order.domain.claim.ClaimType;
 import com.golajugaenyang.order.domain.claim.OrderClaim;
 import com.golajugaenyang.order.domain.claim.OrderClaimItem;
@@ -44,16 +45,6 @@ public class CreateClaimService implements CreateClaimUseCase {
             throw new AppException(OrderErrorCode.INVALID_CLAIM_TYPE);
         }
 
-        List<Long> requestedItemIds = command.items().stream()
-            .map(CreateClaimCommand.Item::orderItemId).toList();
-        if (claimRepositoryPort
-            .existsActiveClaimForItems(command.orderId(), requestedItemIds)) {
-            throw new AppException(OrderErrorCode.CLAIM_ALREADY_IN_PROGRESS);
-        }
-
-        OrderClaim claim = OrderClaim.request(
-            command.orderId(), claimType, command.reason(), command.imageUrls());
-
         Map<Long, Integer> effectiveQuantityByItemId = order.items().stream()
             .collect(Collectors.toMap(
                 ClaimableOrder.Item::orderItemId,
@@ -67,16 +58,23 @@ public class CreateClaimService implements CreateClaimUseCase {
             if (requested.quantity() > effectiveQuantity) {
                 throw new AppException(OrderErrorCode.CLAIM_ITEM_QUANTITY_EXCEEDED);
             }
+        }
+
+        List<Long> requestedItemIds = command.items().stream()
+            .map(CreateClaimCommand.Item::orderItemId).toList();
+
+        List<Long> alreadyClaimed = orderItemClaimStatusPort.claimForNewRequest(
+            requestedItemIds, ClaimStatus.REQUESTED.name());
+        if (!alreadyClaimed.isEmpty()) {
+            throw new AppException(OrderErrorCode.CLAIM_ALREADY_IN_PROGRESS);
+        }
+
+        OrderClaim claim = OrderClaim.request(
+            command.orderId(), claimType, command.reason(), command.imageUrls());
+        for (CreateClaimCommand.Item requested : command.items()) {
             claim.addItem(OrderClaimItem.of(requested.orderItemId(), requested.quantity()));
         }
 
-        OrderClaim saved = claimRepositoryPort.save(claim);
-
-        List<Long> claimedItemIds = command.items().stream()
-            .map(CreateClaimCommand.Item::orderItemId).toList();
-        orderItemClaimStatusPort.updateActiveClaimStatus(
-            claimedItemIds, saved.getClaimStatus().name());
-
-        return CreateClaimResult.from(saved);
+        return CreateClaimResult.from(claimRepositoryPort.save(claim));
     }
 }

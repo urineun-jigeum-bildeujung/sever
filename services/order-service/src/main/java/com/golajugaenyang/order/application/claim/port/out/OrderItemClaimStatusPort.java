@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface OrderItemClaimStatusPort {
 
-    void updateActiveClaimStatus(List<Long> orderItemIds, String claimStatus);
+    List<Long> claimForNewRequest(List<Long> orderItemIds, String claimStatus);
 }
