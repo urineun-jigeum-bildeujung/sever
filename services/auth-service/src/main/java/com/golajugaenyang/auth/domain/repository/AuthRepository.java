@@ -6,5 +6,6 @@ import java.util.Optional;
 public interface AuthRepository {
 
     Optional<Auth> findByProviderAndSocialId(String provider, String socialId);
+    Optional<Auth> findById(Long authId);
     Auth save(Auth auth);
 }

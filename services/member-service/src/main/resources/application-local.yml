@@ -7,6 +7,9 @@ internal:
 auth-service:
   url: http://${AUTH_SERVICE_HOST:localhost}:8081
 
+product-service:
+  url: http://${PRODUCT_SERVICE_HOST:localhost}:8083
+
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/member_db

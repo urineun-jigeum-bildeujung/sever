@@ -32,4 +32,14 @@ public class PetConcernAdapter implements PetConcernRepository {
                 .map(PetConcernMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteByPetId(Long petId) {
+        petConcernJpaRepo.deleteByPetId(petId);
+    }
+
+    @Override
+    public void deleteAllById(List<Long> ids) {
+        petConcernJpaRepo.deleteAllById(ids);
+    }
 }

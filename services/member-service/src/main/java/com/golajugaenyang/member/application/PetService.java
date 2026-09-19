@@ -4,6 +4,7 @@ import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AllergyOption;
 import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
 import com.golajugaenyang.member.domain.entity.BreedMaster;
@@ -13,6 +14,7 @@ import com.golajugaenyang.member.domain.entity.PetAllergy;
 import com.golajugaenyang.member.domain.entity.PetConcern;
 import com.golajugaenyang.member.domain.repository.BreedMasterRepository;
 import com.golajugaenyang.member.domain.repository.ConcernMasterRepository;
+import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.domain.repository.PetAllergyRepository;
 import com.golajugaenyang.member.domain.repository.PetConcernRepository;
 import com.golajugaenyang.member.domain.repository.PetRepository;
@@ -35,9 +37,12 @@ public class PetService {
     private final PetAllergyRepository petAllergyRepo;
     private final ConcernMasterRepository concernMasterRepo;
     private final BreedMasterRepository breedMasterRepo;
+    private final MemberRepository memberRepo;
 
     @Transactional
     public Pet registerPet(Long memberId, PetRegisterRequest request) {
+
+        memberRepo.lockForUpdate(memberId);
 
         validateBreed(request.breedId(), request.species());
 
@@ -72,6 +77,77 @@ public class PetService {
         }
 
         return savedPet;
+    }
+
+    @Transactional
+    public Pet updatePet(Long memberId, Long petId, PetUpdateRequest request) {
+        Pet pet = petRepo.findByIdForUpdate(petId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        if (!pet.getMemberId().equals(memberId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        Species finalSpecies = request.species() != null ? request.species() : pet.getSpecies();
+        Long finalBreedId = request.breedId() != null ? request.breedId() : pet.getBreedId();
+
+        if (request.species() != null || request.breedId() != null) {
+            validateBreed(finalBreedId, finalSpecies);
+        }
+
+        boolean speciesChanged = request.species() != null && request.species() != pet.getSpecies();
+
+        if (request.healthConcerns() != null) {
+            List<ConcernMaster> concernMasters = validateConcerns(request.healthConcerns(), finalSpecies);
+            petConcernRepo.deleteByPetId(petId);
+            if (!concernMasters.isEmpty()) {
+                List<PetConcern> petConcerns = concernMasters.stream()
+                        .map(cm -> new PetConcern(null, petId, cm.getId()))
+                        .toList();
+                petConcernRepo.saveAll(petConcerns);
+            }
+        } else if (speciesChanged) {
+            purgeInvalidConcerns(petId, finalSpecies);
+        }
+
+        if (request.allergies() != null) {
+            validateAllergies(request.allergies(), finalSpecies);
+            petAllergyRepo.deleteByPetId(petId);
+            if (!request.allergies().isEmpty()) {
+                List<PetAllergy> petAllergies = request.allergies().stream()
+                        .map(code -> new PetAllergy(null, code, petId))
+                        .toList();
+                petAllergyRepo.saveAll(petAllergies);
+            }
+        } else if (speciesChanged) {
+            purgeInvalidAllergies(petId, finalSpecies);
+        }
+
+        Pet updatedPet = pet.update(request.name(), request.sex(), request.isNeutered(), request.species(),
+                request.age(), request.birthDate(), request.size(), request.weight(), request.bcs(),
+                request.image(), request.breedId());
+
+        return petRepo.save(updatedPet);
+    }
+
+    @Transactional
+    public void deletePet(Long memberId, Long petId) {
+        memberRepo.lockForUpdate(memberId);
+
+        Pet pet = petRepo.findById(petId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        if (!pet.getMemberId().equals(memberId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        petRepo.save(pet.delete());
+
+        if (pet.isDefault()) {
+            petRepo.findByMemberId(memberId).stream()
+                    .findFirst()
+                    .ifPresent(nextDefault -> petRepo.save(nextDefault.withIsDefault(true)));
+        }
     }
 
     private void validateBreed(Long breedId, Species species) {
@@ -152,6 +228,41 @@ public class PetService {
 
         if (!allApplicable) {
             throw new AppException(MemberErrorCode.INVALID_ALLERGY);
+        }
+    }
+
+    private void purgeInvalidConcerns(Long petId, Species newSpecies) {
+        List<PetConcern> existing = petConcernRepo.findByPetId(petId);
+        if (existing.isEmpty()) {
+            return;
+        }
+
+        List<Long> concernIds = existing.stream().map(PetConcern::getConcernId).toList();
+        Set<Long> validConcernIds = concernMasterRepo.findByIdIn(concernIds).stream()
+                .filter(cm -> cm.getSpecies() == newSpecies)
+                .map(ConcernMaster::getId)
+                .collect(Collectors.toSet());
+
+        List<Long> invalidIds = existing.stream()
+                .filter(pc -> !validConcernIds.contains(pc.getConcernId()))
+                .map(PetConcern::getId)
+                .toList();
+
+        if (!invalidIds.isEmpty()) {
+            petConcernRepo.deleteAllById(invalidIds);
+        }
+    }
+
+    private void purgeInvalidAllergies(Long petId, Species newSpecies) {
+        List<PetAllergy> existing = petAllergyRepo.findByPetId(petId);
+
+        List<Long> invalidIds = existing.stream()
+                .filter(pa -> !pa.getAllergyCode().getApplicableSpecies().contains(newSpecies))
+                .map(PetAllergy::getId)
+                .toList();
+
+        if (!invalidIds.isEmpty()) {
+            petAllergyRepo.deleteAllById(invalidIds);
         }
     }
 

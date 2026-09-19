@@ -28,17 +28,18 @@ public class MemberAdapter implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> findByNickname(String nickname){
+        return memberJpaRepo.findByNickname(nickname)
+                .map(MemberMapper::toDomain);
+    }
+
+    @Override
     public Member save(Member member) {
         try {
             return MemberMapper.toDomain(memberJpaRepo.save(MemberMapper.toJpaEntity(member)));
         } catch (DataIntegrityViolationException e) {
             throw toAppException(e);
         }
-    }
-
-    @Override
-    public boolean existsByAuthId(Long authId){
-        return memberJpaRepo.existsByAuthId(authId);
     }
 
     private AppException toAppException(DataIntegrityViolationException e) {
@@ -57,7 +58,19 @@ public class MemberAdapter implements MemberRepository {
 
     @Override
     public Optional<Member> findByAuthId(Long authId){
+        return memberJpaRepo.findByAuthIdAndDeletedAtIsNull(authId)
+                .map(MemberMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Member> findByAuthIdIncludingDeleted(Long authId){
         return memberJpaRepo.findByAuthId(authId)
+                .map(MemberMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Member> findById(Long memberId){
+        return memberJpaRepo.findByIdAndDeletedAtIsNull(memberId)
                 .map(MemberMapper::toDomain);
     }
 

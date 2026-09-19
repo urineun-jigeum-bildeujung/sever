@@ -25,4 +25,8 @@ public class Auth {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+
+    public Auth withStatus(AuthStatus status) {
+        return new Auth(id, provider, socialId, socialEmail, status, createdAt, updatedAt);
+    }
 }

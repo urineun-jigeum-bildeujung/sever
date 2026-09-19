@@ -28,4 +28,10 @@ public class AuthAdapter implements AuthRepository {
         return authJpaRepo.findByProviderAndSocialId(provider, socialId)
             .map(AuthMapper::toDomain);
     }
+
+    @Override
+    public Optional<Auth> findById(Long authId) {
+        return authJpaRepo.findById(authId)
+            .map(AuthMapper::toDomain);
+    }
 }

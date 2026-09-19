@@ -35,7 +35,11 @@ public class AuthService {
     public AuthLoginResult findOrCreateAuth(String provider, String socialId, String socialEmail) {
         Optional<Auth> existingAuth = authRepository.findByProviderAndSocialId(provider, socialId);
         if (existingAuth.isPresent()) {
-            return new AuthLoginResult(existingAuth.get(), false);
+            Auth auth = existingAuth.get();
+            if (auth.getStatus() == AuthStatus.DELETED) {
+                auth = authRepository.save(auth.withStatus(AuthStatus.ACTIVE));
+            }
+            return new AuthLoginResult(auth, false);
         }
 
         try {
@@ -118,6 +122,8 @@ public class AuthService {
         JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyAccessToken(accessToken)
                 .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
 
+        validateTokenOwnership(authId, jwtClaimsSet);
+
         refreshTokenStore.delete(authId);
 
         long ttlSeconds = (jwtClaimsSet.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
@@ -125,10 +131,39 @@ public class AuthService {
         blacklistPublisher.publish(accessToken, ttlSeconds);
     }
 
+    public String getMyEmail(Long authId) {
+        Auth auth = authRepository.findById(authId)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_AUTH));
+        return auth.getSocialEmail();
+    }
+
+    public void withdraw(Long authId, String accessToken) {
+        JWTClaimsSet jwtClaimsSet = jwtVerifier.verifyAccessToken(accessToken)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_TOKEN));
+
+        validateTokenOwnership(authId, jwtClaimsSet);
+
+        Auth auth = authRepository.findById(authId)
+                .orElseThrow(() -> new AppException(AuthErrorCode.INVALID_AUTH));
+
+        authRepository.save(auth.withStatus(AuthStatus.DELETED));
+
+        refreshTokenStore.delete(authId);
+
+        long ttlSeconds = (jwtClaimsSet.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
+        blacklistPublisher.publish(accessToken, ttlSeconds);
+    }
+
     private void validateMemberOwnership(Long authId, Long memberId) {
         Long actualMemberId = memberClient.getMemberId(authId).memberId();
         if (!memberId.equals(actualMemberId)) {
             throw new AppException(AuthErrorCode.MEMBER_ID_MISMATCH);
+        }
+    }
+
+    private void validateTokenOwnership(Long authId, JWTClaimsSet claims) {
+        if (!authId.equals(Long.valueOf(claims.getSubject()))) {
+            throw new AppException(AuthErrorCode.INVALID_TOKEN);
         }
     }
 

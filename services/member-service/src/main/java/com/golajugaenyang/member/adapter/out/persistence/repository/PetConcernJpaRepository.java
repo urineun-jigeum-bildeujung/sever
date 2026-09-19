@@ -8,4 +8,6 @@ import java.util.List;
 public interface PetConcernJpaRepository extends JpaRepository<PetConcernJpaEntity, Long> {
 
     List<PetConcernJpaEntity> findByPetId(Long petId);
+
+    void deleteByPetId(Long petId);
 }

@@ -8,4 +8,6 @@ import java.util.List;
 public interface PetAllergyJpaRepository extends JpaRepository<PetAllergyJpaEntity, Long> {
 
     List<PetAllergyJpaEntity> findByPetId(Long petId);
+
+    void deleteByPetId(Long petId);
 }

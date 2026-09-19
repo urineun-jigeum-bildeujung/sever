@@ -13,4 +13,6 @@ public interface PetRepository {
     List<Pet> findByMemberId(Long memberId);
 
     Optional<Pet> findById(Long id);
+
+    Optional<Pet> findByIdForUpdate(Long id);
 }

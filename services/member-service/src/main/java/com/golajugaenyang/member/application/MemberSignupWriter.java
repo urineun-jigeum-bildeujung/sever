@@ -11,6 +11,7 @@ import com.golajugaenyang.member.error.MemberErrorCode;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,15 @@ public class MemberSignupWriter {
     public Member persistSignup(Long authId, String nickname, List<SignupRequest.AgreementItem> agreements) {
         validateNoDuplicateAgreementTypes(agreements);
         validateRequiredAgreementsAgreed(agreements);
-        alreadySignedAuthId(authId);
-        checkUniqueNickname(nickname);
 
-        Member savedMember = memberRepo.save(
-            new Member(null, nickname, null, null, null, null, null, null, authId)
-        );
+        Optional<Member> existingMember = memberRepo.findByAuthIdIncludingDeleted(authId);
+        checkUniqueNickname(nickname, existingMember.map(Member::getId).orElse(null));
+
+        Member savedMember = existingMember
+            .map(existing -> reactivateOrReject(existing, nickname))
+            .orElseGet(() -> memberRepo.save(
+                new Member(null, nickname, null, null, null, null, null, null, null, null, authId)
+            ));
 
         LocalDateTime now = LocalDateTime.now();
         List<Agreement> agreementsToSave = agreements.stream()
@@ -77,15 +81,18 @@ public class MemberSignupWriter {
         }
     }
 
-    private void alreadySignedAuthId(Long authId){
-        if(memberRepo.existsByAuthId(authId)){
+    private Member reactivateOrReject(Member existing, String nickname) {
+        if (existing.getDeletedAt() == null) {
             throw new AppException(MemberErrorCode.ALREADY_SIGNED_UP);
         }
+        return memberRepo.save(existing.reactivate(nickname));
     }
 
-    private void checkUniqueNickname(String nickname){
-        if(memberRepo.existsByNickname(nickname)){
-            throw new AppException(MemberErrorCode.ALREADY_HAVE_NICKNAME);
-        }
+    private void checkUniqueNickname(String nickname, Long excludeMemberId){
+        memberRepo.findByNickname(nickname)
+            .filter(existing -> !existing.getId().equals(excludeMemberId))
+            .ifPresent(existing -> {
+                throw new AppException(MemberErrorCode.ALREADY_HAVE_NICKNAME);
+            });
     }
 }

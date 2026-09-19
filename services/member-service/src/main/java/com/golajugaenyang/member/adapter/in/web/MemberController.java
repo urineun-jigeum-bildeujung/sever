@@ -1,12 +1,12 @@
 package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.AuthId;
+import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetDetailResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetRegisterResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.PetSummaryResponse;
-import com.golajugaenyang.member.adapter.in.web.dto.response.SignupResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.*;
 import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
 import com.golajugaenyang.member.application.MemberService;
 import com.golajugaenyang.member.application.PetService;
@@ -67,4 +67,61 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/me/pets/{petId}")
+    public ResponseEntity<PetRegisterResponse> updatePet(
+            @AuthId Long authId,
+            @PathVariable Long petId,
+            @Valid @RequestBody PetUpdateRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        Pet updatedPet = petService.updatePet(memberId, petId, request);
+        PetRegisterResponse response = new PetRegisterResponse(
+                updatedPet.getId(), updatedPet.getName(), updatedPet.getSpecies(), updatedPet.isDefault(), updatedPet.getBreedId()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/me/pets/{petId}")
+    public ResponseEntity<Void> deletePet(
+            @AuthId Long authId,
+            @PathVariable Long petId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        petService.deletePet(memberId, petId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/phone")
+    public ResponseEntity<Void> registerPhone(
+            @AuthId Long authId,
+            @Valid @RequestBody PhoneRegisterRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        memberService.registerPhone(memberId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MemberMyProfileResponse> getMyProfile(
+            @AuthId Long authId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        MemberMyProfileResponse response = memberService.getMyProfile(authId, memberId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<Void> updateProfile(
+            @AuthId Long authId,
+            @Valid @RequestBody MemberProfileUpdateRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        memberService.updateProfile(memberId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> withdraw(
+            @AuthId Long authId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        String accessToken = authorizationHeader.replaceFirst("Bearer ", "");
+        memberService.withdraw(authId, memberId, accessToken);
+        return ResponseEntity.noContent().build();
+    }
 }
