@@ -37,4 +37,9 @@ public class PetAllergyAdapter implements PetAllergyRepository {
     public void deleteByPetId(Long petId) {
         petAllergyJpaRepo.deleteByPetId(petId);
     }
+
+    @Override
+    public void deleteAllById(List<Long> ids) {
+        petAllergyJpaRepo.deleteAllById(ids);
+    }
 }

@@ -91,6 +91,8 @@ public class PetService {
             validateBreed(finalBreedId, finalSpecies);
         }
 
+        boolean speciesChanged = request.species() != null && request.species() != pet.getSpecies();
+
         if (request.healthConcerns() != null) {
             List<ConcernMaster> concernMasters = validateConcerns(request.healthConcerns(), finalSpecies);
             petConcernRepo.deleteByPetId(petId);
@@ -100,6 +102,8 @@ public class PetService {
                         .toList();
                 petConcernRepo.saveAll(petConcerns);
             }
+        } else if (speciesChanged) {
+            purgeInvalidConcerns(petId, finalSpecies);
         }
 
         if (request.allergies() != null) {
@@ -111,6 +115,8 @@ public class PetService {
                         .toList();
                 petAllergyRepo.saveAll(petAllergies);
             }
+        } else if (speciesChanged) {
+            purgeInvalidAllergies(petId, finalSpecies);
         }
 
         Pet updatedPet = pet.update(request.name(), request.sex(), request.isNeutered(), request.species(),
@@ -216,6 +222,41 @@ public class PetService {
 
         if (!allApplicable) {
             throw new AppException(MemberErrorCode.INVALID_ALLERGY);
+        }
+    }
+
+    private void purgeInvalidConcerns(Long petId, Species newSpecies) {
+        List<PetConcern> existing = petConcernRepo.findByPetId(petId);
+        if (existing.isEmpty()) {
+            return;
+        }
+
+        List<Long> concernIds = existing.stream().map(PetConcern::getConcernId).toList();
+        Set<Long> validConcernIds = concernMasterRepo.findByIdIn(concernIds).stream()
+                .filter(cm -> cm.getSpecies() == newSpecies)
+                .map(ConcernMaster::getId)
+                .collect(Collectors.toSet());
+
+        List<Long> invalidIds = existing.stream()
+                .filter(pc -> !validConcernIds.contains(pc.getConcernId()))
+                .map(PetConcern::getId)
+                .toList();
+
+        if (!invalidIds.isEmpty()) {
+            petConcernRepo.deleteAllById(invalidIds);
+        }
+    }
+
+    private void purgeInvalidAllergies(Long petId, Species newSpecies) {
+        List<PetAllergy> existing = petAllergyRepo.findByPetId(petId);
+
+        List<Long> invalidIds = existing.stream()
+                .filter(pa -> !pa.getAllergyCode().getApplicableSpecies().contains(newSpecies))
+                .map(PetAllergy::getId)
+                .toList();
+
+        if (!invalidIds.isEmpty()) {
+            petAllergyRepo.deleteAllById(invalidIds);
         }
     }
 

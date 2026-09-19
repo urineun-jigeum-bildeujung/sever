@@ -10,4 +10,6 @@ public interface PetAllergyRepository {
     List<PetAllergy> findByPetId(Long petId);
 
     void deleteByPetId(Long petId);
+
+    void deleteAllById(List<Long> ids);
 }
