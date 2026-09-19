@@ -1,10 +1,12 @@
 package com.golajugaenyang.member.application;
 
+import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistItemResponse;
 import com.golajugaenyang.member.adapter.out.client.ProductClient;
 import com.golajugaenyang.member.adapter.out.client.dto.ProductInternalItemsResponse;
 import com.golajugaenyang.member.domain.entity.Wishlist;
 import com.golajugaenyang.member.domain.repository.WishlistRepository;
+import com.golajugaenyang.member.error.MemberErrorCode;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,11 @@ public class WishlistService {
             } catch (EmptyResultDataAccessException e) {
             }
             return false;
+        }
+
+        ProductInternalItemsResponse product = productClient.getProducts(List.of(productId));
+        if (product.missingProductIds().contains(productId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_PRODUCT);
         }
 
         try {

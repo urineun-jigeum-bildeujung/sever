@@ -60,6 +60,10 @@ public enum MemberErrorCode implements ErrorCode {
     INVALID_PHONE_CODE(
             HttpStatus.BAD_REQUEST,
             "MEMBER_400_INVALID_PHONE_CODE", "인증번호가 유효하지 않습니다."
+    ),
+    NOT_FOUND_PRODUCT(
+            HttpStatus.NOT_FOUND,
+            "MEMBER_404_NOT_FOUND_PRODUCT", "존재하지 않는 상품입니다."
     );
 
 
