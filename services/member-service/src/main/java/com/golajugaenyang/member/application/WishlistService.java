@@ -8,6 +8,8 @@ import com.golajugaenyang.member.domain.repository.WishlistRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +26,17 @@ public class WishlistService {
         Optional<Wishlist> existing = wishlistRepo.findByMemberIdAndProductId(memberId, productId);
 
         if (existing.isPresent()) {
-            wishlistRepo.deleteById(existing.get().getId());
+            try {
+                wishlistRepo.deleteById(existing.get().getId());
+            } catch (EmptyResultDataAccessException e) {
+            }
             return false;
         }
-        wishlistRepo.save(new Wishlist(null, memberId, productId, null));
+
+        try {
+            wishlistRepo.save(new Wishlist(null, memberId, productId, null));
+        } catch (DataIntegrityViolationException e) {
+        }
         return true;
     }
 
