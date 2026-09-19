@@ -75,8 +75,8 @@ public class MemberService {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND));
 
-        memberRepo.save(member.delete());
-
         authClient.withdraw(new MemberWithdrawRequest(authId, accessToken));
+
+        memberRepo.save(member.delete());
     }
 }
