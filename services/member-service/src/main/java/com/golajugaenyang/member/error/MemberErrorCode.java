@@ -64,6 +64,10 @@ public enum MemberErrorCode implements ErrorCode {
     NOT_FOUND_PRODUCT(
             HttpStatus.NOT_FOUND,
             "MEMBER_404_NOT_FOUND_PRODUCT", "존재하지 않는 상품입니다."
+    ),
+    INVALID_IMAGE_EXTENSION(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_IMAGE_EXTENSION", "허용되지 않는 이미지 형식입니다."
     );
 
 

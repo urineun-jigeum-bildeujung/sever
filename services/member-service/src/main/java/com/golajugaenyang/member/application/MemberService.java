@@ -82,8 +82,12 @@ public class MemberService {
     }
 
     public ProfileImageUploadResponse issueProfileImageUploadUrl(Long memberId, String extension) {
-        PresignedUpload upload = presignedUploadIssuer.issue("member-" + memberId, extension);
-        return new ProfileImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
+        try {
+            PresignedUpload upload = presignedUploadIssuer.issue("member-" + memberId, extension);
+            return new ProfileImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.INVALID_IMAGE_EXTENSION);
+        }
     }
 
     public void withdraw(Long authId, Long memberId, String accessToken) {
