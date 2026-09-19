@@ -23,12 +23,15 @@ public class PresignedUploadIssuer {
     @Value("${storage.cloudfront-domain}")
     private String cloudfrontDomain;
 
+    @Value("${storage.prefix}")
+    private String prefix;
+
     /**
-     * prefix(예: "profiles", "reviews") 하위에 {ownerId}/{uuid}.{extension} 형태의 키로
-     * 업로드용 presigned PUT URL을 발급한다. 서명에 status=pending 태그 조건이 포함되므로,
-     * 클라이언트는 실제 PUT 요청에도 동일한 x-amz-tagging: status=pending 헤더를 보내야 한다.
+     * {storage.prefix}/{ownerId}/{uuid}.{extension} 형태의 키로 업로드용 presigned PUT URL을
+     * 발급한다. 서명에 status=pending 태그 조건이 포함되므로, 클라이언트는 실제 PUT 요청에도
+     * 동일한 x-amz-tagging: status=pending 헤더를 보내야 한다.
      */
-    public PresignedUpload issue(String prefix, String ownerId, String extension) {
+    public PresignedUpload issue(String ownerId, String extension) {
         String key = "%s/%s/%s.%s".formatted(prefix, ownerId, UUID.randomUUID(), extension);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
