@@ -13,6 +13,8 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, Long
 
     boolean existsByNickname(String nickname);
 
+    Optional<MemberJpaEntity> findByNickname(String nickname);
+
     Optional<MemberJpaEntity> findByAuthId(Long authId);
 
     Optional<MemberJpaEntity> findByAuthIdAndDeletedAtIsNull(Long authId);

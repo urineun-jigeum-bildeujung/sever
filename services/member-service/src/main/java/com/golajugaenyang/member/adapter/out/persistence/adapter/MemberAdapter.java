@@ -28,6 +28,12 @@ public class MemberAdapter implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> findByNickname(String nickname){
+        return memberJpaRepo.findByNickname(nickname)
+                .map(MemberMapper::toDomain);
+    }
+
+    @Override
     public Member save(Member member) {
         try {
             return MemberMapper.toDomain(memberJpaRepo.save(MemberMapper.toJpaEntity(member)));
