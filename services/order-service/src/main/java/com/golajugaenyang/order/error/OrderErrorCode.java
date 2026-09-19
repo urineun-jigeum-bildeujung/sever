@@ -59,7 +59,29 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.CONFLICT,
         "ORDER_409_NOT_CONFIRMABLE",
         "구매 확정 가능한 상태가 아닙니다."),
+    ORDER_NOT_CLAIMABLE(
+        HttpStatus.CONFLICT,
+        "ORDER_409_NOT_CLAIMABLE",
+        "반품/교환 신청 가능한 기간이 아닙니다."),
+    ORDER_ITEM_NOT_FOUND(
+        HttpStatus.NOT_FOUND
+        , "ORDER_404_ITEM_NOT_FOUND",
+        "요청한 주문 품목을 찾을 수 없습니다."),
+    CLAIM_ITEM_QUANTITY_EXCEEDED(
+        HttpStatus.CONFLICT,
+        "ORDER_409_CLAIM_ITEM_QUANTITY_EXCEEDED",
+        "신청 가능한 수량을 초과했습니다."
     ),
+    CLAIM_ALREADY_IN_PROGRESS(
+        HttpStatus.CONFLICT,
+        "ORDER_409_CLAIM_ALREADY_IN_PROGRESS",
+        "이미 처리 중인 반품/교환 신청이 있습니다."
+    ),
+    INVALID_CLAIM_TYPE(
+        HttpStatus.BAD_REQUEST,
+        "ORDER_400_INVALID_CLAIM_TYPE",
+        "유효하지 않은 신청 유형입니다."),
+
     ;
 
     private final HttpStatus httpStatus;
