@@ -48,4 +48,13 @@ public class OrderQueryController implements OrderQueryControllerDocs {
             : null;
         return ResponseEntity.ok(OrderListResponse.from(result, nextCursor));
     }
+
+    @Override
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDetailResponse> getOrderDetail(
+        @MemberId Long memberId, @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(OrderDetailResponse.from(
+            getOrderDetailUseCase.getOrderDetail(orderId, memberId)));
+    }
 }

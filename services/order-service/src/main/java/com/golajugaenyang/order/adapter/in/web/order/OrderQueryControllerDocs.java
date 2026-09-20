@@ -37,4 +37,21 @@ public interface OrderQueryControllerDocs {
         @Parameter(description = "페이지당 개수, 최대 50") @RequestParam(defaultValue = "20") @Max(50) @Positive int size
     );
 
+    @Operation(
+        summary = "주문 상세 조회",
+        description = """
+            주문/품목 상태, 배송지, 결제 정보, 품목별 반품·교환 신청 현황을 조회합니다.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = OrderDetailResponse.class))),
+        @ApiResponse(responseCode = "403", description = "본인의 주문이 아님",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE)),
+        @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+    })
+    ResponseEntity<OrderDetailResponse> getOrderDetail(
+        @MemberId Long memberId,
+        @PathVariable Long orderId);
 }
