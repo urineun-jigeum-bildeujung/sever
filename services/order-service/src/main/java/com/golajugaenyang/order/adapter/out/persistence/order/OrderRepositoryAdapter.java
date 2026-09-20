@@ -6,10 +6,13 @@ import com.golajugaenyang.order.application.order.port.out.dto.PurchaseRecord;
 import com.golajugaenyang.order.domain.order.Order;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -57,6 +60,18 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
                 p.orderId(), p.orderItemId(), p.orderStatus().name(),
                 p.confirmedAt(), p.itemStatus().name(), p.orderedAt()))
             .toList();
+    }
+
+    @Override
+    public List<Order> findByMemberIdWithCursor(
+        Long memberId, OffsetDateTime cursorOrderedAt, Long cursorOrderId, int limit) {
+
+        Pageable pageable = PageRequest.ofSize(limit);
+        if (cursorOrderedAt == null) {
+            return orderJpaRepository.findFirstPageByMemberId(memberId, pageable);
+        }
+        return orderJpaRepository.findNextPageByMemberIdAndCursor(
+            memberId, cursorOrderedAt, cursorOrderId, pageable);
     }
 
     @Override
