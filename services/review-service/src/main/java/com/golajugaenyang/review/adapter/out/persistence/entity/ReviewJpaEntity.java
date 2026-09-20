@@ -5,7 +5,6 @@ import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
 import com.golajugaenyang.review.domain.entity.enums.Sex;
-import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import jakarta.persistence.*;
 import java.util.Set;
 import lombok.*;
@@ -29,9 +28,8 @@ public class ReviewJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private double starRate;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UsagePeriod usagePeriod;
+    private int usagePeriod;
 
     private Instant deletedAt;
 

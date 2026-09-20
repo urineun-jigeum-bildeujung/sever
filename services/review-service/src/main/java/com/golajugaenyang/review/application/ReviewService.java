@@ -79,13 +79,6 @@ public class ReviewService {
 
         validatePurchaseConfirmed(memberId, request.productId());
 
-        UsagePeriod usagePeriod;
-        try {
-            usagePeriod = UsagePeriod.valueOf(request.usagePeriod());
-        } catch (IllegalArgumentException e) {
-            throw new AppException(ReviewErrorCode.INVALID_USAGE_PERIOD);
-        }
-
         PetSnapshotResponse petSnapshot;
         try {
             petSnapshot = memberClient.getPetSnapshot(memberId, request.petId());
@@ -98,7 +91,7 @@ public class ReviewService {
             imageUrls.forEach(fileUrl -> validateOwnImage(memberId, fileUrl));
         }
 
-        Review review = new Review(null, request.text(), request.starRate(), usagePeriod,
+        Review review = new Review(null, request.text(), request.starRate(), request.usagePeriod(),
                 null, null, null, memberId, request.productId(), request.petId(),
                 DataOrigin.REAL, false, null,
                 petSnapshot.name(), petSnapshot.species(), petSnapshot.breedId(), petSnapshot.age(),
@@ -249,7 +242,7 @@ public class ReviewService {
                 productSummary,
                 review.getPetId(),
                 (int) Math.round(review.getStarRate()),
-                review.getUsagePeriod().name(),
+                review.getUsagePeriod(),
                 answerValues,
                 goodPoints.isEmpty() ? null : goodPoints,
                 badPoints.isEmpty() ? null : badPoints,
@@ -304,7 +297,7 @@ public class ReviewService {
                                 review.getPetBreedSize().name(),
                                 review.getPetSpecies().name()),
                         (int) Math.round(review.getStarRate()),
-                        review.getUsagePeriod().getDisplayName(),
+                        formatUsagePeriod(review.getUsagePeriod()),
                         palatabilityByReviewId.get(review.getId()),
                         review.getText(),
                         imagesByReviewId.get(review.getId()),
@@ -356,6 +349,24 @@ public class ReviewService {
         } catch (IllegalArgumentException e) {
             throw new AppException(ReviewErrorCode.INVALID_FILTER);
         }
+    }
+
+    private static final int ONE_MONTH_DAYS = 30;
+    private static final int THREE_MONTHS_DAYS = 90;
+    private static final int SIX_MONTHS_DAYS = 180;
+    private static final int ONE_YEAR_DAYS = 365;
+
+    private String formatUsagePeriod(int usagePeriodDays) {
+        if (usagePeriodDays < ONE_MONTH_DAYS) {
+            return usagePeriodDays + "일";
+        }
+        if (usagePeriodDays < THREE_MONTHS_DAYS) {
+            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
+        }
+        if (usagePeriodDays < ONE_YEAR_DAYS) {
+            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
+        }
+        return (usagePeriodDays / ONE_YEAR_DAYS) + "년";
     }
 
     private String toPalatabilityDisplay(ReviewAnswer answer) {

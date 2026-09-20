@@ -4,7 +4,6 @@ import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
 import com.golajugaenyang.review.domain.entity.enums.Sex;
-import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import java.time.Instant;
 import java.util.Set;
 import lombok.Getter;
@@ -15,7 +14,7 @@ public class Review {
     private Long id;
     private String text;
     private double starRate;
-    private UsagePeriod usagePeriod;
+    private int usagePeriod;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -37,7 +36,7 @@ public class Review {
     private double petWeight;
     private Set<String> petHealthConcernCodes;
 
-    public Review(Long id, String text, double starRate, UsagePeriod usagePeriod,
+    public Review(Long id, String text, double starRate, int usagePeriod,
                   Instant createdAt, Instant updatedAt, Instant deletedAt, Long memberId,
                   Long productId, Long petId, DataOrigin dataOrigin, boolean isSynthetic, Long datasetRunId,
                   String petName, Species petSpecies, Long petBreedId, int petAge, Sex petSex,

@@ -8,6 +8,7 @@ import com.golajugaenyang.review.adapter.out.persistence.mapper.ReviewMapper;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
+import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import com.golajugaenyang.review.domain.repository.ReviewSearchCriteria;
 import com.golajugaenyang.review.domain.repository.ReviewSearchRepository;
 import com.querydsl.core.BooleanBuilder;
@@ -25,6 +26,11 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
 
     private static final int PUPPY_MAX_AGE = 1;
     private static final int SENIOR_MIN_AGE = 8;
+
+    private static final int ONE_MONTH_DAYS = 30;
+    private static final int THREE_MONTHS_DAYS = 90;
+    private static final int SIX_MONTHS_DAYS = 180;
+    private static final int ONE_YEAR_DAYS = 365;
 
     private final JPAQueryFactory queryFactory;
 
@@ -85,7 +91,7 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             where.and(reviewJpaEntity.petHealthConcernCodes.any().in(criteria.healthConcerns()));
         }
         if (criteria.usagePeriod() != null) {
-            where.and(reviewJpaEntity.usagePeriod.eq(criteria.usagePeriod()));
+            where.and(usagePeriodCondition(criteria.usagePeriod()));
         }
         if (criteria.personalizedSpecies() != null) {
             where.and(reviewJpaEntity.petSpecies.eq(criteria.personalizedSpecies()));
@@ -103,6 +109,19 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             case SENIOR -> condition.and(reviewJpaEntity.petAge.goe(SENIOR_MIN_AGE));
             case ADULT -> condition.and(reviewJpaEntity.petAge.goe(PUPPY_MAX_AGE))
                     .and(reviewJpaEntity.petAge.lt(SENIOR_MIN_AGE));
+        }
+        return condition;
+    }
+
+    private BooleanBuilder usagePeriodCondition(UsagePeriod usagePeriod) {
+        BooleanBuilder condition = new BooleanBuilder();
+        switch (usagePeriod) {
+            case ONE_MONTH -> condition.and(reviewJpaEntity.usagePeriod.lt(THREE_MONTHS_DAYS));
+            case THREE_MONTHS -> condition.and(reviewJpaEntity.usagePeriod.goe(THREE_MONTHS_DAYS))
+                    .and(reviewJpaEntity.usagePeriod.lt(SIX_MONTHS_DAYS));
+            case SIX_MONTHS -> condition.and(reviewJpaEntity.usagePeriod.goe(SIX_MONTHS_DAYS))
+                    .and(reviewJpaEntity.usagePeriod.lt(ONE_YEAR_DAYS));
+            case ONE_YEAR -> condition.and(reviewJpaEntity.usagePeriod.goe(ONE_YEAR_DAYS));
         }
         return condition;
     }
