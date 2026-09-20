@@ -12,4 +12,6 @@ public interface ReviewRepository {
     boolean existsById(Long reviewId);
 
     List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit);
+
+    List<Review> findByMemberId(Long memberId, int page, int size);
 }

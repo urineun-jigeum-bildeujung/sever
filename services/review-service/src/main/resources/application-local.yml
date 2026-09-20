@@ -10,6 +10,9 @@ member-service:
 order-service:
   url: http://${ORDER_SERVICE_HOST:localhost}:8084
 
+product-service:
+  url: http://${PRODUCT_SERVICE_HOST:localhost}:8083
+
 storage:
   bucket: ${STORAGE_BUCKET:petflow-dev-uploads}
   region: ${STORAGE_REGION:ap-northeast-2}

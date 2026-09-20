@@ -34,4 +34,11 @@ public class ReviewAdapter implements ReviewRepository {
     public List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit) {
         return reviewJpaRepo.findRecentReviewIdsWithImageByProductId(productId, PageRequest.of(0, limit));
     }
+
+    @Override
+    public List<Review> findByMemberId(Long memberId, int page, int size) {
+        return reviewJpaRepo.findByMemberIdOrderByCreatedAtDesc(memberId, PageRequest.of(page, size)).stream()
+                .map(ReviewMapper::toDomain)
+                .toList();
+    }
 }

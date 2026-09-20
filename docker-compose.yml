@@ -116,6 +116,7 @@ services:
       DB_HOST: postgres
       MEMBER_SERVICE_HOST: member-service
       ORDER_SERVICE_HOST: order-service
+      PRODUCT_SERVICE_HOST: product-service
 
   notification-service:
     build:

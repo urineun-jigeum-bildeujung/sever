@@ -18,4 +18,6 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, Long
         order by r.createdAt desc
         """)
     List<Long> findRecentReviewIdsWithImageByProductId(@Param("productId") Long productId, Pageable pageable);
+
+    List<ReviewJpaEntity> findByMemberIdOrderByCreatedAtDesc(Long memberId, Pageable pageable);
 }

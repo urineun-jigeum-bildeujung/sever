@@ -4,6 +4,7 @@ import com.golajugaenyang.common.security.annotation.MemberId;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewImageUploadRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
@@ -68,5 +69,14 @@ public class ReviewController {
             @PathVariable Long reviewId
     ) {
         return ResponseEntity.ok(reviewService.toggleRecommend(memberId, reviewId));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MyReviewListResponse> getMyReviews(
+            @MemberId Long memberId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(reviewService.getMyReviews(memberId, page, size));
     }
 }

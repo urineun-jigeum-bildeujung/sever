@@ -6,11 +6,15 @@ import com.golajugaenyang.common.storage.PresignedUpload;
 import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.adapter.out.client.OrderClient;
+import com.golajugaenyang.review.adapter.out.client.ProductClient;
+import com.golajugaenyang.review.adapter.out.client.dto.ProductInternalItemResponse;
+import com.golajugaenyang.review.adapter.out.client.dto.ProductInternalItemsResponse;
 import com.golajugaenyang.review.adapter.out.client.dto.PurchaseVerificationResponse;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.ReviewImage;
@@ -25,6 +29,7 @@ import com.golajugaenyang.review.domain.repository.ReviewRecommendRepository;
 import com.golajugaenyang.review.domain.repository.ReviewRepository;
 import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +53,7 @@ public class ReviewService {
     private final ReviewRecommendRepository reviewRecommendRepo;
     private final MemberClient memberClient;
     private final OrderClient orderClient;
+    private final ProductClient productClient;
     private final PresignedUploadIssuer presignedUploadIssuer;
     private final ObjectTagConfirmer objectTagConfirmer;
 
@@ -145,6 +151,39 @@ public class ReviewService {
 
         long likeCount = reviewRecommendRepo.countByReviewId(reviewId);
         return new ReviewRecommendResponse(liked, (int) likeCount);
+    }
+
+    public MyReviewListResponse getMyReviews(Long memberId, int page, int size) {
+        List<Review> fetched = reviewRepo.findByMemberId(memberId, page, size + 1);
+        boolean hasNext = fetched.size() > size;
+        List<Review> reviews = hasNext ? fetched.subList(0, size) : fetched;
+
+        if (reviews.isEmpty()) {
+            return new MyReviewListResponse(List.of(), false);
+        }
+
+        List<Long> productIds = reviews.stream().map(Review::getProductId).distinct().toList();
+        ProductInternalItemsResponse products = productClient.getProducts(productIds);
+        Map<Long, ProductInternalItemResponse> productById = products.items().stream()
+                .collect(Collectors.toMap(ProductInternalItemResponse::productId, item -> item));
+
+        List<MyReviewListResponse.Item> items = reviews.stream()
+                .map(review -> toMyReviewItem(review, productById.get(review.getProductId())))
+                .toList();
+
+        return new MyReviewListResponse(items, hasNext);
+    }
+
+    private MyReviewListResponse.Item toMyReviewItem(Review review, ProductInternalItemResponse product) {
+        return new MyReviewListResponse.Item(
+                review.getId(),
+                review.getProductId(),
+                product != null ? product.productName() : "",
+                product != null ? product.thumbnailUrl() : null,
+                (int) Math.round(review.getStarRate()),
+                review.getText(),
+                review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
+        );
     }
 
     private void validatePurchaseConfirmed(Long memberId, Long productId) {
