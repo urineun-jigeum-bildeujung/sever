@@ -1,10 +1,14 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
+import com.golajugaenyang.common.storage.PresignedUpload;
+import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.MemberMyProfileResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.ProfileImageUploadResponse;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
 import com.golajugaenyang.member.adapter.out.client.dto.*;
 import com.golajugaenyang.member.domain.entity.Member;
@@ -13,6 +17,9 @@ import com.golajugaenyang.member.error.MemberErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +29,8 @@ public class MemberService {
     private final NicknameGenerator nicknameGenerator;
     private final AuthClient authClient;
     private final MemberSignupWriter memberSignupWriter;
+    private final PresignedUploadIssuer presignedUploadIssuer;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     public String generateUniqueNickname() {
         String nickname;
@@ -64,11 +73,41 @@ public class MemberService {
                 member.getPhone(), member.getProfileImage(), response.email());
     }
 
+    @Transactional
     public void updateProfile(Long memberId, MemberProfileUpdateRequest request) {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
 
+        if (request.image() != null) {
+            confirmOwnImage(memberId, request.image());
+        }
+
         memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
+    }
+
+    public ProfileImageUploadResponse issueProfileImageUploadUrl(Long memberId, String extension) {
+        try {
+            PresignedUpload upload = presignedUploadIssuer.issue("member-" + memberId, extension);
+            return new ProfileImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.INVALID_IMAGE_EXTENSION);
+        }
+    }
+
+    private void confirmOwnImage(Long memberId, String fileUrl) {
+        String ownerId = "member-" + memberId;
+        try {
+            objectTagConfirmer.validateOwnership(fileUrl, ownerId);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.FORBIDDEN_IMAGE);
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                objectTagConfirmer.confirm(fileUrl, ownerId);
+            }
+        });
     }
 
     public void withdraw(Long authId, Long memberId, String accessToken) {

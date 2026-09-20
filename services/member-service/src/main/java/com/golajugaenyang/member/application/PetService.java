@@ -3,6 +3,7 @@ package com.golajugaenyang.member.application;
 import com.golajugaenyang.common.core.domain.AllergenCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.AllergyOption;
@@ -27,6 +28,8 @@ import com.golajugaenyang.member.error.MemberErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +41,7 @@ public class PetService {
     private final ConcernMasterRepository concernMasterRepo;
     private final BreedMasterRepository breedMasterRepo;
     private final MemberRepository memberRepo;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     @Transactional
     public Pet registerPet(Long memberId, PetRegisterRequest request) {
@@ -51,6 +55,10 @@ public class PetService {
 
         List<AllergenCode> allergyCodes = request.allergies() == null ? List.of() : request.allergies();
         validateAllergies(allergyCodes, request.species());
+
+        if (request.image() != null) {
+            confirmOwnImage(memberId, request.image());
+        }
 
         boolean isDefault = !petRepo.existsByMemberId(memberId);
 
@@ -86,6 +94,10 @@ public class PetService {
 
         if (!pet.getMemberId().equals(memberId)) {
             throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        if (request.image() != null) {
+            confirmOwnImage(memberId, request.image());
         }
 
         Species finalSpecies = request.species() != null ? request.species() : pet.getSpecies();
@@ -148,6 +160,22 @@ public class PetService {
                     .findFirst()
                     .ifPresent(nextDefault -> petRepo.save(nextDefault.withIsDefault(true)));
         }
+    }
+
+    private void confirmOwnImage(Long memberId, String fileUrl) {
+        String ownerId = "member-" + memberId;
+        try {
+            objectTagConfirmer.validateOwnership(fileUrl, ownerId);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.FORBIDDEN_IMAGE);
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                objectTagConfirmer.confirm(fileUrl, ownerId);
+            }
+        });
     }
 
     private void validateBreed(Long breedId, Species species) {

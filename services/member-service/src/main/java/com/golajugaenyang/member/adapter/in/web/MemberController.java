@@ -5,6 +5,7 @@ import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateR
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PetUpdateRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
+import com.golajugaenyang.member.adapter.in.web.dto.request.ProfileImageUploadRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.*;
 import com.golajugaenyang.member.adapter.out.client.dto.TokenPairResponse;
@@ -96,6 +97,15 @@ public class MemberController {
         Long memberId = memberService.getMemberIdByAuthId(authId);
         memberService.registerPhone(memberId, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/me/profile-image/presigned-url")
+    public ResponseEntity<ProfileImageUploadResponse> issueProfileImageUploadUrl(
+            @AuthId Long authId,
+            @Valid @RequestBody ProfileImageUploadRequest request) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        ProfileImageUploadResponse response = memberService.issueProfileImageUploadUrl(memberId, request.extension());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
