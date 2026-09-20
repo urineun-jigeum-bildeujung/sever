@@ -96,7 +96,7 @@ class PetServiceTest {
 
         petService.registerPet(memberId, request);
 
-        verify(objectTagConfirmer).confirm(fileUrl);
+        verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }
 
     @Test
@@ -119,6 +119,6 @@ class PetServiceTest {
 
         petService.updatePet(memberId, petId, request);
 
-        verify(objectTagConfirmer).confirm(fileUrl);
+        verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }
 }

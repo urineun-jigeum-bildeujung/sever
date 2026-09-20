@@ -68,6 +68,10 @@ public enum MemberErrorCode implements ErrorCode {
     INVALID_IMAGE_EXTENSION(
             HttpStatus.BAD_REQUEST,
             "MEMBER_400_INVALID_IMAGE_EXTENSION", "허용되지 않는 이미지 형식입니다."
+    ),
+    FORBIDDEN_IMAGE(
+            HttpStatus.FORBIDDEN,
+            "MEMBER_403_FORBIDDEN_IMAGE", "본인이 업로드한 이미지만 사용할 수 있습니다."
     );
 
 

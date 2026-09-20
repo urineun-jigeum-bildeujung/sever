@@ -74,11 +74,11 @@ public class MemberService {
         Member member = memberRepo.findById(memberId)
                 .orElseThrow(()-> new AppException(MemberErrorCode.NOT_FOUND));
 
-        memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
-
         if (request.image() != null) {
-            objectTagConfirmer.confirm(request.image());
+            confirmOwnImage(memberId, request.image());
         }
+
+        memberRepo.save(member.update(request.nickname(), request.name(), request.birth(), request.image()));
     }
 
     public ProfileImageUploadResponse issueProfileImageUploadUrl(Long memberId, String extension) {
@@ -87,6 +87,14 @@ public class MemberService {
             return new ProfileImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
         } catch (IllegalArgumentException e) {
             throw new AppException(MemberErrorCode.INVALID_IMAGE_EXTENSION);
+        }
+    }
+
+    private void confirmOwnImage(Long memberId, String fileUrl) {
+        try {
+            objectTagConfirmer.confirm(fileUrl, "member-" + memberId);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.FORBIDDEN_IMAGE);
         }
     }
 

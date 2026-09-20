@@ -54,6 +54,10 @@ public class PetService {
         List<AllergenCode> allergyCodes = request.allergies() == null ? List.of() : request.allergies();
         validateAllergies(allergyCodes, request.species());
 
+        if (request.image() != null) {
+            confirmOwnImage(memberId, request.image());
+        }
+
         boolean isDefault = !petRepo.existsByMemberId(memberId);
 
         Pet savedPet = petRepo.save(
@@ -78,10 +82,6 @@ public class PetService {
             petAllergyRepo.saveAll(petAllergies);
         }
 
-        if (request.image() != null) {
-            objectTagConfirmer.confirm(request.image());
-        }
-
         return savedPet;
     }
 
@@ -92,6 +92,10 @@ public class PetService {
 
         if (!pet.getMemberId().equals(memberId)) {
             throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        if (request.image() != null) {
+            confirmOwnImage(memberId, request.image());
         }
 
         Species finalSpecies = request.species() != null ? request.species() : pet.getSpecies();
@@ -133,10 +137,6 @@ public class PetService {
                 request.age(), request.birthDate(), request.size(), request.weight(), request.bcs(),
                 request.image(), request.breedId());
 
-        if (request.image() != null) {
-            objectTagConfirmer.confirm(request.image());
-        }
-
         return petRepo.save(updatedPet);
     }
 
@@ -157,6 +157,14 @@ public class PetService {
             petRepo.findByMemberId(memberId).stream()
                     .findFirst()
                     .ifPresent(nextDefault -> petRepo.save(nextDefault.withIsDefault(true)));
+        }
+    }
+
+    private void confirmOwnImage(Long memberId, String fileUrl) {
+        try {
+            objectTagConfirmer.confirm(fileUrl, "member-" + memberId);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(MemberErrorCode.FORBIDDEN_IMAGE);
         }
     }
 

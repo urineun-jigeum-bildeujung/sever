@@ -3,6 +3,7 @@ package com.golajugaenyang.member.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -88,7 +89,7 @@ class MemberServiceTest {
 
         memberService.updateProfile(memberId, request);
 
-        verify(objectTagConfirmer).confirm(fileUrl);
+        verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }
 
     @Test
@@ -105,6 +106,29 @@ class MemberServiceTest {
 
         memberService.updateProfile(memberId, request);
 
-        verify(objectTagConfirmer, never()).confirm(any());
+        verify(objectTagConfirmer, never()).confirm(any(), any());
+    }
+
+    @Test
+    @DisplayName("본인 소유가 아닌 이미지면 FORBIDDEN_IMAGE로 변환하고 저장하지 않는다.")
+    void updateProfile_translates_ownership_mismatch_and_skips_save() {
+        Long memberId = 1L;
+        String fileUrl = "https://image.leechs.shop/profiles/member-99/uuid.jpg";
+        Member member = new Member(memberId, "기존닉네임", null, null, null,
+            null, null, null, null, null, 10L);
+
+        when(memberRepo.findById(memberId)).thenReturn(Optional.of(member));
+        doThrow(new IllegalArgumentException("이 파일에 대한 권한이 없습니다"))
+            .when(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
+
+        MemberProfileUpdateRequest request = new MemberProfileUpdateRequest(
+            "새닉네임", "홍길동", LocalDate.of(1998, 1, 1), fileUrl);
+
+        assertThatThrownBy(() -> memberService.updateProfile(memberId, request))
+            .isInstanceOf(AppException.class)
+            .extracting(e -> ((AppException) e).getErrorCode())
+            .isEqualTo(MemberErrorCode.FORBIDDEN_IMAGE);
+
+        verify(memberRepo, never()).save(any());
     }
 }
