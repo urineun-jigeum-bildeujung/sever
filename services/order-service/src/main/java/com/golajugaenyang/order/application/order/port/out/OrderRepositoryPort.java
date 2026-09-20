@@ -2,6 +2,7 @@ package com.golajugaenyang.order.application.order.port.out;
 
 import com.golajugaenyang.order.application.order.port.out.dto.PurchaseRecord;
 import com.golajugaenyang.order.domain.order.Order;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface OrderRepositoryPort {
@@ -17,6 +18,9 @@ public interface OrderRepositoryPort {
     Order findByOrderItemIdOrNull(Long orderItemId);
 
     List<PurchaseRecord> findPurchases(Long memberId, Long productId);
+
+    List<Order> findByMemberIdWithCursor(
+        Long memberId, OffsetDateTime cursorOrderedAt, Long cursorOrderId, int limit);
 
     Order save(Order order);
 

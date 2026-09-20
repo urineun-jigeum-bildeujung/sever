@@ -71,6 +71,9 @@ public class Order extends BaseTimeEntity {
     @Column(name = "paid_at")
     private OffsetDateTime paidAt;
 
+    @Column(name = "payment_method", length = 30)
+    private String paymentMethod;
+
     @Column(name = "delivered_at")
     private OffsetDateTime deliveredAt;
 
@@ -181,12 +184,13 @@ public class Order extends BaseTimeEntity {
         }
     }
 
-    public void markPaid(OffsetDateTime paidAt) {
+    public void markPaid(OffsetDateTime paidAt, String paymentMethod) {
         if (!this.orderStatus.canTransitTo(OrderStatus.PAID)) {
             return;
         }
         this.orderStatus = OrderStatus.PAID;
         this.paidAt = paidAt;
+        this.paymentMethod = paymentMethod;
     }
 
     public void cancelDueToPaymentFailure() {
