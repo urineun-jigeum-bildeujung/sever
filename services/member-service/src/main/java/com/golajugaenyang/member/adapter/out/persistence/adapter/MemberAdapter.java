@@ -11,6 +11,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -31,6 +32,13 @@ public class MemberAdapter implements MemberRepository {
     public Optional<Member> findByNickname(String nickname){
         return memberJpaRepo.findByNickname(nickname)
                 .map(MemberMapper::toDomain);
+    }
+
+    @Override
+    public List<Member> findByIdIn(List<Long> memberIds){
+        return memberJpaRepo.findByIdInAndDeletedAtIsNull(memberIds).stream()
+                .map(MemberMapper::toDomain)
+                .toList();
     }
 
     @Override

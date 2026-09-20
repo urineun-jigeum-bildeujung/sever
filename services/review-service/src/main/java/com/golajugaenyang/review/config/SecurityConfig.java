@@ -27,7 +27,7 @@ public class SecurityConfig {
                 // 순서 중요: /me가 더 뒤의 GET /api/v1/reviews/* 패턴에도 매칭되므로,
                 // 로그인이 필요한 /me를 먼저 명시해서 우선순위를 갖도록 함
                 .requestMatchers("/internal/**", "/actuator/**").permitAll()
-                .requestMatchers("/api/v1/reviews/products/*/photos/**").permitAll()
+                .requestMatchers("/api/v1/reviews/products/**").permitAll()
                 .requestMatchers("/api/v1/reviews/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
                 .anyRequest().authenticated());

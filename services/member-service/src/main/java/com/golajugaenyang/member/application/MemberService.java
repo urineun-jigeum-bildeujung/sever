@@ -8,6 +8,8 @@ import com.golajugaenyang.member.adapter.in.web.dto.request.MemberProfileUpdateR
 import com.golajugaenyang.member.adapter.in.web.dto.request.PhoneRegisterRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.request.SignupRequest;
 import com.golajugaenyang.member.adapter.in.web.dto.response.MemberMyProfileResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.NicknameInternalItemResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.NicknameInternalItemsResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.ProfileImageUploadResponse;
 import com.golajugaenyang.member.adapter.out.client.AuthClient;
 import com.golajugaenyang.member.adapter.out.client.dto.*;
@@ -48,6 +50,13 @@ public class MemberService {
     public Long getMemberIdByAuthId(Long authId){
         return memberRepo.findByAuthId(authId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND)).getId();
+    }
+
+    public NicknameInternalItemsResponse getNicknames(List<Long> memberIds) {
+        List<NicknameInternalItemResponse> items = memberRepo.findByIdIn(memberIds).stream()
+                .map(member -> new NicknameInternalItemResponse(member.getId(), member.getNickname()))
+                .toList();
+        return new NicknameInternalItemsResponse(items);
     }
 
     public void registerPhone(Long memberId, PhoneRegisterRequest request) {

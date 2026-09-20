@@ -41,6 +41,13 @@ public class ReviewImageAdapter implements ReviewImageRepository {
     }
 
     @Override
+    public List<ReviewImage> findByReviewIdIn(List<Long> reviewIds) {
+        return reviewImageJpaRepo.findByReviewIdInOrderBySortOrderAsc(reviewIds).stream()
+                .map(ReviewImageMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<ReviewImage> findByProductId(Long productId, int page, int size) {
         return reviewImageJpaRepo.findByProductId(productId, PageRequest.of(page, size)).stream()
                 .map(ReviewImageMapper::toDomain)

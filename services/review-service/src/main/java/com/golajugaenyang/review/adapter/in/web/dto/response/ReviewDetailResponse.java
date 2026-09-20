@@ -9,7 +9,7 @@ public record ReviewDetailResponse(
         Product product,
         Long petId,
         int rating,
-        int usagePeriod,
+        String usagePeriod,
         List<AnswerValue> answerValues,
         List<String> goodPoints,
         List<String> badPoints,

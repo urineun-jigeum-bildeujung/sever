@@ -20,7 +20,16 @@ public class ReviewMapper {
                 jpaEntity.getPetId(),
                 jpaEntity.getDataOrigin(),
                 jpaEntity.isSynthetic(),
-                jpaEntity.getDatasetRunId()
+                jpaEntity.getDatasetRunId(),
+                jpaEntity.getPetName(),
+                jpaEntity.getPetSpecies(),
+                jpaEntity.getPetBreedId(),
+                jpaEntity.getPetAge(),
+                jpaEntity.getPetSex(),
+                jpaEntity.isPetNeutered(),
+                jpaEntity.getPetBreedSize(),
+                jpaEntity.getPetWeight(),
+                jpaEntity.getPetHealthConcernCodes()
         );
     }
 
@@ -38,6 +47,15 @@ public class ReviewMapper {
                 .dataOrigin(domain.getDataOrigin())
                 .isSynthetic(domain.isSynthetic())
                 .datasetRunId(domain.getDatasetRunId())
+                .petName(domain.getPetName())
+                .petSpecies(domain.getPetSpecies())
+                .petBreedId(domain.getPetBreedId())
+                .petAge(domain.getPetAge())
+                .petSex(domain.getPetSex())
+                .petNeutered(domain.isPetNeutered())
+                .petBreedSize(domain.getPetBreedSize())
+                .petWeight(domain.getPetWeight())
+                .petHealthConcernCodes(domain.getPetHealthConcernCodes())
                 .build();
     }
 }

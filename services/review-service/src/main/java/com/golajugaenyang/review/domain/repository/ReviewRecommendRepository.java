@@ -1,6 +1,8 @@
 package com.golajugaenyang.review.domain.repository;
 
 import com.golajugaenyang.review.domain.entity.ReviewRecommend;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface ReviewRecommendRepository {
@@ -12,4 +14,6 @@ public interface ReviewRecommendRepository {
     void deleteById(Long id);
 
     long countByReviewId(Long reviewId);
+
+    Map<Long, Long> countByReviewIdIn(List<Long> reviewIds);
 }

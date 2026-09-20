@@ -29,6 +29,10 @@ public enum ReviewErrorCode implements ErrorCode {
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_ANSWER", "해당 질문에 허용되지 않는 답변입니다."
     ),
+    INVALID_USAGE_PERIOD(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_INVALID_USAGE_PERIOD", "존재하지 않는 사용기간 옵션입니다."
+    ),
     INVALID_IMAGE_EXTENSION(
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_IMAGE_EXTENSION", "허용되지 않는 이미지 확장자입니다."
@@ -40,6 +44,10 @@ public enum ReviewErrorCode implements ErrorCode {
     PURCHASE_NOT_CONFIRMED(
             HttpStatus.FORBIDDEN,
             "REVIEW_403_PURCHASE_NOT_CONFIRMED", "구매 확정된 상품에 대해서만 리뷰를 작성할 수 있습니다."
+    ),
+    INVALID_FILTER(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_INVALID_FILTER", "유효하지 않은 필터 값입니다."
     );
 
     private final HttpStatus httpStatus;

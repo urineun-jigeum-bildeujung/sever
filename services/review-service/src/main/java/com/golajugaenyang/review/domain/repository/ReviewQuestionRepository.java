@@ -8,4 +8,6 @@ public interface ReviewQuestionRepository {
     List<ReviewQuestion> saveAll(List<ReviewQuestion> questions);
 
     List<ReviewQuestion> findByReviewId(Long reviewId);
+
+    List<ReviewQuestion> findByReviewIdIn(List<Long> reviewIds);
 }

@@ -7,12 +7,14 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhoto
 import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewDetailResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewFilterListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -88,5 +90,29 @@ public class ReviewController {
             @RequestHeader(value = "X-Member-Id", required = false) Long memberId
     ) {
         return ResponseEntity.ok(reviewService.getReviewDetail(reviewId, memberId));
+    }
+
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ReviewFilterListResponse> getProductReviews(
+            @PathVariable Long productId,
+            @RequestParam(required = false) String species,
+            @RequestParam(required = false) Long breedId,
+            @RequestParam(required = false) String ageGroup,
+            @RequestParam(required = false) Boolean neutered,
+            @RequestParam(required = false) Integer weightMin,
+            @RequestParam(required = false) Integer weightMax,
+            @RequestParam(required = false) List<String> healthConcerns,
+            @RequestParam(required = false) String usagePeriod,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean personalized,
+            @RequestParam(required = false) Long petId,
+            @RequestHeader(value = "X-Member-Id", required = false) Long memberId
+    ) {
+        ReviewFilterListResponse response = reviewService.getProductReviews(
+                productId, species, breedId, ageGroup, neutered, weightMin, weightMax,
+                healthConcerns, usagePeriod, sort, page, size, personalized, petId, memberId);
+        return ResponseEntity.ok(response);
     }
 }
