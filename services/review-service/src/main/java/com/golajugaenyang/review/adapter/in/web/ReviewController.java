@@ -6,6 +6,7 @@ import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewImageUploadReq
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -47,5 +49,14 @@ public class ReviewController {
     @GetMapping("/products/{productId}/photos/featured")
     public ResponseEntity<FeaturedReviewPhotosResponse> getFeaturedPhotos(@PathVariable Long productId) {
         return ResponseEntity.ok(reviewService.getFeaturedPhotos(productId));
+    }
+
+    @GetMapping("/products/{productId}/photos")
+    public ResponseEntity<ReviewPhotosResponse> getPhotos(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size
+    ) {
+        return ResponseEntity.ok(reviewService.getPhotos(productId, page, size));
     }
 }

@@ -7,6 +7,7 @@ import com.golajugaenyang.review.domain.entity.ReviewImage;
 import com.golajugaenyang.review.domain.repository.ReviewImageRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,5 +31,17 @@ public class ReviewImageAdapter implements ReviewImageRepository {
         return reviewImageJpaRepo.findByReviewIdInAndSortOrder(reviewIds, 0).stream()
                 .map(ReviewImageMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<ReviewImage> findByProductId(Long productId, int page, int size) {
+        return reviewImageJpaRepo.findByProductId(productId, PageRequest.of(page, size)).stream()
+                .map(ReviewImageMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countByProductId(Long productId) {
+        return reviewImageJpaRepo.countByProductId(productId);
     }
 }

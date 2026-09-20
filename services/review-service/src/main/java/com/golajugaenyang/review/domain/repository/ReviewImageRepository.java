@@ -8,4 +8,8 @@ public interface ReviewImageRepository {
     List<ReviewImage> saveAll(List<ReviewImage> images);
 
     List<ReviewImage> findRepresentativeImagesByReviewIds(List<Long> reviewIds);
+
+    List<ReviewImage> findByProductId(Long productId, int page, int size);
+
+    long countByProductId(Long productId);
 }

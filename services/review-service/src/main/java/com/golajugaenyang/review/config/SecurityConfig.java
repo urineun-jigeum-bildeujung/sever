@@ -23,7 +23,7 @@ public class SecurityConfig {
             .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HeaderAuthenticationEntryPoint()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/reviews/products/*/photos/featured", "/internal/**", "/actuator/**")
+                .requestMatchers("/api/v1/reviews/products/*/photos/**", "/internal/**", "/actuator/**")
                 .permitAll()
                 .anyRequest().authenticated());
         return http.build();

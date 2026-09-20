@@ -7,6 +7,7 @@ import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.adapter.out.client.OrderClient;
 import com.golajugaenyang.review.adapter.out.client.dto.PurchaseVerificationResponse;
@@ -102,6 +103,15 @@ public class ReviewService {
                 .toList();
 
         return new FeaturedReviewPhotosResponse(photos);
+    }
+
+    public ReviewPhotosResponse getPhotos(Long productId, int page, int size) {
+        long totalCount = reviewImageRepo.countByProductId(productId);
+        List<ReviewPhotosResponse.Photo> photos = reviewImageRepo.findByProductId(productId, page, size).stream()
+                .map(image -> new ReviewPhotosResponse.Photo(image.getReviewId(), image.getImageUrl()))
+                .toList();
+        boolean hasNext = (long) (page + 1) * size < totalCount;
+        return new ReviewPhotosResponse((int) totalCount, photos, hasNext);
     }
 
     private void validatePurchaseConfirmed(Long memberId, Long productId) {
