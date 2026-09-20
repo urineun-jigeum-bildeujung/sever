@@ -9,6 +9,8 @@ public interface ReviewImageRepository {
 
     List<ReviewImage> findRepresentativeImagesByReviewIds(List<Long> reviewIds);
 
+    List<ReviewImage> findByReviewId(Long reviewId);
+
     List<ReviewImage> findByProductId(Long productId, int page, int size);
 
     long countByProductId(Long productId);

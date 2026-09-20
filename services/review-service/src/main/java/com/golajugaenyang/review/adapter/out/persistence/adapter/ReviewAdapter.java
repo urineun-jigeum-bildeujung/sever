@@ -5,6 +5,7 @@ import com.golajugaenyang.review.adapter.out.persistence.repository.ReviewJpaRep
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.repository.ReviewRepository;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,11 @@ public class ReviewAdapter implements ReviewRepository {
     @Override
     public boolean existsById(Long reviewId) {
         return reviewJpaRepo.existsById(reviewId);
+    }
+
+    @Override
+    public Optional<Review> findById(Long reviewId) {
+        return reviewJpaRepo.findById(reviewId).map(ReviewMapper::toDomain);
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewDetailResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
@@ -184,6 +185,65 @@ public class ReviewService {
                 review.getText(),
                 review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
         );
+    }
+
+    public ReviewDetailResponse getReviewDetail(Long reviewId, Long memberId) {
+        Review review = reviewRepo.findById(reviewId)
+                .orElseThrow(() -> new AppException(ReviewErrorCode.NOT_FOUND));
+
+        boolean isMine = memberId != null && memberId.equals(review.getMemberId());
+
+        ProductInternalItemsResponse products = productClient.getProducts(List.of(review.getProductId()));
+        ProductInternalItemResponse product = products.items().stream().findFirst().orElse(null);
+        ReviewDetailResponse.Product productSummary = new ReviewDetailResponse.Product(
+                review.getProductId(),
+                product != null ? product.productName() : "",
+                product != null ? product.thumbnailUrl() : null
+        );
+
+        List<ReviewQuestion> questions = reviewQuestionRepo.findByReviewId(reviewId);
+        List<ReviewDetailResponse.AnswerValue> answerValues = questions.stream()
+                .map(q -> new ReviewDetailResponse.AnswerValue(
+                        q.getReviewQuestionType().name(), q.getReviewAnswer().name()))
+                .toList();
+
+        List<String> goodPoints = questions.stream()
+                .filter(q -> q.getReviewAnswer() == ReviewAnswer.POSITIVE)
+                .map(q -> toPointPhrase(q.getReviewQuestionType(), q.getReviewAnswer()))
+                .toList();
+        List<String> badPoints = questions.stream()
+                .filter(q -> q.getReviewAnswer() != ReviewAnswer.POSITIVE)
+                .map(q -> toPointPhrase(q.getReviewQuestionType(), q.getReviewAnswer()))
+                .toList();
+
+        List<String> images = reviewImageRepo.findByReviewId(reviewId).stream()
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        return new ReviewDetailResponse(
+                review.getId(),
+                isMine,
+                productSummary,
+                review.getPetId(),
+                (int) Math.round(review.getStarRate()),
+                review.getUsagePeriod(),
+                answerValues,
+                goodPoints.isEmpty() ? null : goodPoints,
+                badPoints.isEmpty() ? null : badPoints,
+                null,
+                review.getText(),
+                images.isEmpty() ? null : images,
+                review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
+        );
+    }
+
+    private String toPointPhrase(ReviewQuestionType type, ReviewAnswer answer) {
+        String suffix = switch (answer) {
+            case POSITIVE -> "좋음";
+            case NEUTRAL -> "보통";
+            case NEGATIVE -> "나쁨";
+        };
+        return type.getDisplayName() + " " + suffix;
     }
 
     private void validatePurchaseConfirmed(Long memberId, Long productId) {

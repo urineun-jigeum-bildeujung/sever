@@ -2,6 +2,7 @@ package com.golajugaenyang.review.domain.repository;
 
 import com.golajugaenyang.review.domain.entity.Review;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository {
 
@@ -10,6 +11,8 @@ public interface ReviewRepository {
     boolean existsByMemberIdAndProductId(Long memberId, Long productId);
 
     boolean existsById(Long reviewId);
+
+    Optional<Review> findById(Long reviewId);
 
     List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit);
 

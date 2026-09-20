@@ -6,6 +6,7 @@ import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewImageUploadReq
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewDetailResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,5 +80,13 @@ public class ReviewController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(reviewService.getMyReviews(memberId, page, size));
+    }
+
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewDetailResponse> getReviewDetail(
+            @PathVariable Long reviewId,
+            @RequestHeader(value = "X-Member-Id", required = false) Long memberId
+    ) {
+        return ResponseEntity.ok(reviewService.getReviewDetail(reviewId, memberId));
     }
 }

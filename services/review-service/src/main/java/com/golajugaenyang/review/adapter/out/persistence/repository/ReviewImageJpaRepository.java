@@ -11,6 +11,8 @@ public interface ReviewImageJpaRepository extends JpaRepository<ReviewImageJpaEn
 
     List<ReviewImageJpaEntity> findByReviewIdInAndSortOrder(List<Long> reviewIds, int sortOrder);
 
+    List<ReviewImageJpaEntity> findByReviewIdOrderBySortOrderAsc(Long reviewId);
+
     @Query("""
         select ri from ReviewImageJpaEntity ri, ReviewJpaEntity r
         where ri.reviewId = r.id and r.productId = :productId

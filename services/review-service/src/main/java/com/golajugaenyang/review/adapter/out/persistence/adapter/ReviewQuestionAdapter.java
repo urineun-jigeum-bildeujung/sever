@@ -24,4 +24,11 @@ public class ReviewQuestionAdapter implements ReviewQuestionRepository {
                 .map(ReviewQuestionMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<ReviewQuestion> findByReviewId(Long reviewId) {
+        return reviewQuestionJpaRepo.findByReviewId(reviewId).stream()
+                .map(ReviewQuestionMapper::toDomain)
+                .toList();
+    }
 }
