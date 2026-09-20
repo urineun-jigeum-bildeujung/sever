@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ReviewErrorCode implements ErrorCode {
 
+    NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "REVIEW_404_NOT_FOUND", "리뷰를 찾을 수 없습니다."
+    ),
     INVALID_PET(
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_PET", "존재하지 않거나 본인 소유가 아닌 반려동물입니다."

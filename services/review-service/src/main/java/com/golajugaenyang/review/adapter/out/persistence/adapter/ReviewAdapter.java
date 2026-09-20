@@ -26,6 +26,11 @@ public class ReviewAdapter implements ReviewRepository {
     }
 
     @Override
+    public boolean existsById(Long reviewId) {
+        return reviewJpaRepo.existsById(reviewId);
+    }
+
+    @Override
     public List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit) {
         return reviewJpaRepo.findRecentReviewIdsWithImageByProductId(productId, PageRequest.of(0, limit));
     }

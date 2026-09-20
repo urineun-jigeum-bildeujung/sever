@@ -7,6 +7,7 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhoto
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,5 +60,13 @@ public class ReviewController {
             @RequestParam(defaultValue = "30") int size
     ) {
         return ResponseEntity.ok(reviewService.getPhotos(productId, page, size));
+    }
+
+    @PatchMapping("/{reviewId}/recommend")
+    public ResponseEntity<ReviewRecommendResponse> toggleRecommend(
+            @MemberId Long memberId,
+            @PathVariable Long reviewId
+    ) {
+        return ResponseEntity.ok(reviewService.toggleRecommend(memberId, reviewId));
     }
 }

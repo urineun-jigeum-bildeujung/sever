@@ -8,25 +8,31 @@ import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.adapter.out.client.OrderClient;
 import com.golajugaenyang.review.adapter.out.client.dto.PurchaseVerificationResponse;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.ReviewImage;
 import com.golajugaenyang.review.domain.entity.ReviewQuestion;
+import com.golajugaenyang.review.domain.entity.ReviewRecommend;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
 import com.golajugaenyang.review.domain.entity.enums.ReviewAnswer;
 import com.golajugaenyang.review.domain.entity.enums.ReviewQuestionType;
 import com.golajugaenyang.review.domain.repository.ReviewImageRepository;
 import com.golajugaenyang.review.domain.repository.ReviewQuestionRepository;
+import com.golajugaenyang.review.domain.repository.ReviewRecommendRepository;
 import com.golajugaenyang.review.domain.repository.ReviewRepository;
 import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -39,6 +45,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepo;
     private final ReviewQuestionRepository reviewQuestionRepo;
     private final ReviewImageRepository reviewImageRepo;
+    private final ReviewRecommendRepository reviewRecommendRepo;
     private final MemberClient memberClient;
     private final OrderClient orderClient;
     private final PresignedUploadIssuer presignedUploadIssuer;
@@ -112,6 +119,32 @@ public class ReviewService {
                 .toList();
         boolean hasNext = (long) (page + 1) * size < totalCount;
         return new ReviewPhotosResponse((int) totalCount, photos, hasNext);
+    }
+
+    @Transactional
+    public ReviewRecommendResponse toggleRecommend(Long memberId, Long reviewId) {
+        if (!reviewRepo.existsById(reviewId)) {
+            throw new AppException(ReviewErrorCode.NOT_FOUND);
+        }
+
+        Optional<ReviewRecommend> existing = reviewRecommendRepo.findByMemberIdAndReviewId(memberId, reviewId);
+        boolean liked;
+        if (existing.isPresent()) {
+            try {
+                reviewRecommendRepo.deleteById(existing.get().getId());
+            } catch (EmptyResultDataAccessException e) {
+            }
+            liked = false;
+        } else {
+            try {
+                reviewRecommendRepo.save(new ReviewRecommend(null, memberId, reviewId));
+            } catch (DataIntegrityViolationException e) {
+            }
+            liked = true;
+        }
+
+        long likeCount = reviewRecommendRepo.countByReviewId(reviewId);
+        return new ReviewRecommendResponse(liked, (int) likeCount);
     }
 
     private void validatePurchaseConfirmed(Long memberId, Long productId) {

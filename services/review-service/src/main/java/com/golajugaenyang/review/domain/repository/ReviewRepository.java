@@ -9,5 +9,7 @@ public interface ReviewRepository {
 
     boolean existsByMemberIdAndProductId(Long memberId, Long productId);
 
+    boolean existsById(Long reviewId);
+
     List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit);
 }
