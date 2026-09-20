@@ -19,8 +19,7 @@ public class OrderClaimRepositoryAdapter implements ClaimRepositoryPort {
     }
 
     @Override
-    public boolean existsActiveClaimForItems(Long orderId, List<Long> orderItemIds) {
-        return orderClaimJpaRepository.existsActiveClaimForItems(
-            orderId, orderItemIds, ClaimStatus.terminalStates());
+    public List<OrderClaim> findByOrderId(Long orderId) {
+        return orderClaimJpaRepository.findByOrderId(orderId);
     }
 }

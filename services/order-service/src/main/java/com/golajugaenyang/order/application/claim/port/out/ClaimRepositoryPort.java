@@ -7,5 +7,5 @@ public interface ClaimRepositoryPort {
 
     OrderClaim save(OrderClaim claim);
 
-    boolean existsActiveClaimForItems(Long orderId, List<Long> orderItemIds);
+    List<OrderClaim> findByOrderId(Long orderId);
 }
