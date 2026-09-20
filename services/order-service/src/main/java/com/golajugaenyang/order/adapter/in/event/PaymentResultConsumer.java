@@ -17,6 +17,8 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class PaymentResultConsumer {
 
+    private static final String TEMPORARY_DEFAULT_PAYMENT_METHOD = "토스페이먼츠";
+
     private final OrderRepositoryPort orderRepositoryPort;
     private final ObjectMapper kafkaObjectMapper;
 
@@ -31,7 +33,7 @@ public class PaymentResultConsumer {
                 message.orderItemId());
             return;
         }
-        order.markPaid(OffsetDateTime.now());
+        order.markPaid(OffsetDateTime.now(), TEMPORARY_DEFAULT_PAYMENT_METHOD);
     }
 
     @KafkaListener(topics = "payment.failed", groupId = "order-service.order-status-consumer")
