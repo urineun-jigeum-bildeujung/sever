@@ -31,7 +31,7 @@ public class OrderQueryController implements OrderQueryControllerDocs {
     public ResponseEntity<OrderListResponse> getOrderList(
         @MemberId Long memberId,
         @RequestParam(required = false) String cursor,
-        @Max(10) @Positive int size
+        int size
     ) {
         OrderListCursorCodec.Cursor decoded = OrderListCursorCodec.decode(cursor);
         GetOrderListQuery query = new GetOrderListQuery(
