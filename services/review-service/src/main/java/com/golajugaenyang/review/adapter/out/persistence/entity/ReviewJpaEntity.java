@@ -16,7 +16,9 @@ import java.time.Instant;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "review")
+@Table(name = "review", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_review_member_product", columnNames = {"member_id", "product_id"})
+})
 public class ReviewJpaEntity extends BaseTimeEntity {
 
     @Id

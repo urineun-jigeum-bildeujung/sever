@@ -14,10 +14,12 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResp
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
+@Validated
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -61,8 +64,8 @@ public class ReviewController {
     @GetMapping("/products/{productId}/photos")
     public ResponseEntity<ReviewPhotosResponse> getPhotos(
             @PathVariable Long productId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "30") @Min(1) int size
     ) {
         return ResponseEntity.ok(reviewService.getPhotos(productId, page, size));
     }
@@ -78,8 +81,8 @@ public class ReviewController {
     @GetMapping("/me")
     public ResponseEntity<MyReviewListResponse> getMyReviews(
             @MemberId Long memberId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size
     ) {
         return ResponseEntity.ok(reviewService.getMyReviews(memberId, page, size));
     }
@@ -104,8 +107,8 @@ public class ReviewController {
             @RequestParam(required = false) List<String> healthConcerns,
             @RequestParam(required = false) String usagePeriod,
             @RequestParam(required = false) String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "false") boolean personalized,
             @RequestParam(required = false) Long petId,
             @RequestHeader(value = "X-Member-Id", required = false) Long memberId

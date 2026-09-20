@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +74,14 @@ public class ReviewService {
 
         if (reviewRepo.existsByMemberIdAndProductId(memberId, request.productId())) {
             throw new AppException(ReviewErrorCode.ALREADY_REVIEWED);
+        }
+
+        long distinctQuestionKeys = request.answerValues().stream()
+                .map(ReviewCreateRequest.AnswerValue::questionKey)
+                .distinct()
+                .count();
+        if (distinctQuestionKeys != request.answerValues().size()) {
+            throw new AppException(ReviewErrorCode.DUPLICATE_QUESTION_KEY);
         }
 
         validatePurchaseConfirmed(memberId, request.productId());
@@ -159,10 +166,7 @@ public class ReviewService {
             }
             liked = false;
         } else {
-            try {
-                reviewRecommendRepo.save(new ReviewRecommend(null, memberId, reviewId));
-            } catch (DataIntegrityViolationException e) {
-            }
+            reviewRecommendRepo.insertIfAbsent(memberId, reviewId);
             liked = true;
         }
 
@@ -284,7 +288,8 @@ public class ReviewService {
 
         Map<Long, String> palatabilityByReviewId = reviewQuestionRepo.findByReviewIdIn(reviewIds).stream()
                 .filter(q -> q.getReviewQuestionType() == ReviewQuestionType.PALATABILITY)
-                .collect(Collectors.toMap(ReviewQuestion::getReviewId, q -> toPalatabilityDisplay(q.getReviewAnswer())));
+                .collect(Collectors.toMap(ReviewQuestion::getReviewId, q -> toPalatabilityDisplay(q.getReviewAnswer()),
+                        (first, second) -> first));
 
         List<ReviewFilterListResponse.Item> items = reviews.stream()
                 .map(review -> new ReviewFilterListResponse.Item(

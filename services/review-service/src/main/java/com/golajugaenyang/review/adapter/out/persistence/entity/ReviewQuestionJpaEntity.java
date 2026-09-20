@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "review_question")
+@Table(name = "review_question", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_review_question_review_type", columnNames = {"review_id", "review_question_type"})
+})
 public class ReviewQuestionJpaEntity {
 
     @Id

@@ -31,6 +31,11 @@ public class ReviewRecommendAdapter implements ReviewRecommendRepository {
     }
 
     @Override
+    public void insertIfAbsent(Long memberId, Long reviewId) {
+        reviewRecommendJpaRepo.insertIfAbsent(memberId, reviewId);
+    }
+
+    @Override
     public void deleteById(Long id) {
         reviewRecommendJpaRepo.deleteById(id);
     }

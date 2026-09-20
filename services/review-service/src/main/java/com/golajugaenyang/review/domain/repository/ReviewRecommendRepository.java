@@ -11,6 +11,8 @@ public interface ReviewRecommendRepository {
 
     ReviewRecommend save(ReviewRecommend recommend);
 
+    void insertIfAbsent(Long memberId, Long reviewId);
+
     void deleteById(Long id);
 
     long countByReviewId(Long reviewId);

@@ -25,6 +25,10 @@ public enum ReviewErrorCode implements ErrorCode {
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_QUESTION_KEY", "존재하지 않는 질문 항목입니다."
     ),
+    DUPLICATE_QUESTION_KEY(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_DUPLICATE_QUESTION_KEY", "같은 질문에 대한 답변이 중복으로 들어왔습니다."
+    ),
     INVALID_ANSWER(
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_ANSWER", "해당 질문에 허용되지 않는 답변입니다."
