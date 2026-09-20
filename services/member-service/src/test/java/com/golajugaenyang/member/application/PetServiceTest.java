@@ -2,6 +2,7 @@ package com.golajugaenyang.member.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,12 +27,16 @@ import com.golajugaenyang.member.domain.repository.PetRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronizationUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PetServiceTest {
@@ -53,6 +58,17 @@ class PetServiceTest {
 
     @InjectMocks
     private PetService petService;
+
+
+    @BeforeEach
+    void setUpTransactionSynchronization() {
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void tearDownTransactionSynchronization() {
+        TransactionSynchronizationManager.clearSynchronization();
+    }
 
     @Test
     @DisplayName("반려동물 상세 조회 시 allergies는 code와 displayName을 함께 반환한다.")
@@ -96,6 +112,11 @@ class PetServiceTest {
 
         petService.registerPet(memberId, request);
 
+        verify(objectTagConfirmer).validateOwnership(fileUrl, "member-" + memberId);
+        verify(objectTagConfirmer, never()).confirm(any(), any());
+
+        TransactionSynchronizationUtils.triggerAfterCommit();
+
         verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }
 
@@ -118,6 +139,11 @@ class PetServiceTest {
         when(petRepo.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         petService.updatePet(memberId, petId, request);
+
+        verify(objectTagConfirmer).validateOwnership(fileUrl, "member-" + memberId);
+        verify(objectTagConfirmer, never()).confirm(any(), any());
+
+        TransactionSynchronizationUtils.triggerAfterCommit();
 
         verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }

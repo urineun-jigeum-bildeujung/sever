@@ -20,12 +20,16 @@ import com.golajugaenyang.member.domain.repository.MemberRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
 import java.time.LocalDate;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronizationUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -45,6 +49,16 @@ class MemberServiceTest {
 
     @InjectMocks
     private MemberService memberService;
+
+    @BeforeEach
+    void setUpTransactionSynchronization() {
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void tearDownTransactionSynchronization() {
+        TransactionSynchronizationManager.clearSynchronization();
+    }
 
     @Test
     @DisplayName("presigned URL 발급에 성공하면 uploadUrl/fileUrl을 그대로 반환한다.")
@@ -75,8 +89,8 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("프로필 수정 시 image가 있으면 태그를 confirmed로 변경한다.")
-    void updateProfile_confirms_tag_when_image_present() {
+    @DisplayName("프로필 수정 시 image가 있으면 소유권을 검증하고, 커밋 후에 태그를 confirmed로 변경한다.")
+    void updateProfile_confirms_tag_after_commit_when_image_present() {
         Long memberId = 1L;
         String fileUrl = "https://image.leechs.shop/profiles/member-1/uuid.jpg";
         Member member = new Member(memberId, "기존닉네임", null, null, null,
@@ -88,6 +102,11 @@ class MemberServiceTest {
             "새닉네임", "홍길동", LocalDate.of(1998, 1, 1), fileUrl);
 
         memberService.updateProfile(memberId, request);
+
+        verify(objectTagConfirmer).validateOwnership(fileUrl, "member-" + memberId);
+        verify(objectTagConfirmer, never()).confirm(any(), any());
+
+        TransactionSynchronizationUtils.triggerAfterCommit();
 
         verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
     }
@@ -106,6 +125,8 @@ class MemberServiceTest {
 
         memberService.updateProfile(memberId, request);
 
+        TransactionSynchronizationUtils.triggerAfterCommit();
+
         verify(objectTagConfirmer, never()).confirm(any(), any());
     }
 
@@ -119,7 +140,7 @@ class MemberServiceTest {
 
         when(memberRepo.findById(memberId)).thenReturn(Optional.of(member));
         doThrow(new IllegalArgumentException("이 파일에 대한 권한이 없습니다"))
-            .when(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
+            .when(objectTagConfirmer).validateOwnership(fileUrl, "member-" + memberId);
 
         MemberProfileUpdateRequest request = new MemberProfileUpdateRequest(
             "새닉네임", "홍길동", LocalDate.of(1998, 1, 1), fileUrl);

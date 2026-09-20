@@ -19,14 +19,21 @@ public class ObjectTagConfirmer {
     private String cloudfrontDomain;
 
     /**
-     * DB에 저장할 fileUrl(CloudFront 조회 주소)을 받아서, 해당 S3 객체의 태그를
+     * fileUrl의 키가 실제로 expectedOwnerId 소유인지만 로컬에서 검증한다(S3 호출 없음).
+     * DB에 저장하기 전, 트랜잭션 커밋 여부와 무관하게 즉시 걸러내야 하는 시점에 사용한다.
+     */
+    public void validateOwnership(String fileUrl, String expectedOwnerId) {
+        validateOwner(toKey(fileUrl), expectedOwnerId);
+    }
+
+    /**
+     * DB에 저장한 fileUrl(CloudFront 조회 주소)을 받아서, 해당 S3 객체의 태그를
      * status=pending에서 status=confirmed로 바꾼다. confirmed로 바뀐 객체는 Lifecycle
      * 삭제 대상에서 제외된다.
      *
-     * fileUrl은 클라이언트가 요청 바디에 실어 보내는 값이라 임의로 조작될 수 있으므로,
-     * 키의 ownerId 세그먼트가 호출자가 실제로 발급받은 expectedOwnerId와 일치하는지
-     * 반드시 검증한다. 이 검증 없이는 다른 사람의 pending 객체를 임의로 confirmed로
-     * 바꿔버릴 수 있다
+     * S3 호출은 되돌릴 수 없으므로, DB 트랜잭션 커밋이 확정된 뒤에만 호출해야 한다 —
+     * 커밋 전에 호출했다가 이후 커밋이 실패하면, DB에는 반영 안 됐는데 S3 객체만
+     * confirmed로 남아 Lifecycle 정리 대상에서 영원히 제외되는 고아 객체가 생긴다.
      */
     public void confirm(String fileUrl, String expectedOwnerId) {
         String key = toKey(fileUrl);
