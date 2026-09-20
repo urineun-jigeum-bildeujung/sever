@@ -3,6 +3,7 @@ package com.golajugaenyang.review.adapter.in.web;
 import com.golajugaenyang.common.security.annotation.MemberId;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewImageUploadRequest;
+import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.application.ReviewService;
@@ -11,6 +12,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +42,10 @@ public class ReviewController {
     ) {
         ReviewImageUploadResponse response = reviewService.issueImageUploadUrl(memberId, request.extension());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/products/{productId}/photos/featured")
+    public ResponseEntity<FeaturedReviewPhotosResponse> getFeaturedPhotos(@PathVariable Long productId) {
+        return ResponseEntity.ok(reviewService.getFeaturedPhotos(productId));
     }
 }

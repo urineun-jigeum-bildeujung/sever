@@ -6,4 +6,6 @@ import java.util.List;
 public interface ReviewImageRepository {
 
     List<ReviewImage> saveAll(List<ReviewImage> images);
+
+    List<ReviewImage> findRepresentativeImagesByReviewIds(List<Long> reviewIds);
 }

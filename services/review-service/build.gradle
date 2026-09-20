@@ -16,6 +16,9 @@ dependencies {
     implementation project(':modules:common-storage')
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
+    // spring security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     //openfeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 

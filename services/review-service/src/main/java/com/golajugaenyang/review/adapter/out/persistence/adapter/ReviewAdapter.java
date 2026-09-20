@@ -4,7 +4,9 @@ import com.golajugaenyang.review.adapter.out.persistence.mapper.ReviewMapper;
 import com.golajugaenyang.review.adapter.out.persistence.repository.ReviewJpaRepository;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.repository.ReviewRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,5 +23,10 @@ public class ReviewAdapter implements ReviewRepository {
     @Override
     public boolean existsByMemberIdAndProductId(Long memberId, Long productId) {
         return reviewJpaRepo.existsByMemberIdAndProductId(memberId, productId);
+    }
+
+    @Override
+    public List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit) {
+        return reviewJpaRepo.findRecentReviewIdsWithImageByProductId(productId, PageRequest.of(0, limit));
     }
 }

@@ -5,6 +5,7 @@ import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.common.storage.PresignedUpload;
 import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
+import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.adapter.out.client.OrderClient;
@@ -21,6 +22,8 @@ import com.golajugaenyang.review.domain.repository.ReviewRepository;
 import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -80,6 +83,25 @@ public class ReviewService {
         }
 
         return savedReview;
+    }
+
+    private static final int FEATURED_PHOTO_LIMIT = 4;
+
+    public FeaturedReviewPhotosResponse getFeaturedPhotos(Long productId) {
+        List<Long> reviewIds = reviewRepo.findRecentReviewIdsWithImageByProductId(productId, FEATURED_PHOTO_LIMIT);
+        if (reviewIds.isEmpty()) {
+            return new FeaturedReviewPhotosResponse(List.of());
+        }
+
+        Map<Long, String> imageUrlByReviewId = reviewImageRepo.findRepresentativeImagesByReviewIds(reviewIds).stream()
+                .collect(Collectors.toMap(ReviewImage::getReviewId, ReviewImage::getImageUrl));
+
+        List<FeaturedReviewPhotosResponse.Photo> photos = reviewIds.stream()
+                .map(reviewId -> new FeaturedReviewPhotosResponse.Photo(reviewId, imageUrlByReviewId.get(reviewId)))
+                .filter(photo -> photo.imageUrl() != null)
+                .toList();
+
+        return new FeaturedReviewPhotosResponse(photos);
     }
 
     private void validatePurchaseConfirmed(Long memberId, Long productId) {
