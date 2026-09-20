@@ -2,11 +2,21 @@ plugins {
     id 'org.springframework.boot'
 }
 
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation project(':modules:common-core')
+    implementation project(':modules:common-security')
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    //openfeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
     testImplementation project(':modules:common-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

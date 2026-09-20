@@ -1,4 +1,4 @@
-package com.golajugaenyang.review.out.persistence.entity;
+package com.golajugaenyang.review.adapter.out.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

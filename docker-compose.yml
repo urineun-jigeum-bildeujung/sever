@@ -114,6 +114,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
+      MEMBER_SERVICE_HOST: member-service
 
   notification-service:
     build:

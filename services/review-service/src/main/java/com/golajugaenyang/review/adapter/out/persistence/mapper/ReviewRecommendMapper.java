@@ -1,7 +1,7 @@
-package com.golajugaenyang.review.out.persistence.mapper;
+package com.golajugaenyang.review.adapter.out.persistence.mapper;
 
 import com.golajugaenyang.review.domain.entity.ReviewRecommend;
-import com.golajugaenyang.review.out.persistence.entity.ReviewRecommendJpaEntity;
+import com.golajugaenyang.review.adapter.out.persistence.entity.ReviewRecommendJpaEntity;
 
 public class ReviewRecommendMapper {
 

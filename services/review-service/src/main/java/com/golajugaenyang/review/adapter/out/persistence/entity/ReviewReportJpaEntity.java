@@ -1,4 +1,4 @@
-package com.golajugaenyang.review.out.persistence.entity;
+package com.golajugaenyang.review.adapter.out.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,19 +17,18 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "review_image")
-public class ReviewImageJpaEntity {
+@Table(name = "review_report")
+public class ReviewReportJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String imageUrl;
-
-    @Column(nullable = false)
-    private int sortOrder;
-
-    @Column(nullable = false)
     private Long reviewId;
+
+    @Column(nullable = false)
+    private Long memberId;
+
+    private String reason;
 }

@@ -1,7 +1,8 @@
-package com.golajugaenyang.review.out.persistence.entity;
+package com.golajugaenyang.review.adapter.out.persistence.entity;
 
-import com.golajugaenyang.review.domain.entity.enums.ReviewAnswer;
-import com.golajugaenyang.review.domain.entity.enums.ReviewQuestionType;
+import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
+import com.golajugaenyang.review.domain.entity.enums.FeedbackCheckAnswer;
+import com.golajugaenyang.review.domain.entity.enums.FeedbackCheckStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,8 +23,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "review_question")
-public class ReviewQuestionJpaEntity {
+@Table(name = "product_feedback_check")
+public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,13 +32,20 @@ public class ReviewQuestionJpaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReviewQuestionType reviewQuestionType;
+    private FeedbackCheckStatus feedbackCheckStatus;
 
     @Enumerated(EnumType.STRING)
-    private ReviewAnswer reviewAnswer;
+    private FeedbackCheckAnswer feedbackCheckAnswer;
 
-    private Instant updatedAt;
+    private Instant checkAvailableAt;
+
+    private Instant checkExpiresAt;
+
+    private Instant answeredAt;
 
     @Column(nullable = false)
-    private Long reviewId;
+    private Long orderProductId;
+
+    @Column(nullable = false)
+    private Long petId;
 }

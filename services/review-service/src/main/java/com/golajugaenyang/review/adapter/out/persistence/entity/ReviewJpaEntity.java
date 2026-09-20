@@ -1,4 +1,4 @@
-package com.golajugaenyang.review.out.persistence.entity;
+package com.golajugaenyang.review.adapter.out.persistence.entity;
 
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
