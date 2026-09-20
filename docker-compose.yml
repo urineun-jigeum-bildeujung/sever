@@ -115,6 +115,7 @@ services:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
       MEMBER_SERVICE_HOST: member-service
+      ORDER_SERVICE_HOST: order-service
 
   notification-service:
     build:

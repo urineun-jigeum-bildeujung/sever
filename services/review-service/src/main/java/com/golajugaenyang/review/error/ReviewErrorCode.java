@@ -32,6 +32,10 @@ public enum ReviewErrorCode implements ErrorCode {
     FORBIDDEN_IMAGE(
             HttpStatus.FORBIDDEN,
             "REVIEW_403_FORBIDDEN_IMAGE", "본인이 업로드한 이미지만 사용할 수 있습니다."
+    ),
+    PURCHASE_NOT_CONFIRMED(
+            HttpStatus.FORBIDDEN,
+            "REVIEW_403_PURCHASE_NOT_CONFIRMED", "구매 확정된 상품에 대해서만 리뷰를 작성할 수 있습니다."
     );
 
     private final HttpStatus httpStatus;

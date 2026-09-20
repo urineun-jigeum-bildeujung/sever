@@ -7,6 +7,8 @@ import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
+import com.golajugaenyang.review.adapter.out.client.OrderClient;
+import com.golajugaenyang.review.adapter.out.client.dto.PurchaseVerificationResponse;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.ReviewImage;
 import com.golajugaenyang.review.domain.entity.ReviewQuestion;
@@ -34,6 +36,7 @@ public class ReviewService {
     private final ReviewQuestionRepository reviewQuestionRepo;
     private final ReviewImageRepository reviewImageRepo;
     private final MemberClient memberClient;
+    private final OrderClient orderClient;
     private final PresignedUploadIssuer presignedUploadIssuer;
     private final ObjectTagConfirmer objectTagConfirmer;
 
@@ -43,6 +46,8 @@ public class ReviewService {
         if (reviewRepo.existsByMemberIdAndProductId(memberId, request.productId())) {
             throw new AppException(ReviewErrorCode.ALREADY_REVIEWED);
         }
+
+        validatePurchaseConfirmed(memberId, request.productId());
 
         try {
             memberClient.validatePetOwnership(memberId, request.petId());
@@ -75,6 +80,17 @@ public class ReviewService {
         }
 
         return savedReview;
+    }
+
+    private void validatePurchaseConfirmed(Long memberId, Long productId) {
+        PurchaseVerificationResponse response = orderClient.getPurchaseVerification(memberId, productId);
+        boolean confirmed = response.items().stream()
+                .anyMatch(item -> "CONFIRMED".equals(item.orderStatus())
+                        && !"CANCELLED".equals(item.itemStatus())
+                        && !"RETURNED".equals(item.itemStatus()));
+        if (!confirmed) {
+            throw new AppException(ReviewErrorCode.PURCHASE_NOT_CONFIRMED);
+        }
     }
 
     public ReviewImageUploadResponse issueImageUploadUrl(Long memberId, String extension) {
