@@ -81,7 +81,10 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.BAD_REQUEST,
         "ORDER_400_INVALID_CLAIM_TYPE",
         "유효하지 않은 신청 유형입니다."),
-
+    INVALID_CURSOR(
+        HttpStatus.BAD_REQUEST,
+        "ORDER_400_INVALID_CURSOR",
+        "유효하지 않은 커서 값입니다."),
     ;
 
     private final HttpStatus httpStatus;
