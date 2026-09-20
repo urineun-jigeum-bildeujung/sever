@@ -2,7 +2,9 @@ package com.golajugaenyang.review.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.MemberId;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
+import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewImageUploadRequest;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewCreateResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
@@ -28,5 +30,14 @@ public class ReviewController {
     ) {
         Review savedReview = reviewService.createReview(memberId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReviewCreateResponse(savedReview.getId()));
+    }
+
+    @PostMapping("/images/presigned-url")
+    public ResponseEntity<ReviewImageUploadResponse> issueImageUploadUrl(
+            @MemberId Long memberId,
+            @Valid @RequestBody ReviewImageUploadRequest request
+    ) {
+        ReviewImageUploadResponse response = reviewService.issueImageUploadUrl(memberId, request.extension());
+        return ResponseEntity.ok(response);
     }
 }

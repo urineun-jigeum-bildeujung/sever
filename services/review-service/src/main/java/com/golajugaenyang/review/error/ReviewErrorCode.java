@@ -24,6 +24,14 @@ public enum ReviewErrorCode implements ErrorCode {
     INVALID_ANSWER(
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_ANSWER", "해당 질문에 허용되지 않는 답변입니다."
+    ),
+    INVALID_IMAGE_EXTENSION(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_INVALID_IMAGE_EXTENSION", "허용되지 않는 이미지 확장자입니다."
+    ),
+    FORBIDDEN_IMAGE(
+            HttpStatus.FORBIDDEN,
+            "REVIEW_403_FORBIDDEN_IMAGE", "본인이 업로드한 이미지만 사용할 수 있습니다."
     );
 
     private final HttpStatus httpStatus;

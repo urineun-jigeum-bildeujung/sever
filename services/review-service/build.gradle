@@ -13,6 +13,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation project(':modules:common-core')
     implementation project(':modules:common-security')
+    implementation project(':modules:common-storage')
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     //openfeign

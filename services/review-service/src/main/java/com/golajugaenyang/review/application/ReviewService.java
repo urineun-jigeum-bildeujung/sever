@@ -1,7 +1,11 @@
 package com.golajugaenyang.review.application;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
+import com.golajugaenyang.common.storage.PresignedUpload;
+import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
+import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.ReviewImage;
@@ -19,6 +23,8 @@ import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +34,8 @@ public class ReviewService {
     private final ReviewQuestionRepository reviewQuestionRepo;
     private final ReviewImageRepository reviewImageRepo;
     private final MemberClient memberClient;
+    private final PresignedUploadIssuer presignedUploadIssuer;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     @Transactional
     public Review createReview(Long memberId, ReviewCreateRequest request) {
@@ -42,6 +50,11 @@ public class ReviewService {
             throw new AppException(ReviewErrorCode.INVALID_PET);
         }
 
+        List<String> imageUrls = request.images();
+        if (imageUrls != null) {
+            imageUrls.forEach(fileUrl -> validateOwnImage(memberId, fileUrl));
+        }
+
         Review review = new Review(null, request.text(), request.starRate(), request.usagePeriod(),
                 null, null, null, memberId, request.productId(), request.petId(),
                 DataOrigin.REAL, false, null);
@@ -52,15 +65,43 @@ public class ReviewService {
                 .toList();
         reviewQuestionRepo.saveAll(questions);
 
-        if (request.images() != null && !request.images().isEmpty()) {
-            List<String> imageUrls = request.images();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
             List<ReviewImage> images = IntStream.range(0, imageUrls.size())
                     .mapToObj(i -> new ReviewImage(null, imageUrls.get(i), i, savedReview.getId()))
                     .toList();
             reviewImageRepo.saveAll(images);
+
+            imageUrls.forEach(fileUrl -> confirmOwnImageAfterCommit(memberId, fileUrl));
         }
 
         return savedReview;
+    }
+
+    public ReviewImageUploadResponse issueImageUploadUrl(Long memberId, String extension) {
+        try {
+            PresignedUpload upload = presignedUploadIssuer.issue("member-" + memberId, extension);
+            return new ReviewImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ReviewErrorCode.INVALID_IMAGE_EXTENSION);
+        }
+    }
+
+    private void validateOwnImage(Long memberId, String fileUrl) {
+        try {
+            objectTagConfirmer.validateOwnership(fileUrl, "member-" + memberId);
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ReviewErrorCode.FORBIDDEN_IMAGE);
+        }
+    }
+
+    private void confirmOwnImageAfterCommit(Long memberId, String fileUrl) {
+        String ownerId = "member-" + memberId;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                objectTagConfirmer.confirm(fileUrl, ownerId);
+            }
+        });
     }
 
     private ReviewQuestion toReviewQuestion(ReviewCreateRequest.AnswerValue answerValue, Long reviewId) {
