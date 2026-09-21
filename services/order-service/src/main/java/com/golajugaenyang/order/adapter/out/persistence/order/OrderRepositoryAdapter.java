@@ -2,8 +2,10 @@ package com.golajugaenyang.order.adapter.out.persistence.order;
 
 
 import com.golajugaenyang.order.application.order.port.out.OrderRepositoryPort;
+import com.golajugaenyang.order.application.order.port.out.dto.ConfirmedPurchaseItem;
 import com.golajugaenyang.order.application.order.port.out.dto.PurchaseRecord;
 import com.golajugaenyang.order.domain.order.Order;
+import com.golajugaenyang.order.domain.order.OrderStatus;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -86,5 +88,17 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
             .getSingleResult()).longValue();
         String datePart = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DATE_FORMAT);
         return "ORD-%s-%06d".formatted(datePart, seq);
+    }
+
+    @Override
+    public List<ConfirmedPurchaseItem> findConfirmedPurchaseItems(Long memberId, int limit) {
+        return orderItemJpaRepository
+            .findConfirmedPurchaseItems(
+                memberId, OrderStatus.CONFIRMED, PageRequest.ofSize(limit))
+            .stream()
+            .map(p -> new ConfirmedPurchaseItem(
+                p.productId(), p.orderId(), p.orderItemId(),
+                p.orderStatus().name(), p.itemStatus().name(), p.confirmedAt()))
+            .toList();
     }
 }

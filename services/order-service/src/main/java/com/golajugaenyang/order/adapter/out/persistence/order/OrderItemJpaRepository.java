@@ -1,10 +1,13 @@
 package com.golajugaenyang.order.adapter.out.persistence.order;
 
+import com.golajugaenyang.order.adapter.out.persistence.order.dto.ConfirmedPurchaseItemProjection;
 import com.golajugaenyang.order.adapter.out.persistence.order.dto.PurchaseVerificationProjection;
 import com.golajugaenyang.order.domain.order.Order;
 import com.golajugaenyang.order.domain.order.OrderItem;
+import com.golajugaenyang.order.domain.order.OrderStatus;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +36,16 @@ public interface OrderItemJpaRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("select oi.order from OrderItem oi where oi.id = :orderItemId")
     Optional<Order> findOrderByOrderItemId(@Param("orderItemId") Long orderItemId);
+
+    @Query("""
+        select new com.golajugaenyang.order.adapter.out.persistence.order.dto.ConfirmedPurchaseItemProjection(
+            oi.productId, o.id, oi.id, o.orderStatus, oi.itemStatus, o.confirmedAt)
+        from OrderItem oi join oi.order o
+        where o.memberId = :memberId and o.orderStatus = :orderStatus
+        order by o.confirmedAt desc
+        """)
+    List<ConfirmedPurchaseItemProjection> findConfirmedPurchaseItems(
+        @Param("memberId") Long memberId,
+        @Param("orderStatus") OrderStatus orderStatus,
+        Pageable pageable);
 }
