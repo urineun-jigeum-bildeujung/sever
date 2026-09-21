@@ -2,11 +2,33 @@ plugins {
     id 'org.springframework.boot'
 }
 
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation project(':modules:common-core')
+    implementation project(':modules:common-security')
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    // spring security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // spring data jpa
+    implementation project(':modules:common-jpa')
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // spring scheduling(quartz 대신 기본 @Scheduled 사용 - 배치 규모가 작아 별도 스케줄러 불필요)
+
+    // openfeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // firebase admin sdk (FCM push)
+    implementation 'com.google.firebase:firebase-admin:9.4.1'
 
     testImplementation project(':modules:common-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
