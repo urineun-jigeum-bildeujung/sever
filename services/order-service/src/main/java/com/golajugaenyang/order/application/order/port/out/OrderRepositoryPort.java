@@ -1,5 +1,6 @@
 package com.golajugaenyang.order.application.order.port.out;
 
+import com.golajugaenyang.order.application.order.port.out.dto.ConfirmedPurchaseItem;
 import com.golajugaenyang.order.application.order.port.out.dto.PurchaseRecord;
 import com.golajugaenyang.order.domain.order.Order;
 import java.time.OffsetDateTime;
@@ -25,4 +26,6 @@ public interface OrderRepositoryPort {
     Order save(Order order);
 
     String generateOrderNumber();
+
+    List<ConfirmedPurchaseItem> findConfirmedPurchaseItems(Long memberId, int limit);
 }

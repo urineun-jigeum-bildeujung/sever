@@ -85,6 +85,18 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.BAD_REQUEST,
         "ORDER_400_INVALID_CURSOR",
         "유효하지 않은 커서 값입니다."),
+    MEMBER_SERVICE_UNAVAILABLE(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "ORDER_503_MEMBER_SERVICE_UNAVAILABLE",
+        "회원 서비스를 일시적으로 확인할 수 없습니다."),
+    ADDRESS_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "ORDER_404_ADDRESS_NOT_FOUND",
+        "요청한 배송지를 사용할 수 없습니다."),
+    MEMBER_SERVICE_REQUEST_INVALID(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "ORDER_500_MEMBER_SERVICE_REQUEST_INVALID",
+        "배송지 정보를 확인하는 중 오류가 발생했습니다."),
     ;
 
     private final HttpStatus httpStatus;

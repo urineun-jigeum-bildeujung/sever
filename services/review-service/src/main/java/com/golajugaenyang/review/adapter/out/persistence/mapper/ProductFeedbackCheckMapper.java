@@ -9,6 +9,8 @@ public class ProductFeedbackCheckMapper {
         if (jpaEntity == null) return null;
         return new ProductFeedbackCheck(
                 jpaEntity.getId(),
+                jpaEntity.getMemberId(),
+                jpaEntity.getProductId(),
                 jpaEntity.getFeedbackCheckStatus(),
                 jpaEntity.getFeedbackCheckAnswer(),
                 jpaEntity.getCheckAvailableAt(),
@@ -24,6 +26,8 @@ public class ProductFeedbackCheckMapper {
         if (domain == null) return null;
         return ProductFeedbackCheckJpaEntity.builder()
                 .id(domain.getId())
+                .memberId(domain.getMemberId())
+                .productId(domain.getProductId())
                 .feedbackCheckStatus(domain.getFeedbackCheckStatus())
                 .feedbackCheckAnswer(domain.getFeedbackCheckAnswer())
                 .checkAvailableAt(domain.getCheckAvailableAt())

@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,12 +24,23 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "product_feedback_check")
+@Table(
+        name = "product_feedback_check",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_product_feedback_check_order_product",
+                columnNames = "order_product_id")
+)
 public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private Long memberId;
+
+    @Column(nullable = false)
+    private Long productId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,6 +58,5 @@ public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private Long orderProductId;
 
-    @Column(nullable = false)
     private Long petId;
 }

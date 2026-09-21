@@ -14,9 +14,11 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewFilterListRes
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.WritableProductListResponse;
 import com.golajugaenyang.review.adapter.out.client.MemberClient;
 import com.golajugaenyang.review.adapter.out.client.OrderClient;
 import com.golajugaenyang.review.adapter.out.client.ProductClient;
+import com.golajugaenyang.review.adapter.out.client.dto.ConfirmedItemsResponse;
 import com.golajugaenyang.review.adapter.out.client.dto.NicknameInternalItemResponse;
 import com.golajugaenyang.review.adapter.out.client.dto.PetSnapshotResponse;
 import com.golajugaenyang.review.adapter.out.client.dto.ProductInternalItemResponse;
@@ -41,6 +43,7 @@ import com.golajugaenyang.review.domain.repository.ReviewSearchRepository;
 import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -204,6 +207,53 @@ public class ReviewService {
                 (int) Math.round(review.getStarRate()),
                 review.getText(),
                 review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
+        );
+    }
+
+    private static final String PAID_ITEM_STATUS = "PAID";
+
+    public WritableProductListResponse getWritableProducts(Long memberId) {
+        List<ConfirmedItemsResponse.ConfirmedItem> paidItems = orderClient.getConfirmedItems(memberId).items()
+                .stream()
+                .filter(item -> PAID_ITEM_STATUS.equals(item.itemStatus()))
+                .toList();
+        if (paidItems.isEmpty()) {
+            return new WritableProductListResponse(List.of());
+        }
+
+        List<Long> productIds = paidItems.stream()
+                .map(ConfirmedItemsResponse.ConfirmedItem::productId).distinct().toList();
+        Set<Long> reviewedProductIds = new HashSet<>(reviewRepo.findReviewedProductIds(memberId, productIds));
+
+        List<ConfirmedItemsResponse.ConfirmedItem> unreviewed = paidItems.stream()
+                .filter(item -> !reviewedProductIds.contains(item.productId()))
+                .toList();
+        if (unreviewed.isEmpty()) {
+            return new WritableProductListResponse(List.of());
+        }
+
+        List<Long> unreviewedProductIds = unreviewed.stream()
+                .map(ConfirmedItemsResponse.ConfirmedItem::productId).distinct().toList();
+        Map<Long, ProductInternalItemResponse> productById = productClient.getProducts(unreviewedProductIds)
+                .items().stream()
+                .collect(Collectors.toMap(ProductInternalItemResponse::productId, item -> item));
+
+        List<WritableProductListResponse.Item> items = unreviewed.stream()
+                .map(item -> toWritableItem(item, productById.get(item.productId())))
+                .toList();
+
+        return new WritableProductListResponse(items);
+    }
+
+    private WritableProductListResponse.Item toWritableItem(
+            ConfirmedItemsResponse.ConfirmedItem item, ProductInternalItemResponse product
+    ) {
+        return new WritableProductListResponse.Item(
+                item.orderItemId(),
+                item.productId(),
+                product != null ? product.productName() : "",
+                product != null ? product.thumbnailUrl() : null,
+                item.confirmedAt()
         );
     }
 

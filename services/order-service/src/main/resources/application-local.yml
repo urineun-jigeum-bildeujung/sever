@@ -30,6 +30,11 @@ spring:
     listener:
       ack-mode: RECORD
 
+member-service:
+  base-url: http://${MEMBER_SERVICE_HOST:localhost}:8082
+  connect-timeout: 1s
+  read-timeout: 2s
+
 product-service:
   base-url: http://${PRODUCT_SERVICE_HOST:localhost}:8083
   connect-timeout: 1s

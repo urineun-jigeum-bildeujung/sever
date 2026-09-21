@@ -20,4 +20,7 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewJpaEntity, Long
     List<Long> findRecentReviewIdsWithImageByProductId(@Param("productId") Long productId, Pageable pageable);
 
     List<ReviewJpaEntity> findByMemberIdOrderByCreatedAtDesc(Long memberId, Pageable pageable);
+
+    @Query("select r.productId from ReviewJpaEntity r where r.memberId = :memberId and r.productId in :productIds")
+    List<Long> findReviewedProductIds(@Param("memberId") Long memberId, @Param("productIds") List<Long> productIds);
 }

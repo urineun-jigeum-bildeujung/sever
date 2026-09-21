@@ -17,4 +17,6 @@ public interface ReviewRepository {
     List<Long> findRecentReviewIdsWithImageByProductId(Long productId, int limit);
 
     List<Review> findByMemberId(Long memberId, int page, int size);
+
+    List<Long> findReviewedProductIds(Long memberId, List<Long> productIds);
 }

@@ -61,4 +61,9 @@ public class ReviewAdapter implements ReviewRepository {
                 .map(ReviewMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Long> findReviewedProductIds(Long memberId, List<Long> productIds) {
+        return reviewJpaRepo.findReviewedProductIds(memberId, productIds);
+    }
 }

@@ -10,6 +10,8 @@ import java.time.Instant;
 public class ProductFeedbackCheck {
 
     private Long id;
+    private Long memberId;
+    private Long productId;
     private FeedbackCheckStatus feedbackCheckStatus;
     private FeedbackCheckAnswer feedbackCheckAnswer;
     private Instant checkAvailableAt;
@@ -19,10 +21,13 @@ public class ProductFeedbackCheck {
     private Long orderProductId;
     private Long petId;
 
-    public ProductFeedbackCheck(Long id, FeedbackCheckStatus feedbackCheckStatus, FeedbackCheckAnswer feedbackCheckAnswer,
+    public ProductFeedbackCheck(Long id, Long memberId, Long productId,
+                                FeedbackCheckStatus feedbackCheckStatus, FeedbackCheckAnswer feedbackCheckAnswer,
                                 Instant checkAvailableAt, Instant checkExpiresAt,
                                 Instant answeredAt, Instant createdAt, Long orderProductId, Long petId) {
         this.id = id;
+        this.memberId = memberId;
+        this.productId = productId;
         this.feedbackCheckStatus = feedbackCheckStatus;
         this.feedbackCheckAnswer = feedbackCheckAnswer;
         this.checkAvailableAt = checkAvailableAt;
