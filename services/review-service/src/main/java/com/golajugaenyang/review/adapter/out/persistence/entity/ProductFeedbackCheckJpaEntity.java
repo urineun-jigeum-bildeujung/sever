@@ -58,9 +58,5 @@ public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private Long orderProductId;
 
-    /**
-     * 주문 시점엔 있지만(OrderItem.petId), order-service의 confirmed-items 응답에
-     * 아직 petId가 노출되지 않아 당분간 null로 둔다. 추후 필드 추가되면 채워 넣을 예정.
-     */
     private Long petId;
 }
