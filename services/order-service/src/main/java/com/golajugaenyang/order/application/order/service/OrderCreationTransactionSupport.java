@@ -3,8 +3,10 @@ package com.golajugaenyang.order.application.order.service;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.order.application.order.port.in.dto.CreateOrderCommand;
 import com.golajugaenyang.order.application.order.port.in.dto.CreateOrderResult;
+import com.golajugaenyang.order.application.order.port.out.AddressLookupPort;
 import com.golajugaenyang.order.application.order.port.out.OrderRepositoryPort;
 import com.golajugaenyang.order.application.order.port.out.ProductCatalogPort;
+import com.golajugaenyang.order.application.order.port.out.dto.AddressInfo;
 import com.golajugaenyang.order.application.order.port.out.dto.CatalogItem;
 import com.golajugaenyang.order.application.order.port.out.dto.CatalogKey;
 import com.golajugaenyang.order.application.order.port.out.dto.ReservationItem;
@@ -29,6 +31,7 @@ public class OrderCreationTransactionSupport {
     private static final BigDecimal FIXED_SHIPPING_FEE = BigDecimal.valueOf(3000);
 
     private final ProductCatalogPort productCatalogPort;
+    private final AddressLookupPort addressLookupPort;
     private final OrderRepositoryPort orderRepositoryPort;
     private final OrderReservationProperties reservationProperties;
 
@@ -44,6 +47,8 @@ public class OrderCreationTransactionSupport {
 
     @Transactional
     public PendingOrderCreation persistPendingOrder(CreateOrderCommand command) {
+        AddressInfo addressInfo = addressLookupPort.lookup(command.addressId(), command.memberId());
+
         List<Long> productIds = command.items().stream()
             .filter(i -> !i.isTimeDeal())
             .map(CreateOrderCommand.Item::productId)
@@ -59,10 +64,14 @@ public class OrderCreationTransactionSupport {
                 Collectors.toMap(c ->
                     new CatalogKey(c.isTimeDeal(), c.referenceId()), c -> c));
 
-        DeliveryAddress deliveryAddress = DeliveryAddress.placeholder(command.addressId());
+        DeliveryAddress deliveryAddress = DeliveryAddress.from(command.addressId(), addressInfo);
+
+        String deliveryNote = (command.deliveryNote() != null && !command.deliveryNote().isBlank())
+            ? command.deliveryNote() : addressInfo.deliveryNote();
+
         Order order = Order.createPending(
             orderRepositoryPort.generateOrderNumber(), command.idempotencyKey(), command.memberId(),
-            deliveryAddress, command.deliveryNote(), reservationProperties.ttl());
+            deliveryAddress, deliveryNote, reservationProperties.ttl());
 
         BigDecimal productAmount = BigDecimal.ZERO;
         for (CreateOrderCommand.Item requested : command.items()) {
