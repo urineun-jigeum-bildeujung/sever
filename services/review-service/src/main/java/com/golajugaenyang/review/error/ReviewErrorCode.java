@@ -48,6 +48,18 @@ public enum ReviewErrorCode implements ErrorCode {
     INVALID_FILTER(
             HttpStatus.BAD_REQUEST,
             "REVIEW_400_INVALID_FILTER", "유효하지 않은 필터 값입니다."
+    ),
+    INVALID_ORDER_PRODUCT(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_INVALID_ORDER_PRODUCT", "존재하지 않거나 본인이 구매하지 않은 주문 상품입니다."
+    ),
+    ALREADY_ANSWERED_FEEDBACK(
+            HttpStatus.CONFLICT,
+            "REVIEW_409_ALREADY_ANSWERED_FEEDBACK", "이미 상태 체크에 답변했습니다."
+    ),
+    FEEDBACK_NOT_AVAILABLE_YET(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_FEEDBACK_NOT_AVAILABLE_YET", "아직 상태 체크가 가능한 시점이 아닙니다."
     );
 
     private final HttpStatus httpStatus;

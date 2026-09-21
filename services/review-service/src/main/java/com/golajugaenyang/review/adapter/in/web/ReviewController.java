@@ -11,6 +11,7 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewFilterListRes
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewImageUploadResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResponse;
+import com.golajugaenyang.review.adapter.in.web.dto.response.WritableProductListResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
 import jakarta.validation.Valid;
@@ -76,6 +77,11 @@ public class ReviewController {
             @PathVariable Long reviewId
     ) {
         return ResponseEntity.ok(reviewService.toggleRecommend(memberId, reviewId));
+    }
+
+    @GetMapping("/writable")
+    public ResponseEntity<WritableProductListResponse> getWritableProducts(@MemberId Long memberId) {
+        return ResponseEntity.ok(reviewService.getWritableProducts(memberId));
     }
 
     @GetMapping("/me")
