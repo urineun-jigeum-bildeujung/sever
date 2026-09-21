@@ -18,7 +18,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -45,19 +44,15 @@ public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Setter
     private FeedbackCheckStatus feedbackCheckStatus;
 
     @Enumerated(EnumType.STRING)
-    @Setter
     private FeedbackCheckAnswer feedbackCheckAnswer;
 
-    @Setter
     private Instant checkAvailableAt;
 
     private Instant checkExpiresAt;
 
-    @Setter
     private Instant answeredAt;
 
     @Column(nullable = false)

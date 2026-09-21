@@ -56,6 +56,10 @@ public enum ReviewErrorCode implements ErrorCode {
     ALREADY_ANSWERED_FEEDBACK(
             HttpStatus.CONFLICT,
             "REVIEW_409_ALREADY_ANSWERED_FEEDBACK", "이미 상태 체크에 답변했습니다."
+    ),
+    FEEDBACK_NOT_AVAILABLE_YET(
+            HttpStatus.BAD_REQUEST,
+            "REVIEW_400_FEEDBACK_NOT_AVAILABLE_YET", "아직 상태 체크가 가능한 시점이 아닙니다."
     );
 
     private final HttpStatus httpStatus;

@@ -26,6 +26,10 @@ import org.springframework.stereotype.Service;
  * "잘 맞았어요?" 상태 체크를 받는 기능. 스케줄러로 미리 계산해두지 않고,
  * 메인페이지 조회 시점에 order-service/product-service 데이터를 조합해 즉석 계산한다
  * (order-service에 회원 전체 대상 벌크 조회 API가 없어 배치 방식이 적합하지 않음).
+ *
+ * 목록 조회(GET)와 제출(POST) 양쪽 모두 {@link #toEligible}로 동일한 자격 판정을 거친다 -
+ * 제출 경로가 목록에 없던(아직 기간이 안 지났거나 보류 기간 중인) 항목까지 받아들이지
+ * 않도록 하기 위함이다. 답변/보류 자체는 원자적 UPSERT로 처리해 동시 요청 레이스를 막는다.
  */
 @Service
 @RequiredArgsConstructor
@@ -55,6 +59,7 @@ public class ProductFeedbackCheckService {
 
         Instant now = Instant.now();
         List<EligibleItem> eligible = paidItems.stream()
+                .filter(item -> !isAnswered(existingChecks.get(item.orderItemId())))
                 .map(item -> toEligible(
                         item, productsById.get(item.productId()), existingChecks.get(item.orderItemId()), now))
                 .filter(Objects::nonNull)
@@ -76,29 +81,51 @@ public class ProductFeedbackCheckService {
     public void submitFeedback(
             Long memberId, Long productId, Long orderProductId, boolean postpone, FeedbackCheckAnswer answer
     ) {
-        validateOwnership(memberId, productId, orderProductId);
-        if (feedbackCheckRepository.isAlreadyAnswered(orderProductId)) {
-            throw new AppException(ReviewErrorCode.ALREADY_ANSWERED_FEEDBACK);
-        }
+        validateEligibleForSubmission(memberId, productId, orderProductId);
 
         if (postpone) {
-            feedbackCheckRepository.postpone(memberId, productId, orderProductId, Instant.now().plus(POSTPONE_PERIOD));
+            boolean applied = feedbackCheckRepository.postpone(
+                    memberId, productId, orderProductId, Instant.now().plus(POSTPONE_PERIOD));
+            if (!applied) {
+                throw new AppException(ReviewErrorCode.ALREADY_ANSWERED_FEEDBACK);
+            }
             return;
         }
 
         if (answer == null) {
             throw new AppException(ReviewErrorCode.INVALID_ANSWER);
         }
-        feedbackCheckRepository.submitAnswer(memberId, productId, orderProductId, answer);
+        boolean applied = feedbackCheckRepository.submitAnswer(memberId, productId, orderProductId, answer);
+        if (!applied) {
+            throw new AppException(ReviewErrorCode.ALREADY_ANSWERED_FEEDBACK);
+        }
     }
 
-    private void validateOwnership(Long memberId, Long productId, Long orderProductId) {
-        boolean owns = getPaidConfirmedItems(memberId).stream()
-                .anyMatch(item -> item.orderItemId().equals(orderProductId)
-                        && item.productId().equals(productId));
-        if (!owns) {
-            throw new AppException(ReviewErrorCode.INVALID_ORDER_PRODUCT);
+    /**
+     * 소유권뿐 아니라 목록 조회와 동일한 자격(카테고리별 기간 경과, 보류 기간 경과)까지
+     * 확인한다 - 그렇지 않으면 목록에 뜨지도 않은 항목을 기간 전에 바로 답변하거나,
+     * 보류 중인 항목을 곧바로 재답변/재보류할 수 있게 된다.
+     */
+    private void validateEligibleForSubmission(Long memberId, Long productId, Long orderProductId) {
+        ConfirmedItem target = getPaidConfirmedItems(memberId).stream()
+                .filter(item -> item.orderItemId().equals(orderProductId) && item.productId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ReviewErrorCode.INVALID_ORDER_PRODUCT));
+
+        ProductInternalItemResponse product = productClient.getProducts(List.of(productId)).items().stream()
+                .findFirst()
+                .orElse(null);
+        ProductFeedbackCheck existing = feedbackCheckRepository
+                .findExistingByOrderProductIds(List.of(orderProductId))
+                .get(orderProductId);
+
+        if (toEligible(target, product, existing, Instant.now()) == null) {
+            throw new AppException(ReviewErrorCode.FEEDBACK_NOT_AVAILABLE_YET);
         }
+    }
+
+    private boolean isAnswered(ProductFeedbackCheck existing) {
+        return existing != null && existing.getFeedbackCheckStatus() == FeedbackCheckStatus.ANSWERED;
     }
 
     private List<ConfirmedItem> getPaidConfirmedItems(Long memberId) {
@@ -113,13 +140,14 @@ public class ProductFeedbackCheckService {
                 .collect(Collectors.toMap(ProductInternalItemResponse::productId, p -> p));
     }
 
+    /**
+     * "지금 시점에 카테고리별 기간(또는 보류 기간)이 지났는지"만 판단한다.
+     * ANSWERED 여부는 호출부(목록 조회는 사전 필터, 제출은 원자적 UPSERT)에서 처리한다.
+     */
     private EligibleItem toEligible(
             ConfirmedItem item, ProductInternalItemResponse product, ProductFeedbackCheck existing, Instant now
     ) {
         if (product == null || item.confirmedAt() == null) {
-            return null;
-        }
-        if (existing != null && existing.getFeedbackCheckStatus() == FeedbackCheckStatus.ANSWERED) {
             return null;
         }
 

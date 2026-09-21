@@ -5,16 +5,13 @@ import com.golajugaenyang.review.adapter.out.persistence.mapper.ProductFeedbackC
 import com.golajugaenyang.review.adapter.out.persistence.repository.ProductFeedbackCheckJpaRepository;
 import com.golajugaenyang.review.domain.entity.ProductFeedbackCheck;
 import com.golajugaenyang.review.domain.entity.enums.FeedbackCheckAnswer;
-import com.golajugaenyang.review.domain.entity.enums.FeedbackCheckStatus;
 import com.golajugaenyang.review.domain.repository.ProductFeedbackCheckRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -31,37 +28,12 @@ public class ProductFeedbackCheckAdapter implements ProductFeedbackCheckReposito
     }
 
     @Override
-    public boolean isAlreadyAnswered(Long orderProductId) {
-        return feedbackCheckJpaRepo.findByOrderProductId(orderProductId)
-                .map(entity -> entity.getFeedbackCheckStatus() == FeedbackCheckStatus.ANSWERED)
-                .orElse(false);
+    public boolean submitAnswer(Long memberId, Long productId, Long orderProductId, FeedbackCheckAnswer answer) {
+        return feedbackCheckJpaRepo.upsertAnswer(memberId, productId, orderProductId, answer.name()) > 0;
     }
 
     @Override
-    @Transactional
-    public void submitAnswer(Long memberId, Long productId, Long orderProductId, FeedbackCheckAnswer answer) {
-        ProductFeedbackCheckJpaEntity entity = findOrCreate(memberId, productId, orderProductId);
-        entity.setFeedbackCheckAnswer(answer);
-        entity.setFeedbackCheckStatus(FeedbackCheckStatus.ANSWERED);
-        entity.setAnsweredAt(Instant.now());
-    }
-
-    @Override
-    @Transactional
-    public void postpone(Long memberId, Long productId, Long orderProductId, Instant postponedUntil) {
-        ProductFeedbackCheckJpaEntity entity = findOrCreate(memberId, productId, orderProductId);
-        entity.setFeedbackCheckStatus(FeedbackCheckStatus.POSTPONED);
-        entity.setCheckAvailableAt(postponedUntil);
-    }
-
-    private ProductFeedbackCheckJpaEntity findOrCreate(Long memberId, Long productId, Long orderProductId) {
-        Supplier<ProductFeedbackCheckJpaEntity> createNew = () -> feedbackCheckJpaRepo.save(
-                ProductFeedbackCheckJpaEntity.builder()
-                        .memberId(memberId)
-                        .productId(productId)
-                        .orderProductId(orderProductId)
-                        .feedbackCheckStatus(FeedbackCheckStatus.PENDING)
-                        .build());
-        return feedbackCheckJpaRepo.findByOrderProductId(orderProductId).orElseGet(createNew);
+    public boolean postpone(Long memberId, Long productId, Long orderProductId, Instant postponedUntil) {
+        return feedbackCheckJpaRepo.upsertPostpone(memberId, productId, orderProductId, postponedUntil) > 0;
     }
 }
