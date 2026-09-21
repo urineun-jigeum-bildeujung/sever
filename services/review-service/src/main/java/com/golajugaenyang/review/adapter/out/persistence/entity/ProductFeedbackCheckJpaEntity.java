@@ -11,41 +11,61 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "product_feedback_check")
+@Table(
+        name = "product_feedback_check",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_product_feedback_check_order_product",
+                columnNames = "order_product_id")
+)
 public class ProductFeedbackCheckJpaEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private Long memberId;
+
+    @Column(nullable = false)
+    private Long productId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private FeedbackCheckStatus feedbackCheckStatus;
 
     @Enumerated(EnumType.STRING)
+    @Setter
     private FeedbackCheckAnswer feedbackCheckAnswer;
 
+    @Setter
     private Instant checkAvailableAt;
 
     private Instant checkExpiresAt;
 
+    @Setter
     private Instant answeredAt;
 
     @Column(nullable = false)
     private Long orderProductId;
 
-    @Column(nullable = false)
+    /**
+     * 주문 시점엔 있지만(OrderItem.petId), order-service의 confirmed-items 응답에
+     * 아직 petId가 노출되지 않아 당분간 null로 둔다. 추후 필드 추가되면 채워 넣을 예정.
+     */
     private Long petId;
 }

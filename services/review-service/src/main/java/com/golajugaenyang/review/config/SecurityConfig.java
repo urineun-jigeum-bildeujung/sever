@@ -24,11 +24,12 @@ public class SecurityConfig {
             .addFilterBefore(new HeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HeaderAuthenticationEntryPoint()))
             .authorizeHttpRequests(auth -> auth
-                // 순서 중요: /me가 더 뒤의 GET /api/v1/reviews/* 패턴에도 매칭되므로,
-                // 로그인이 필요한 /me를 먼저 명시해서 우선순위를 갖도록 함
+                // 순서 중요: /me, 상태체크 피드백 제출이 더 뒤의 permitAll 패턴에도
+                // 매칭되므로, 로그인이 필요한 경로를 먼저 명시해서 우선순위를 갖도록 함
                 .requestMatchers("/internal/**", "/actuator/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/reviews/products/*/feedbacks").authenticated()
                 .requestMatchers("/api/v1/reviews/products/**").permitAll()
-                .requestMatchers("/api/v1/reviews/me").authenticated()
+                .requestMatchers("/api/v1/reviews/me", "/api/v1/reviews/feedbacks/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/reviews/*").permitAll()
                 .anyRequest().authenticated());
         return http.build();
