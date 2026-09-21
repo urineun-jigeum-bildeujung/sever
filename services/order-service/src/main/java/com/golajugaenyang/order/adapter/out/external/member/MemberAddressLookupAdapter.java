@@ -8,12 +8,14 @@ import com.golajugaenyang.order.application.order.port.out.AddressLookupPort;
 import com.golajugaenyang.order.application.order.port.out.dto.AddressInfo;
 import com.golajugaenyang.order.error.OrderErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 
 
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MemberAddressLookupAdapter implements AddressLookupPort {
@@ -25,8 +27,15 @@ public class MemberAddressLookupAdapter implements AddressLookupPort {
         ResponseEntity<AddressSnapshotResponse> response;
         try {
             response = memberInternalApiClient.getAddress(memberId, addressId);
-        } catch (RestClientException e) {
+        } catch (ResourceAccessException e) {
             throw new AppException(OrderErrorCode.MEMBER_SERVICE_UNAVAILABLE);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().is5xxServerError()) {
+                throw new AppException(OrderErrorCode.MEMBER_SERVICE_UNAVAILABLE);
+            }
+            log.error("[MemberAddressLookup] 예상 못한 4xx 응답. status={}, body={}",
+                e.getStatusCode(), e.getResponseBodyAsString());
+            throw new AppException(OrderErrorCode.MEMBER_SERVICE_REQUEST_INVALID);
         }
 
         AddressSnapshotResponse body = response.getBody();
