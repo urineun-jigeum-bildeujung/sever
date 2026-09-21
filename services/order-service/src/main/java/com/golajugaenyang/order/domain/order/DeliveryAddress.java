@@ -1,6 +1,7 @@
 package com.golajugaenyang.order.domain.order;
 
 
+import com.golajugaenyang.order.application.order.port.out.dto.AddressInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -33,14 +34,16 @@ public class DeliveryAddress {
     @Column(name = "address_detail", length = 100)
     private String addressDetail;
 
-    // TODO: member-service 실제 연동 후속 작업 대체
-    public static DeliveryAddress placeholder(Long addressId) {
+    public static DeliveryAddress from(Long addressId, AddressInfo info) {
         DeliveryAddress deliveryAddress = new DeliveryAddress();
         deliveryAddress.addressId = addressId;
-        deliveryAddress.addressName = "기본 배송지";
-        deliveryAddress.receiver = "미확인";
-        deliveryAddress.receiverPhone = "000-0000-0000";
-        deliveryAddress.address = "(addressId=" + addressId + ")";
+        deliveryAddress.addressName = info.addressName();
+        deliveryAddress.receiver = info.receiver();
+        deliveryAddress.receiverPhone = info.receiverPhone();
+        deliveryAddress.zipCode = info.zipCode();
+        deliveryAddress.address = info.address();
+        deliveryAddress.addressDetail = info.addressDetail();
         return deliveryAddress;
     }
+    
 }
