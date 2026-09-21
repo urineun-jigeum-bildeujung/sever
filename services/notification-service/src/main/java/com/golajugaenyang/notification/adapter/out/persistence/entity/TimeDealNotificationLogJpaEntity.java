@@ -1,6 +1,6 @@
 package com.golajugaenyang.notification.adapter.out.persistence.entity;
 
-import com.golajugaenyang.notification.domain.entity.enums.NotificationType;
+import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -38,8 +38,8 @@ public class TimeDealNotificationLogJpaEntity {
     private Long dealId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationType notificationType;
+    @Column(name = "notification_type", nullable = false)
+    private TimeDealTrigger trigger;
 
     @Column(nullable = false)
     private Instant sentAt;

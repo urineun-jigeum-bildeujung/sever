@@ -1,7 +1,7 @@
 package com.golajugaenyang.notification.adapter.out.persistence.adapter;
 
 import com.golajugaenyang.notification.adapter.out.persistence.repository.TimeDealNotificationLogJpaRepository;
-import com.golajugaenyang.notification.domain.entity.enums.NotificationType;
+import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import com.golajugaenyang.notification.domain.repository.TimeDealNotificationLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ public class TimeDealNotificationLogAdapter implements TimeDealNotificationLogRe
 
     @Override
     @Transactional
-    public boolean tryMarkAsSent(Long dealId, NotificationType notificationType) {
-        return logJpaRepo.insertIfAbsent(dealId, notificationType.name()) > 0;
+    public boolean tryMarkAsSent(Long dealId, TimeDealTrigger trigger) {
+        return logJpaRepo.insertIfAbsent(dealId, trigger.name()) > 0;
     }
 }

@@ -5,7 +5,9 @@ import com.golajugaenyang.notification.adapter.out.client.dto.TimeDealListRespon
 import com.golajugaenyang.notification.adapter.out.push.FcmPushSender;
 import com.golajugaenyang.notification.domain.entity.Notification;
 import com.golajugaenyang.notification.domain.entity.enums.NotificationCategory;
-import com.golajugaenyang.notification.domain.entity.enums.NotificationType;
+import com.golajugaenyang.notification.domain.entity.enums.NotificationDisplayType;
+import com.golajugaenyang.notification.domain.entity.enums.NotificationTargetType;
+import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import com.golajugaenyang.notification.domain.repository.FcmTokenRepository;
 import com.golajugaenyang.notification.domain.repository.NotificationRepository;
 import com.golajugaenyang.notification.domain.repository.NotificationSubscriptionRepository;
@@ -33,7 +35,6 @@ public class TimeDealNotificationScheduler {
 
     private static final Duration UPCOMING_OFFSET = Duration.ofMinutes(10);
     private static final Duration ONGOING_OFFSET = Duration.ofMinutes(30);
-    private static final String DEEP_LINK_PREFIX = "petflow://time-deals/";
 
     private final ProductClient productClient;
     private final TimeDealNotificationLogRepository logRepository;
@@ -75,17 +76,17 @@ public class TimeDealNotificationScheduler {
         }
 
         if (now.isBefore(startAt) && !now.isBefore(startAt.minus(UPCOMING_OFFSET))) {
-            tryNotify(deal, NotificationType.TIME_DEAL_UPCOMING,
+            tryNotify(deal, TimeDealTrigger.UPCOMING,
                     "타임딜 시작 10분 전!", deal.dealName() + " 타임딜이 곧 시작해요.");
         }
 
         if (!now.isBefore(startAt) && isOngoing(now, endAt)) {
-            tryNotify(deal, NotificationType.TIME_DEAL_START,
+            tryNotify(deal, TimeDealTrigger.START,
                     "타임딜 시작!", deal.dealName() + " 타임딜이 지금 시작했어요.");
         }
 
         if (!now.isBefore(startAt.plus(ONGOING_OFFSET)) && isOngoing(now, endAt)) {
-            tryNotify(deal, NotificationType.TIME_DEAL_ONGOING,
+            tryNotify(deal, TimeDealTrigger.ONGOING,
                     "타임딜 진행중", deal.dealName() + " 타임딜, 아직 늦지 않았어요.");
         }
     }
@@ -94,9 +95,9 @@ public class TimeDealNotificationScheduler {
         return endAt == null || now.isBefore(endAt);
     }
 
-    private void tryNotify(DealGroupResponse deal, NotificationType type, String title, String body) {
-        String deepLink = DEEP_LINK_PREFIX + deal.dealId();
-        List<Long> memberIds = markAndPersist(deal.dealId(), type, title, body, deepLink);
+    private void tryNotify(DealGroupResponse deal, TimeDealTrigger trigger, String title, String body) {
+        String targetId = deal.dealId().toString();
+        List<Long> memberIds = markAndPersist(deal.dealId(), trigger, title, body, targetId);
         if (memberIds.isEmpty()) {
             return;
         }
@@ -104,15 +105,15 @@ public class TimeDealNotificationScheduler {
         Map<Long, List<String>> tokensByMember = fcmTokenRepository.findTokensByMemberIds(memberIds);
         for (Long memberId : memberIds) {
             for (String token : tokensByMember.getOrDefault(memberId, List.of())) {
-                fcmPushSender.send(token, title, body, deepLink);
+                fcmPushSender.send(token, title, body, NotificationTargetType.TIMEDEAL.name(), targetId);
             }
         }
     }
 
     private List<Long> markAndPersist(
-            Long dealId, NotificationType type, String title, String body, String deepLink
+            Long dealId, TimeDealTrigger trigger, String title, String body, String targetId
     ) {
-        if (!logRepository.tryMarkAsSent(dealId, type)) {
+        if (!logRepository.tryMarkAsSent(dealId, trigger)) {
             return List.of();
         }
 
@@ -122,7 +123,10 @@ public class TimeDealNotificationScheduler {
         }
 
         List<Notification> notifications = memberIds.stream()
-                .map(memberId -> new Notification(null, memberId, type, title, body, deepLink, false, null))
+                .map(memberId -> new Notification(
+                        null, memberId, NotificationDisplayType.TIMEDEAL,
+                        title, body, NotificationTargetType.TIMEDEAL, targetId,
+                        false, null))
                 .toList();
         notificationRepository.saveAll(notifications);
         return memberIds;

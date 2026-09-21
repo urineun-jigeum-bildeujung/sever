@@ -14,8 +14,8 @@ public interface TimeDealNotificationLogJpaRepository
     @Modifying
     @Query(value = """
         INSERT INTO time_deal_notification_log (deal_id, notification_type, sent_at)
-        VALUES (:dealId, :notificationType, now())
+        VALUES (:dealId, :trigger, now())
         ON CONFLICT ON CONSTRAINT uk_time_deal_notification_log_deal_type DO NOTHING
         """, nativeQuery = true)
-    int insertIfAbsent(@Param("dealId") Long dealId, @Param("notificationType") String notificationType);
+    int insertIfAbsent(@Param("dealId") Long dealId, @Param("trigger") String trigger);
 }

@@ -13,7 +13,8 @@ public class NotificationMapper {
                 jpaEntity.getType(),
                 jpaEntity.getTitle(),
                 jpaEntity.getBody(),
-                jpaEntity.getDeepLink(),
+                jpaEntity.getTargetType(),
+                jpaEntity.getTargetId(),
                 jpaEntity.isRead(),
                 jpaEntity.getCreatedAt()
         );
@@ -27,7 +28,8 @@ public class NotificationMapper {
                 .type(domain.getType())
                 .title(domain.getTitle())
                 .body(domain.getBody())
-                .deepLink(domain.getDeepLink())
+                .targetType(domain.getTargetType())
+                .targetId(domain.getTargetId())
                 .read(domain.isRead())
                 .build();
     }

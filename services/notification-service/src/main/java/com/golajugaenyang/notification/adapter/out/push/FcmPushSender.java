@@ -15,23 +15,27 @@ public class FcmPushSender {
 
     private final FirebaseApp firebaseApp;
 
-    public void send(String token, String title, String body, String deepLink) {
+    public void send(String token, String title, String body, String targetType, String targetId) {
         if (firebaseApp == null) {
             log.debug("FCM 미설정으로 푸시 발송을 건너뜁니다. token={}", token);
             return;
         }
 
-        Message message = Message.builder()
+        Message.Builder builder = Message.builder()
                 .setToken(token)
                 .setNotification(com.google.firebase.messaging.Notification.builder()
                         .setTitle(title)
                         .setBody(body)
-                        .build())
-                .putData("deepLink", deepLink == null ? "" : deepLink)
-                .build();
+                        .build());
+        if (targetType != null) {
+            builder.putData("targetType", targetType);
+        }
+        if (targetId != null) {
+            builder.putData("targetId", targetId);
+        }
 
         try {
-            FirebaseMessaging.getInstance(firebaseApp).send(message);
+            FirebaseMessaging.getInstance(firebaseApp).send(builder.build());
         } catch (FirebaseMessagingException e) {
             log.warn("FCM 푸시 발송 실패: token={}, error={}", token, e.getMessage());
         }

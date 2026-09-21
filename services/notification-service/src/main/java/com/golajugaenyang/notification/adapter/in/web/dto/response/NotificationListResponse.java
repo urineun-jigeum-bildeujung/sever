@@ -13,8 +13,9 @@ public record NotificationListResponse(
             String type,
             String title,
             String body,
-            String deepLink,
-            boolean read,
+            boolean isRead,
+            String targetType,
+            String targetId,
             Instant createdAt
     ) {
 
@@ -23,8 +24,14 @@ public record NotificationListResponse(
     public static NotificationListResponse from(List<Notification> notifications) {
         List<Item> content = notifications.stream()
                 .map(n -> new Item(
-                        n.getId(), n.getType().name(), n.getTitle(),
-                        n.getBody(), n.getDeepLink(), n.isRead(), n.getCreatedAt()))
+                        n.getId(),
+                        n.getType().name(),
+                        n.getTitle(),
+                        n.getBody(),
+                        n.isRead(),
+                        n.getTargetType() != null ? n.getTargetType().name() : null,
+                        n.getTargetId(),
+                        n.getCreatedAt()))
                 .toList();
         return new NotificationListResponse(content);
     }

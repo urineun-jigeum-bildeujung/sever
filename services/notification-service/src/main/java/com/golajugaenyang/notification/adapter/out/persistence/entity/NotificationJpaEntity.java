@@ -1,7 +1,8 @@
 package com.golajugaenyang.notification.adapter.out.persistence.entity;
 
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
-import com.golajugaenyang.notification.domain.entity.enums.NotificationType;
+import com.golajugaenyang.notification.domain.entity.enums.NotificationDisplayType;
+import com.golajugaenyang.notification.domain.entity.enums.NotificationTargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,7 +34,7 @@ public class NotificationJpaEntity extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type;
+    private NotificationDisplayType type;
 
     @Column(nullable = false)
     private String title;
@@ -41,7 +42,10 @@ public class NotificationJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private String body;
 
-    private String deepLink;
+    @Enumerated(EnumType.STRING)
+    private NotificationTargetType targetType;
+
+    private String targetId;
 
     @Column(nullable = false)
     private boolean read;
