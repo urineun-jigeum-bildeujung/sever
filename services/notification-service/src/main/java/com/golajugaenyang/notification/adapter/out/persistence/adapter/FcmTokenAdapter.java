@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -17,14 +16,8 @@ public class FcmTokenAdapter implements FcmTokenRepository {
     private final FcmTokenJpaRepository fcmTokenJpaRepo;
 
     @Override
-    @Transactional
     public void upsert(Long memberId, String token) {
-        fcmTokenJpaRepo.findByToken(token)
-                .ifPresentOrElse(
-                        existing -> existing.setMemberId(memberId),
-                        () -> fcmTokenJpaRepo.save(
-                                FcmTokenJpaEntity.builder().memberId(memberId).token(token).build())
-                );
+        fcmTokenJpaRepo.upsert(memberId, token);
     }
 
     @Override
@@ -39,5 +32,10 @@ public class FcmTokenAdapter implements FcmTokenRepository {
     @Override
     public List<Long> findAllMemberIds() {
         return fcmTokenJpaRepo.findDistinctMemberIds();
+    }
+
+    @Override
+    public void deleteByToken(String token) {
+        fcmTokenJpaRepo.deleteByToken(token);
     }
 }

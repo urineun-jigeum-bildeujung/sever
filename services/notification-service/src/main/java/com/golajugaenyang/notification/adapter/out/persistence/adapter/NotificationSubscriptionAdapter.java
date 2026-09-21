@@ -7,7 +7,6 @@ import com.golajugaenyang.notification.domain.repository.NotificationSubscriptio
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -16,17 +15,8 @@ public class NotificationSubscriptionAdapter implements NotificationSubscription
     private final NotificationSubscriptionJpaRepository subscriptionJpaRepo;
 
     @Override
-    @Transactional
     public void upsert(Long memberId, NotificationCategory category, boolean subscribed) {
-        subscriptionJpaRepo.findByMemberIdAndCategory(memberId, category)
-                .ifPresentOrElse(
-                        existing -> existing.setSubscribed(subscribed),
-                        () -> subscriptionJpaRepo.save(NotificationSubscriptionJpaEntity.builder()
-                                .memberId(memberId)
-                                .category(category)
-                                .subscribed(subscribed)
-                                .build())
-                );
+        subscriptionJpaRepo.upsert(memberId, category.name(), subscribed);
     }
 
     @Override

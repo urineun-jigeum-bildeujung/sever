@@ -10,4 +10,6 @@ public interface FcmTokenRepository {
     Map<Long, List<String>> findTokensByMemberIds(List<Long> memberIds);
 
     List<Long> findAllMemberIds();
+
+    void deleteByToken(String token);
 }

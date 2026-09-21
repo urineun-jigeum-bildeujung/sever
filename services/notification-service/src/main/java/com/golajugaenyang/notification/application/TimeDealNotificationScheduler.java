@@ -3,15 +3,9 @@ package com.golajugaenyang.notification.application;
 import com.golajugaenyang.notification.adapter.out.client.ProductClient;
 import com.golajugaenyang.notification.adapter.out.client.dto.TimeDealListResponse.DealGroupResponse;
 import com.golajugaenyang.notification.adapter.out.push.FcmPushSender;
-import com.golajugaenyang.notification.domain.entity.Notification;
-import com.golajugaenyang.notification.domain.entity.enums.NotificationCategory;
-import com.golajugaenyang.notification.domain.entity.enums.NotificationDisplayType;
 import com.golajugaenyang.notification.domain.entity.enums.NotificationTargetType;
 import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import com.golajugaenyang.notification.domain.repository.FcmTokenRepository;
-import com.golajugaenyang.notification.domain.repository.NotificationRepository;
-import com.golajugaenyang.notification.domain.repository.NotificationSubscriptionRepository;
-import com.golajugaenyang.notification.domain.repository.TimeDealNotificationLogRepository;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -37,10 +31,8 @@ public class TimeDealNotificationScheduler {
     private static final Duration ONGOING_OFFSET = Duration.ofMinutes(30);
 
     private final ProductClient productClient;
-    private final TimeDealNotificationLogRepository logRepository;
-    private final NotificationSubscriptionRepository subscriptionRepository;
+    private final TimeDealNotificationPersistenceService persistenceService;
     private final FcmTokenRepository fcmTokenRepository;
-    private final NotificationRepository notificationRepository;
     private final FcmPushSender fcmPushSender;
 
     @Scheduled(fixedRate = 60_000)
@@ -97,7 +89,7 @@ public class TimeDealNotificationScheduler {
 
     private void tryNotify(DealGroupResponse deal, TimeDealTrigger trigger, String title, String body) {
         String targetId = deal.dealId().toString();
-        List<Long> memberIds = markAndPersist(deal.dealId(), trigger, title, body, targetId);
+        List<Long> memberIds = persistenceService.markAndPersist(deal.dealId(), trigger, title, body, targetId);
         if (memberIds.isEmpty()) {
             return;
         }
@@ -108,27 +100,5 @@ public class TimeDealNotificationScheduler {
                 fcmPushSender.send(token, title, body, NotificationTargetType.TIMEDEAL.name(), targetId);
             }
         }
-    }
-
-    private List<Long> markAndPersist(
-            Long dealId, TimeDealTrigger trigger, String title, String body, String targetId
-    ) {
-        if (!logRepository.tryMarkAsSent(dealId, trigger)) {
-            return List.of();
-        }
-
-        List<Long> memberIds = subscriptionRepository.findSubscribedMemberIds(NotificationCategory.TIME_DEAL);
-        if (memberIds.isEmpty()) {
-            return List.of();
-        }
-
-        List<Notification> notifications = memberIds.stream()
-                .map(memberId -> new Notification(
-                        null, memberId, NotificationDisplayType.TIMEDEAL,
-                        title, body, NotificationTargetType.TIMEDEAL, targetId,
-                        false, null))
-                .toList();
-        notificationRepository.saveAll(notifications);
-        return memberIds;
     }
 }

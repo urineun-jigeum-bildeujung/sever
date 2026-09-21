@@ -16,7 +16,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -43,6 +42,5 @@ public class NotificationSubscriptionJpaEntity extends BaseTimeEntity {
     private NotificationCategory category;
 
     @Column(nullable = false)
-    @Setter
     private boolean subscribed;
 }

@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -28,7 +27,6 @@ public class FcmTokenJpaEntity extends BaseTimeEntity {
     private Long id;
 
     @Column(nullable = false)
-    @Setter
     private Long memberId;
 
     @Column(nullable = false)

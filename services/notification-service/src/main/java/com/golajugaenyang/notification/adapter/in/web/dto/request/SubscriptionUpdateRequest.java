@@ -1,7 +1,9 @@
 package com.golajugaenyang.notification.adapter.in.web.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+
 public record SubscriptionUpdateRequest(
-        boolean subscribed
+        @NotNull Boolean subscribed
 ) {
 
 }
