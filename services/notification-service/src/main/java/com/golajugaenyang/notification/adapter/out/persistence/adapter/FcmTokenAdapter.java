@@ -35,4 +35,9 @@ public class FcmTokenAdapter implements FcmTokenRepository {
                         Collectors.mapping(FcmTokenJpaEntity::getToken, Collectors.toList())
                 ));
     }
+
+    @Override
+    public List<Long> findAllMemberIds() {
+        return fcmTokenJpaRepo.findDistinctMemberIds();
+    }
 }

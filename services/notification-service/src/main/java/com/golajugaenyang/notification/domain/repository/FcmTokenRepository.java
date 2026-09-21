@@ -8,4 +8,6 @@ public interface FcmTokenRepository {
     void upsert(Long memberId, String token);
 
     Map<Long, List<String>> findTokensByMemberIds(List<Long> memberIds);
+
+    List<Long> findAllMemberIds();
 }
