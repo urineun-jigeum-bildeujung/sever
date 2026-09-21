@@ -42,7 +42,7 @@ public interface OrderItemJpaRepository extends JpaRepository<OrderItem, Long> {
             oi.productId, o.id, oi.id, o.orderStatus, oi.itemStatus, o.confirmedAt)
         from OrderItem oi join oi.order o
         where o.memberId = :memberId and o.orderStatus = :orderStatus
-        order by o.confirmedAt desc
+        order by o.confirmedAt desc, oi.id desc
         """)
     List<ConfirmedPurchaseItemProjection> findConfirmedPurchaseItems(
         @Param("memberId") Long memberId,
