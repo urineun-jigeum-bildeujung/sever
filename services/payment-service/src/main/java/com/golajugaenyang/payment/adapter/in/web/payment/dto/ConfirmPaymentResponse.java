@@ -6,6 +6,7 @@ import java.time.OffsetDateTime;
 
 public record ConfirmPaymentResponse(
     Long paymentId,
+    Long orderId,
     String orderNumber,
     String paymentStatus,
     BigDecimal amount,
@@ -16,6 +17,7 @@ public record ConfirmPaymentResponse(
     public static ConfirmPaymentResponse from(ConfirmPaymentResult result) {
         return new ConfirmPaymentResponse(
             result.paymentId(),
+            result.orderId(),
             result.orderNumber(),
             result.paymentStatus(),
             result.amount(),

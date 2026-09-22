@@ -49,7 +49,7 @@ public class GetOrderDetailService implements GetOrderDetailUseCase {
 
         return new OrderDetailResult(
             order.getId(), order.getOrderNumber(),
-            order.getOrderStatus().name(),
+            order.getOrderStatus().name(), order.getDeliveredAt(),
             order.getProductAmount(), order.getTotalAmount(),
             items, toAddressDetail(order.getDeliveryAddress()),
             order.getDeliveryNote(), payment);
@@ -66,7 +66,8 @@ public class GetOrderDetailService implements GetOrderDetailUseCase {
             .toList();
         return new OrderDetailResult.ItemDetail(
             item.getId(), item.getThumbnailUrlSnapshot(), item.getProductNameSnapshot(),
-            item.getQuantity(),
+            item.getQuantity(), item.getCancelledQuantity(),
+            item.getReturnedQuantity(), item.effectiveQuantity(),
             item.getUnitPrice(), item.getItemStatus().name(), claims);
     }
 

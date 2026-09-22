@@ -10,6 +10,7 @@ public record OrderDetailResponse(
     Long orderId,
     String orderNumber,
     String orderStatus,
+    OffsetDateTime deliveredAt,
     BigDecimal productAmount,
     BigDecimal totalAmount,
     List<ItemDetail> items,
@@ -23,6 +24,9 @@ public record OrderDetailResponse(
         String thumbnailUrl,
         String productName,
         int quantity,
+        int cancelledQuantity,
+        int returnedQuantity,
+        int effectiveQuantity,
         BigDecimal unitPrice,
         String itemStatus,
         List<ClaimSummary> claims
@@ -60,8 +64,9 @@ public record OrderDetailResponse(
     public static OrderDetailResponse from(OrderDetailResult result) {
         List<ItemDetail> items = result.items().stream()
             .map(i -> new ItemDetail(
-                i.orderItemId(), i.thumbnailUrl(),
-                i.productName(), i.quantity(),
+                i.orderItemId(), i.thumbnailUrl(), i.productName(),
+                i.quantity(), i.cancelledQuantity(),
+                i.returnedQuantity(), i.effectiveQuantity(),
                 i.unitPrice(), i.itemStatus(),
                 i.claims().stream()
                     .map(c -> new ClaimSummary(
@@ -83,8 +88,8 @@ public record OrderDetailResponse(
             : null;
 
         return new OrderDetailResponse(
-            result.orderId(),
-            result.orderNumber(), result.orderStatus(),
+            result.orderId(), result.orderNumber(),
+            result.orderStatus(), result.deliveredAt(),
             result.productAmount(), result.totalAmount(),
             items, address, result.deliveryNote(), payment);
     }

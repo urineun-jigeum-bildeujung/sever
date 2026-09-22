@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public record ConfirmPaymentResult(
+    Long orderId,
     Long paymentId,
     String orderNumber,
     String paymentStatus,
@@ -15,6 +16,7 @@ public record ConfirmPaymentResult(
 
     public static ConfirmPaymentResult from(Payment payment) {
         return new ConfirmPaymentResult(
+            payment.getOrderId(),
             payment.getId(),
             payment.getOrderNumber(),
             payment.getPaymentStatus().name(),
