@@ -23,6 +23,9 @@ public record OrderDetailResult(
         String thumbnailUrl,
         String productName,
         int quantity,
+        int cancelledQuantity,
+        int returnedQuantity,
+        int effectiveQuantity,
         BigDecimal unitPrice,
         String itemStatus,
         List<ClaimSummary> claims

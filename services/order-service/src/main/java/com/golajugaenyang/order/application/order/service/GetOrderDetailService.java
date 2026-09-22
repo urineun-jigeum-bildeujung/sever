@@ -66,7 +66,8 @@ public class GetOrderDetailService implements GetOrderDetailUseCase {
             .toList();
         return new OrderDetailResult.ItemDetail(
             item.getId(), item.getThumbnailUrlSnapshot(), item.getProductNameSnapshot(),
-            item.getQuantity(),
+            item.getQuantity(), item.getCancelledQuantity(),
+            item.getReturnedQuantity(), item.effectiveQuantity(),
             item.getUnitPrice(), item.getItemStatus().name(), claims);
     }
 
