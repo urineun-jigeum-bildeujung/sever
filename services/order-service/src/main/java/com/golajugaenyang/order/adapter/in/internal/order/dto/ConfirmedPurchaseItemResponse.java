@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 public record ConfirmedPurchaseItemResponse(
     Long productId,
+    Long petId,
     Long orderId,
     Long orderItemId,
     String orderStatus,
@@ -15,6 +16,7 @@ public record ConfirmedPurchaseItemResponse(
     public static ConfirmedPurchaseItemResponse from(ConfirmedPurchaseItemResult result) {
         return new ConfirmedPurchaseItemResponse(
             result.productId(),
+            result.petId(),
             result.orderId(),
             result.orderItemId(),
             result.orderStatus(),

@@ -23,7 +23,7 @@ public class GetConfirmedPurchaseItemsService implements GetConfirmedPurchaseIte
         return orderRepositoryPort
             .findConfirmedPurchaseItems(memberId, MAX_RESULT_SIZE).stream()
             .map(i -> new ConfirmedPurchaseItemResult(
-                i.productId(), i.orderId(), i.orderItemId(),
+                i.productId(), i.petId(), i.orderId(), i.orderItemId(),
                 i.orderStatus(), i.itemStatus(), i.confirmedAt()))
             .toList();
     }

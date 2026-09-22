@@ -4,6 +4,7 @@ import java.util.List;
 
 public record CreateOrderCommand(
     Long memberId,
+    Long petId,
     String idempotencyKey,
     Long addressId,
     List<Item> items,

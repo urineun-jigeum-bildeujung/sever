@@ -6,6 +6,7 @@ import java.time.OffsetDateTime;
 
 public record ConfirmedPurchaseItemProjection(
     Long productId,
+    Long petId,
     Long orderId,
     Long orderItemId,
     OrderStatus orderStatus,

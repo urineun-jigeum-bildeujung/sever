@@ -11,6 +11,7 @@ import java.util.List;
 
 public record CreateOrderRequest(
     @NotNull Long addressId,
+    @NotNull Long petId,
     @NotEmpty @Valid List<Item> items,
     @Size(max = 200) String deliveryNote
 ) {
@@ -35,6 +36,7 @@ public record CreateOrderRequest(
             .toList();
         return new CreateOrderCommand(
             memberId,
+            petId,
             idempotencyKey,
             addressId,
             commandItems,

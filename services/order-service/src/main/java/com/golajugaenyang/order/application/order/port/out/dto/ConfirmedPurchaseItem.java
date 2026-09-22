@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 
 public record ConfirmedPurchaseItem(
     Long productId,
+    Long petId,
     Long orderId,
     Long orderItemId,
     String orderStatus,
