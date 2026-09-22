@@ -16,6 +16,11 @@ spring:
         highlight_sql: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: payment-service.refund-consumer
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: RECORD
 
 toss-payments:
   base-url: https://api.tosspayments.com
