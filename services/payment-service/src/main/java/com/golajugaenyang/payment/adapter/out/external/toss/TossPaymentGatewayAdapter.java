@@ -9,6 +9,7 @@ import com.golajugaenyang.payment.adapter.out.external.toss.dto.TossConfirmRespo
 import com.golajugaenyang.payment.application.payment.port.out.TossPaymentGatewayPort;
 import com.golajugaenyang.payment.application.payment.port.out.dto.TossConfirmResult;
 import com.golajugaenyang.payment.error.PaymentErrorCode;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.web.client.RestClientException;
 public class TossPaymentGatewayAdapter implements TossPaymentGatewayPort {
 
     private final TossPaymentApiClient tossPaymentApiClient;
+    private final MeterRegistry meterRegistry;
 
     @Override
     public TossConfirmResult confirm(String paymentKey, String orderId, BigDecimal amount) {
@@ -43,13 +45,13 @@ public class TossPaymentGatewayAdapter implements TossPaymentGatewayPort {
     }
 
     @Override
-    public void cancel(String paymentKey, String reason) {
+    public void cancel(String paymentKey, String reason, String idempotencyKey) {
         try {
-            tossPaymentApiClient.cancel(
-                paymentKey, UUID.randomUUID().toString(), new TossCancelRequest(reason));
+            tossPaymentApiClient.cancel(paymentKey, idempotencyKey, new TossCancelRequest(reason));
         } catch (RestClientException e) {
             log.error("[TossCancel] 자동 취소 실패, 수동 확인 필요. paymentKey={}, reason={}",
                 paymentKey, reason, e);
+            meterRegistry.counter("payment.toss.cancel.failed").increment();
             throw new AppException(PaymentErrorCode.TOSS_CANCEL_FAILED);
         }
     }

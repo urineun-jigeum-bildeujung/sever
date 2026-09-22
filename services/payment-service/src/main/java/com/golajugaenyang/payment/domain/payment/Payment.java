@@ -67,6 +67,12 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "fail_reason", length = 500)
     private String failReason;
 
+    @Column(name = "cancel_idempotency_key", length = 100)
+    private String cancelIdempotencyKey;
+
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     public static Payment requestFor(
         Long orderId, String orderNumber, Long memberId, BigDecimal amount) {
         Payment payment = new Payment();
@@ -109,6 +115,30 @@ public class Payment extends BaseTimeEntity {
         this.paymentKey = paymentKey;
         this.failReason = reason;
         this.paymentStatus = PaymentStatus.FAILED;
+    }
+
+    public void beginCancellation(String newIdempotencyKey, String reason) {
+        if (this.paymentStatus == PaymentStatus.CANCELLING
+            || this.paymentStatus == PaymentStatus.CANCELLED) {
+            return;
+        }
+        if (this.paymentStatus != PaymentStatus.DONE) {
+            return;
+        }
+        this.paymentStatus = PaymentStatus.CANCELLING;
+        this.cancelIdempotencyKey = newIdempotencyKey;
+        this.cancelReason = reason;
+    }
+
+    public void finalizeCancellation() {
+        if (this.paymentStatus == PaymentStatus.CANCELLED) {
+            return;
+        }
+        if (!this.paymentStatus.canTransitTo(PaymentStatus.CANCELLED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 상태 %s에서는 취소를 확정할 수 없습니다.".formatted(getId(), this.paymentStatus));
+        }
+        this.paymentStatus = PaymentStatus.CANCELLED;
     }
 
 }

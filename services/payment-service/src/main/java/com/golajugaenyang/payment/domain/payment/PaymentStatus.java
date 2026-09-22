@@ -10,13 +10,17 @@ public enum PaymentStatus {
     READY,
     APPROVED,
     DONE,
-    FAILED;
+    FAILED,
+    CANCELLING,
+    CANCELLED;
 
     private static final Map<PaymentStatus, Set<PaymentStatus>> ALLOWED = Map.of(
         READY, EnumSet.of(APPROVED, FAILED),
         APPROVED, EnumSet.of(DONE),
-        DONE, EnumSet.noneOf(PaymentStatus.class),
-        FAILED, EnumSet.noneOf(PaymentStatus.class)
+        DONE, EnumSet.of(CANCELLING),
+        CANCELLING, EnumSet.of(CANCELLED),
+        FAILED, EnumSet.noneOf(PaymentStatus.class),
+        CANCELLED, EnumSet.noneOf(PaymentStatus.class)
     );
 
     public boolean canTransitTo(PaymentStatus next) {
