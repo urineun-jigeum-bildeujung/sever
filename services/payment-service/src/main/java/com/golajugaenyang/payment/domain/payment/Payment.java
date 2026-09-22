@@ -67,6 +67,9 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "fail_reason", length = 500)
     private String failReason;
 
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     public static Payment requestFor(
         Long orderId, String orderNumber, Long memberId, BigDecimal amount) {
         Payment payment = new Payment();
@@ -109,6 +112,15 @@ public class Payment extends BaseTimeEntity {
         this.paymentKey = paymentKey;
         this.failReason = reason;
         this.paymentStatus = PaymentStatus.FAILED;
+    }
+
+    public void cancel(String reason) {
+        if (!this.paymentStatus.canTransitTo(PaymentStatus.CANCELLED)) {
+            throw new IllegalStateException(
+                "id=%d, 현재 상태 %s에서는 취소할 수 없습니다.".formatted(getId(), this.paymentStatus));
+        }
+        this.paymentStatus = PaymentStatus.CANCELLED;
+        this.cancelReason = reason;
     }
 
 }
