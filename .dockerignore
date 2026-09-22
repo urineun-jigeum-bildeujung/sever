@@ -5,6 +5,8 @@
 # COPY해서 이미지에 담아야 하므로 그것만 예외로 다시 포함시킴(2026-09-14,
 # gradle을 kaniko 안에서 다시 안 돌리도록 구조 변경하면서 발견).
 **/build/**
+!**/build/
+!**/build/libs/
 !**/build/libs/*.jar
 .idea
 *.iml

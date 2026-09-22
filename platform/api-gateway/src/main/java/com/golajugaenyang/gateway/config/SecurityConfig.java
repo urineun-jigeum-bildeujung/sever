@@ -3,6 +3,7 @@ package com.golajugaenyang.gateway.config;
 import com.golajugaenyang.gateway.security.TokenBlacklistCache;
 import com.golajugaenyang.gateway.security.TokenBlacklistValidator;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.webclient.autoconfigure.WebClientSsl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
+import org.springframework.web.reactive.function.client.WebClient;
 
 
 @Configuration
@@ -44,8 +46,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.jwks-uri}") String jwksUri, TokenBlacklistCache blacklistCache) {
-        NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSetUri(jwksUri).build();
+    public ReactiveJwtDecoder jwtDecoder(
+        @Value("${jwt.jwks-uri}") String jwksUri,
+        @Value("${internal.mtls.enabled:false}") boolean internalMtlsEnabled,
+        TokenBlacklistCache blacklistCache,
+        WebClient.Builder webClientBuilder,
+        WebClientSsl webClientSsl
+    ) {
+        var decoderBuilder = NimbusReactiveJwtDecoder.withJwkSetUri(jwksUri);
+        if (internalMtlsEnabled) {
+            WebClient jwksWebClient = webClientBuilder.clone()
+                .apply(webClientSsl.fromBundle("internalmtls"))
+                .build();
+            decoderBuilder.webClient(jwksWebClient);
+        }
+
+        NimbusReactiveJwtDecoder decoder = decoderBuilder.build();
 
         OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
             JwtValidators.createDefault(),
