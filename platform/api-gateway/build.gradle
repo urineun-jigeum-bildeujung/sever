@@ -10,9 +10,18 @@ dependencyManagement {
 
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+    // Spring Cloud 5.0.2가 가져오는 1.81.1의 CVE-2026-8763을 수정한 최소 버전.
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-webclient'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     implementation 'com.github.ben-manes.caffeine:caffeine'
+}
+
+// Jenkins/Kaniko는 미리 생성된 실행 JAR 하나만 이미지에 복사한다. plain JAR가 같이
+// 생기면 Docker wildcard가 잘못된 파일을 선택할 수 있으므로 Gateway도 bootJar만 만든다.
+tasks.named('jar') {
+    enabled = false
 }

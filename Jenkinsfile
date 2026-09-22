@@ -5,6 +5,52 @@ def imageTag = ''
 // 하고 실제 ECR push/배포는 안 함 — dev로 실제 merge된 빌드만 진짜 배포로 취급.
 def isRealDeploy = false
 
+// 감지 결과를 셸 경로나 Gradle task에 직접 보간하지 않고, 고정된 허용 목록에서만
+// 프로젝트/Dockerfile/Values 경로를 꺼낸다. api-gateway는 services/*가 아닌
+// platform/* 모듈이므로 이 매핑이 모든 CI 단계의 단일 기준이다.
+def imageTargets = [
+    'auth-service': [
+        name: 'auth-service', gradleProject: ':services:auth-service',
+        dockerfile: 'services/auth-service/Dockerfile',
+        valuesPath: 'values/dev/services/auth-service/values.yaml',
+    ],
+    'member-service': [
+        name: 'member-service', gradleProject: ':services:member-service',
+        dockerfile: 'services/member-service/Dockerfile',
+        valuesPath: 'values/dev/services/member-service/values.yaml',
+    ],
+    'product-service': [
+        name: 'product-service', gradleProject: ':services:product-service',
+        dockerfile: 'services/product-service/Dockerfile',
+        valuesPath: 'values/dev/services/product-service/values.yaml',
+    ],
+    'order-service': [
+        name: 'order-service', gradleProject: ':services:order-service',
+        dockerfile: 'services/order-service/Dockerfile',
+        valuesPath: 'values/dev/services/order-service/values.yaml',
+    ],
+    'payment-service': [
+        name: 'payment-service', gradleProject: ':services:payment-service',
+        dockerfile: 'services/payment-service/Dockerfile',
+        valuesPath: 'values/dev/services/payment-service/values.yaml',
+    ],
+    'review-service': [
+        name: 'review-service', gradleProject: ':services:review-service',
+        dockerfile: 'services/review-service/Dockerfile',
+        valuesPath: 'values/dev/services/review-service/values.yaml',
+    ],
+    'notification-service': [
+        name: 'notification-service', gradleProject: ':services:notification-service',
+        dockerfile: 'services/notification-service/Dockerfile',
+        valuesPath: 'values/dev/services/notification-service/values.yaml',
+    ],
+    'api-gateway': [
+        name: 'api-gateway', gradleProject: ':platform:api-gateway',
+        dockerfile: 'platform/api-gateway/Dockerfile',
+        valuesPath: 'values/dev/services/api-gateway/values.yaml',
+    ],
+]
+
 pipeline {
     // dev 브랜치에 짧은 시간 안에 push가 몰리면 두 빌드가 동시에 같은 gitops-value
     // HEAD를 기준으로 clone해서, 먼저 push한 쪽 다음 push가 non-fast-forward로
@@ -218,7 +264,12 @@ spec:
                         return
                     }
 
-                    def testTasks = services.collect { ":services:${it}:test" }.join(' ')
+                    def targets = services.collect { svc ->
+                        def target = imageTargets[svc]
+                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                        return target
+                    }
+                    def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
                     container('gradle') {
                         sh """
                             chmod +x gradlew
@@ -247,7 +298,12 @@ spec:
                     // (2026-09-14 실제 Jenkins 빌드에서 재현). Test 스테이지처럼 gradle
                     // 컨테이너에서 jar를 한 번만 미리 빌드해두고, kaniko는 그 jar를 COPY만
                     // 하도록 Dockerfile을 단순화해서 이 문제를 구조적으로 없앤다.
-                    def bootJarTasks = services.collect { ":services:${it}:bootJar" }.join(' ')
+                    def targets = services.collect { svc ->
+                        def target = imageTargets[svc]
+                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                        return target
+                    }
+                    def bootJarTasks = targets.collect { "${it.gradleProject}:bootJar" }.join(' ')
                     container('gradle') {
                         sh """
                             chmod +x gradlew
@@ -276,15 +332,15 @@ spec:
                     //
                     // jar가 이미 만들어져 있어서 kaniko는 COPY만 하면 되므로 캐시 경합이
                     // 구조적으로 불가능함 — 그래도 디스크 여유를 위해 tar는 순차로 지우며 진행.
-                    services.each { svc ->
-                        def tarFile = "${svc}.tar"
-                        def imageRef = "${env.IMAGE_REGISTRY}/${svc}:${imageTag}"
+                    targets.each { target ->
+                        def tarFile = "${target.name}.tar"
+                        def imageRef = "${env.IMAGE_REGISTRY}/${target.name}:${imageTag}"
 
                         container('kaniko') {
                             sh """
                                 /kaniko/executor \\
                                   --context=`pwd` \\
-                                  --dockerfile=services/${svc}/Dockerfile \\
+                                  --dockerfile=${target.dockerfile} \\
                                   --destination=${imageRef} \\
                                   --no-push \\
                                   --tarPath=${tarFile}
@@ -323,6 +379,12 @@ spec:
                         return
                     }
 
+                    def targets = services.collect { svc ->
+                        def target = imageTargets[svc]
+                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                        return target
+                    }
+
                     withCredentials([usernamePassword(
                         credentialsId: 'gitops-value-push',
                         usernameVariable: 'GIT_USER',
@@ -353,9 +415,9 @@ spec:
                         chmod +x /tmp/yq
                     '''
 
-                    services.each { svc ->
+                    targets.each { target ->
                         sh """
-                            /tmp/yq -i '.image.tag = "${imageTag}"' gitops-value-checkout/values/dev/services/${svc}/values.yaml
+                            /tmp/yq -i '.image.tag = "${imageTag}"' gitops-value-checkout/${target.valuesPath}
                         """
                     }
 

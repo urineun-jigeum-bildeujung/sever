@@ -1,6 +1,69 @@
+jwt:
+  jwks-uri: ${JWT_JWKS_URI}
+
+internal:
+  gateway-secret: ${INTERNAL_GATEWAY_SECRET}
+  mtls:
+    enabled: true
+
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      ssl:
+        enabled: true
+        bundle: internalmtls
+  ssl:
+    bundle:
+      pem:
+        internalmtls:
+          keystore:
+            certificate: file:/etc/mtls/tls.crt
+            private-key: file:/etc/mtls/tls.key
+          truststore:
+            certificate: file:/etc/mtls/ca.crt
   cloud:
     gateway:
       server:
         webflux:
-          routes: []
+          httpclient:
+            ssl:
+              ssl-bundle: internalmtls
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/auths/**
+            - id: auth-service-oauth2
+              uri: ${AUTH_SERVICE_URL}
+              predicates:
+                - Path=/api/auth/oauth2/authorization/**,/api/auth/login/oauth2/code/**
+            - id: member-service
+              uri: ${MEMBER_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/members/**
+            - id: member-service-pets
+              uri: ${MEMBER_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/pets/**
+            - id: product-service
+              uri: ${PRODUCT_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/products/**,/api/v1/time-deals/**
+            - id: order-service
+              uri: ${ORDER_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/orders/**,/api/v1/carts/**
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/payments/**
+            - id: review-service
+              uri: ${REVIEW_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/reviews/**
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/notifications/**
