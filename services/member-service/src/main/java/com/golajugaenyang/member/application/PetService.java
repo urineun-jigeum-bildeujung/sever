@@ -147,6 +147,14 @@ public class PetService {
                 request.age(), request.birthDate(), request.size(), request.weight(), request.bcs(),
                 request.image(), request.breedId());
 
+        if (finalSpecies.equals(Species.CAT)) {
+            updatedPet = updatedPet.withTargetBreedSize(null);
+        } else{
+            if (updatedPet.getTargetBreedSize() == null) {
+                throw new AppException(MemberErrorCode.SIZE_REQUIRED);
+            }
+        }
+
         return petRepo.save(updatedPet);
     }
 
