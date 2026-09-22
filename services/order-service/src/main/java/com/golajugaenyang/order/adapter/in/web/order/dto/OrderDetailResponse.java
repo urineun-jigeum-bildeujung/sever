@@ -10,6 +10,7 @@ public record OrderDetailResponse(
     Long orderId,
     String orderNumber,
     String orderStatus,
+    OffsetDateTime deliveredAt,
     BigDecimal productAmount,
     BigDecimal totalAmount,
     List<ItemDetail> items,
@@ -83,8 +84,8 @@ public record OrderDetailResponse(
             : null;
 
         return new OrderDetailResponse(
-            result.orderId(),
-            result.orderNumber(), result.orderStatus(),
+            result.orderId(), result.orderNumber(),
+            result.orderStatus(), result.deliveredAt(),
             result.productAmount(), result.totalAmount(),
             items, address, result.deliveryNote(), payment);
     }

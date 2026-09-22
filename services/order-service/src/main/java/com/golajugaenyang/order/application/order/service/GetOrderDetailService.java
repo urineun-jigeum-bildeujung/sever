@@ -49,7 +49,7 @@ public class GetOrderDetailService implements GetOrderDetailUseCase {
 
         return new OrderDetailResult(
             order.getId(), order.getOrderNumber(),
-            order.getOrderStatus().name(),
+            order.getOrderStatus().name(), order.getDeliveredAt(),
             order.getProductAmount(), order.getTotalAmount(),
             items, toAddressDetail(order.getDeliveryAddress()),
             order.getDeliveryNote(), payment);

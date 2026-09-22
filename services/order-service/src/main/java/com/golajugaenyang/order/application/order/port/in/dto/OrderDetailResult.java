@@ -9,6 +9,7 @@ public record OrderDetailResult(
     Long orderId,
     String orderNumber,
     String orderStatus,
+    OffsetDateTime deliveredAt,
     BigDecimal productAmount,
     BigDecimal totalAmount,
     List<ItemDetail> items,
