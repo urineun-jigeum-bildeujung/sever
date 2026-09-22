@@ -73,7 +73,6 @@ public class ReviewJpaEntity extends BaseTimeEntity {
     private boolean petNeutered;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TargetBreedSize petBreedSize;
 
     @Column(nullable = false)
