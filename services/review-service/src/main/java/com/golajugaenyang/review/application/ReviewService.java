@@ -204,7 +204,7 @@ public class ReviewService {
                 review.getProductId(),
                 product != null ? product.productName() : "",
                 product != null ? product.thumbnailUrl() : null,
-                (int) Math.round(review.getStarRate()),
+                review.getStarRate(),
                 review.getText(),
                 review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
         );
@@ -295,7 +295,7 @@ public class ReviewService {
                 isMine,
                 productSummary,
                 review.getPetId(),
-                (int) Math.round(review.getStarRate()),
+                review.getStarRate(),
                 review.getUsagePeriod(),
                 answerValues,
                 goodPoints.isEmpty() ? null : goodPoints,
@@ -351,7 +351,7 @@ public class ReviewService {
                                 review.getPetAge(),
                                 review.getPetBreedSize() != null ? review.getPetBreedSize().name() : null,
                                 review.getPetSpecies().name()),
-                        (int) Math.round(review.getStarRate()),
+                        review.getStarRate(),
                         formatUsagePeriod(review.getUsagePeriod()),
                         palatabilityByReviewId.get(review.getId()),
                         review.getText(),

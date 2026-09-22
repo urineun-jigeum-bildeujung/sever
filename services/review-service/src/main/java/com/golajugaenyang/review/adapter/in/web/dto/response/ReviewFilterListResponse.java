@@ -12,7 +12,7 @@ public record ReviewFilterListResponse(
             Long reviewId,
             String nickname,
             Pet pet,
-            int rating,
+            double rating,
             String usagePeriod,
             String palatability,
             String text,

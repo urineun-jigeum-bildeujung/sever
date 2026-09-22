@@ -8,7 +8,7 @@ public record ReviewDetailResponse(
         boolean isMine,
         Product product,
         Long petId,
-        int rating,
+        double rating,
         int usagePeriod,
         List<AnswerValue> answerValues,
         List<String> goodPoints,
