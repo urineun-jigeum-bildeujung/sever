@@ -1,11 +1,9 @@
 package com.golajugaenyang.review.adapter.out.persistence.entity;
 
-import com.golajugaenyang.common.core.domain.Species;
-import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
-import com.golajugaenyang.review.domain.entity.enums.Sex;
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.Set;
 import lombok.*;
 
@@ -41,9 +39,6 @@ public class ReviewJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private Long productId;
 
-    @Column(nullable = false)
-    private Long petId;
-
     @Enumerated(EnumType.STRING)
     private DataOrigin dataOrigin;
 
@@ -52,31 +47,10 @@ public class ReviewJpaEntity extends BaseTimeEntity {
 
     private Long datasetRunId;
 
-    @Column(nullable = false)
-    private String petName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Species petSpecies;
-
-    @Column(nullable = false)
-    private Long petBreedId;
-
-    @Column(nullable = false)
-    private int petAge;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Sex petSex;
-
-    @Column(nullable = false)
-    private boolean petNeutered;
-
-    @Enumerated(EnumType.STRING)
-    private TargetBreedSize petBreedSize;
-
-    @Column(nullable = false)
-    private double petWeight;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "review_pet", joinColumns = @JoinColumn(name = "review_id"))
+    @Builder.Default
+    private List<ReviewPetSnapshotEmbeddable> pets = List.of();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "review_health_concern", joinColumns = @JoinColumn(name = "review_id"))

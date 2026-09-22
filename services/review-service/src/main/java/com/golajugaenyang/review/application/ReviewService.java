@@ -26,6 +26,7 @@ import com.golajugaenyang.review.adapter.out.client.dto.ProductInternalItemsResp
 import com.golajugaenyang.review.adapter.out.client.dto.PurchaseVerificationResponse;
 import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.ReviewImage;
+import com.golajugaenyang.review.domain.entity.ReviewPetSnapshot;
 import com.golajugaenyang.review.domain.entity.ReviewQuestion;
 import com.golajugaenyang.review.domain.entity.ReviewRecommend;
 import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
@@ -43,6 +44,7 @@ import com.golajugaenyang.review.domain.repository.ReviewSearchRepository;
 import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,11 +91,16 @@ public class ReviewService {
 
         validatePurchaseConfirmed(memberId, request.productId());
 
-        PetSnapshotResponse petSnapshot;
-        try {
-            petSnapshot = memberClient.getPetSnapshot(memberId, request.petId());
-        } catch (FeignException.NotFound e) {
-            throw new AppException(ReviewErrorCode.INVALID_PET);
+        List<Long> petIds = request.petIds().stream().distinct().toList();
+        List<ReviewPetSnapshot> pets = new ArrayList<>();
+        Set<String> healthConcernCodes = new HashSet<>();
+        for (Long petId : petIds) {
+            PetSnapshotResponse snapshot = fetchPetSnapshot(memberId, petId);
+            pets.add(new ReviewPetSnapshot(petId, snapshot.name(), snapshot.species(), snapshot.breedId(),
+                    snapshot.age(), snapshot.sex(), snapshot.isNeutered(), snapshot.size(), snapshot.weight()));
+            if (snapshot.healthConcerns() != null) {
+                healthConcernCodes.addAll(snapshot.healthConcerns());
+            }
         }
 
         List<String> imageUrls = request.images();
@@ -102,11 +109,8 @@ public class ReviewService {
         }
 
         Review review = new Review(null, request.text(), request.starRate(), request.usagePeriod(),
-                null, null, null, memberId, request.productId(), request.petId(),
-                DataOrigin.REAL, false, null,
-                petSnapshot.name(), petSnapshot.species(), petSnapshot.breedId(), petSnapshot.age(),
-                petSnapshot.sex(), petSnapshot.isNeutered(), petSnapshot.size(), petSnapshot.weight(),
-                petSnapshot.healthConcerns() == null ? Set.of() : Set.copyOf(petSnapshot.healthConcerns()));
+                null, null, null, memberId, request.productId(),
+                DataOrigin.REAL, false, null, pets, healthConcernCodes);
         Review savedReview = reviewRepo.save(review);
 
         List<ReviewQuestion> questions = request.answerValues().stream()
@@ -290,11 +294,17 @@ public class ReviewService {
                 .map(ReviewImage::getImageUrl)
                 .toList();
 
+        List<ReviewDetailResponse.Pet> pets = review.getPets().stream()
+                .map(p -> new ReviewDetailResponse.Pet(
+                        p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
+                        p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name()))
+                .toList();
+
         return new ReviewDetailResponse(
                 review.getId(),
                 isMine,
                 productSummary,
-                review.getPetId(),
+                pets,
                 review.getStarRate(),
                 review.getUsagePeriod(),
                 answerValues,
@@ -345,12 +355,12 @@ public class ReviewService {
                 .map(review -> new ReviewFilterListResponse.Item(
                         review.getId(),
                         nicknameByMemberId.getOrDefault(review.getMemberId(), ""),
-                        new ReviewFilterListResponse.Pet(
-                                review.getPetName(),
-                                review.getPetSex().name(),
-                                review.getPetAge(),
-                                review.getPetBreedSize() != null ? review.getPetBreedSize().name() : null,
-                                review.getPetSpecies().name()),
+                        review.getPets().stream()
+                                .map(p -> new ReviewFilterListResponse.Pet(
+                                        p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
+                                        p.getBreedSize() != null ? p.getBreedSize().name() : null,
+                                        p.getSpecies().name()))
+                                .toList(),
                         review.getStarRate(),
                         formatUsagePeriod(review.getUsagePeriod()),
                         palatabilityByReviewId.get(review.getId()),
@@ -380,12 +390,7 @@ public class ReviewService {
             if (memberId == null) {
                 throw new AppException(ReviewErrorCode.INVALID_FILTER);
             }
-            PetSnapshotResponse target;
-            try {
-                target = memberClient.getPetSnapshot(memberId, petId);
-            } catch (FeignException.NotFound e) {
-                throw new AppException(ReviewErrorCode.INVALID_PET);
-            }
+            PetSnapshotResponse target = fetchPetSnapshot(memberId, petId);
             personalizedSpecies = target.species();
             personalizedBreedSize = target.size();
         }
@@ -458,6 +463,14 @@ public class ReviewService {
             return new ReviewImageUploadResponse(upload.uploadUrl(), upload.fileUrl());
         } catch (IllegalArgumentException e) {
             throw new AppException(ReviewErrorCode.INVALID_IMAGE_EXTENSION);
+        }
+    }
+
+    private PetSnapshotResponse fetchPetSnapshot(Long memberId, Long petId) {
+        try {
+            return memberClient.getPetSnapshot(memberId, petId);
+        } catch (FeignException.NotFound e) {
+            throw new AppException(ReviewErrorCode.INVALID_PET);
         }
     }
 

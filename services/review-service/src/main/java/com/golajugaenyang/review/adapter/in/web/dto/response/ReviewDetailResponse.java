@@ -7,7 +7,7 @@ public record ReviewDetailResponse(
         Long reviewId,
         boolean isMine,
         Product product,
-        Long petId,
+        List<Pet> pets,
         double rating,
         int usagePeriod,
         List<AnswerValue> answerValues,
@@ -22,6 +22,16 @@ public record ReviewDetailResponse(
             Long productId,
             String name,
             String image
+    ) {
+    }
+
+    public record Pet(
+            Long petId,
+            String name,
+            String sex,
+            int age,
+            String breedSize,
+            String species
     ) {
     }
 
