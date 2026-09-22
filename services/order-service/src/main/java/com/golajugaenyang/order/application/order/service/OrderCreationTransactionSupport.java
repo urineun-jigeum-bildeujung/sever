@@ -85,7 +85,8 @@ public class OrderCreationTransactionSupport {
             if (!catalog.purchasable()) {
                 throw new AppException(OrderErrorCode.PRODUCT_NOT_PURCHASABLE);
             }
-            OrderItem orderItem = OrderItem.fromCatalogSnapshot(catalog, requested.quantity());
+            OrderItem orderItem = OrderItem.fromCatalogSnapshot(
+                catalog, requested.quantity(), command.petId());
             order.addItem(orderItem);
             productAmount = productAmount.add(orderItem.lineAmount());
         }

@@ -110,10 +110,11 @@ public class OrderItem extends BaseTimeEntity {
     @Column(name = "normalized_quantity_unit_snapshot", nullable = false, length = 10)
     private QuantityUnit normalizedQuantityUnitSnapshot;
 
-    public static OrderItem fromCatalogSnapshot(CatalogItem catalog, int quantity) {
+    public static OrderItem fromCatalogSnapshot(CatalogItem catalog, int quantity, Long petId) {
         OrderItem item = new OrderItem();
         item.productId = catalog.productId();
         item.dealItemId = catalog.isTimeDeal() ? catalog.dealItemId() : null;
+        item.petId = petId;
         item.productGroupIdSnapshot = catalog.productGroupId();
         item.productNameSnapshot = catalog.productName();
         item.thumbnailUrlSnapshot = catalog.thumbnailUrl();
