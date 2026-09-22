@@ -9,6 +9,7 @@ public record ProductCardResponse(
     String productName,
     BigDecimal discountRate,
     BigDecimal price,
+    BigDecimal originalPrice,
     BigDecimal unitPrice,
     String unitLabel,
     BigDecimal avgRating,
@@ -18,7 +19,8 @@ public record ProductCardResponse(
     public static ProductCardResponse from(ProductListItem item) {
         return new ProductCardResponse(
             item.id(), item.thumbnailUrl(), item.productName(),
-            item.discountRate(), item.price(), item.unitPrice(), item.unitLabel(),
+            item.discountRate(), item.price(), item.originalPrice(),
+            item.unitPrice(), item.unitLabel(),
             item.avgRating(), item.reviewCount());
     }
 }
