@@ -13,7 +13,7 @@ import java.util.List;
 
 public record ReviewCreateRequest(
         @NotNull Long productId,
-        @NotEmpty List<Long> petIds,
+        @NotEmpty List<@NotNull Long> petIds,
         @NotNull @DecimalMin("1.0") @DecimalMax("5.0") Double starRate,
         @NotNull @Positive Integer usagePeriod,
         @NotEmpty List<@Valid AnswerValue> answerValues,
