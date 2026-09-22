@@ -62,6 +62,11 @@ public class Pet {
             targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
     }
 
+    public Pet withTargetBreedSize(TargetBreedSize targetBreedSize) {
+        return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
+            targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
+    }
+
     public Pet update(String name, Sex sex, Boolean isNeutered, Species species, Integer age,
         LocalDate birthDate, TargetBreedSize size, Double weight, Integer bcs, String image, Long breedId) {
         return new Pet(

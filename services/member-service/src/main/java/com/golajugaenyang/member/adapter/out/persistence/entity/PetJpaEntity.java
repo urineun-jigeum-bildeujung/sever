@@ -54,7 +54,6 @@ public class PetJpaEntity extends BaseTimeEntity {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TargetBreedSize targetBreedSize;
 
     @Column(nullable = false)

@@ -349,7 +349,7 @@ public class ReviewService {
                                 review.getPetName(),
                                 review.getPetSex().name(),
                                 review.getPetAge(),
-                                review.getPetBreedSize().name(),
+                                review.getPetBreedSize() != null ? review.getPetBreedSize().name() : null,
                                 review.getPetSpecies().name()),
                         (int) Math.round(review.getStarRate()),
                         formatUsagePeriod(review.getUsagePeriod()),

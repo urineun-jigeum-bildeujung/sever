@@ -62,12 +62,20 @@ public class PetService {
 
         boolean isDefault = !petRepo.existsByMemberId(memberId);
 
-        Pet savedPet = petRepo.save(
-                new Pet(null, isDefault, request.name(), request.sex(), request.isNeutered(),
-                        request.species(), request.age(), request.birthDate(), request.size(),
-                        request.weight(), request.bcs(), request.image(), null,
-                        memberId, request.breedId(), null, null)
-        );
+        Pet newPet = new Pet(null, isDefault, request.name(), request.sex(), request.isNeutered(),
+                request.species(), request.age(), request.birthDate(), null,
+                request.weight(), request.bcs(), request.image(), null,
+                memberId, request.breedId(), null, null);
+
+        if (request.species() == Species.DOG) {
+            if (request.size() == null) {
+                throw new AppException(MemberErrorCode.SIZE_REQUIRED);
+            }
+            newPet = newPet.withTargetBreedSize(request.size());
+        }
+
+        Pet savedPet = petRepo.save(newPet);
+
 
         if (!concernMasters.isEmpty()) {
             List<PetConcern> petConcerns = concernMasters.stream()
@@ -138,6 +146,14 @@ public class PetService {
         Pet updatedPet = pet.update(request.name(), request.sex(), request.isNeutered(), request.species(),
                 request.age(), request.birthDate(), request.size(), request.weight(), request.bcs(),
                 request.image(), request.breedId());
+
+        if (finalSpecies.equals(Species.CAT)) {
+            updatedPet = updatedPet.withTargetBreedSize(null);
+        } else{
+            if (updatedPet.getTargetBreedSize() == null) {
+                throw new AppException(MemberErrorCode.SIZE_REQUIRED);
+            }
+        }
 
         return petRepo.save(updatedPet);
     }
