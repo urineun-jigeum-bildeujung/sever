@@ -1,12 +1,20 @@
 package com.golajugaenyang.review.adapter.out.persistence.mapper;
 
-import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.adapter.out.persistence.entity.ReviewJpaEntity;
+import com.golajugaenyang.review.adapter.out.persistence.entity.ReviewPetSnapshotEmbeddable;
+import com.golajugaenyang.review.domain.entity.Review;
+import com.golajugaenyang.review.domain.entity.ReviewPetSnapshot;
+import java.util.List;
 
 public class ReviewMapper {
 
     public static Review toDomain(ReviewJpaEntity jpaEntity) {
-        if(jpaEntity == null) return null;
+        if (jpaEntity == null) return null;
+
+        List<ReviewPetSnapshot> pets = jpaEntity.getPets().stream()
+                .map(ReviewMapper::toDomainPet)
+                .toList();
+
         return new Review(
                 jpaEntity.getId(),
                 jpaEntity.getText(),
@@ -17,24 +25,21 @@ public class ReviewMapper {
                 jpaEntity.getDeletedAt(),
                 jpaEntity.getMemberId(),
                 jpaEntity.getProductId(),
-                jpaEntity.getPetId(),
                 jpaEntity.getDataOrigin(),
                 jpaEntity.isSynthetic(),
                 jpaEntity.getDatasetRunId(),
-                jpaEntity.getPetName(),
-                jpaEntity.getPetSpecies(),
-                jpaEntity.getPetBreedId(),
-                jpaEntity.getPetAge(),
-                jpaEntity.getPetSex(),
-                jpaEntity.isPetNeutered(),
-                jpaEntity.getPetBreedSize(),
-                jpaEntity.getPetWeight(),
+                pets,
                 jpaEntity.getPetHealthConcernCodes()
         );
     }
 
-    public static ReviewJpaEntity toJpaEntity(Review domain){
-        if(domain == null) return null;
+    public static ReviewJpaEntity toJpaEntity(Review domain) {
+        if (domain == null) return null;
+
+        List<ReviewPetSnapshotEmbeddable> pets = domain.getPets().stream()
+                .map(ReviewMapper::toEmbeddablePet)
+                .toList();
+
         return ReviewJpaEntity.builder()
                 .id(domain.getId())
                 .text(domain.getText())
@@ -43,19 +48,39 @@ public class ReviewMapper {
                 .deletedAt(domain.getDeletedAt())
                 .memberId(domain.getMemberId())
                 .productId(domain.getProductId())
-                .petId(domain.getPetId())
                 .dataOrigin(domain.getDataOrigin())
                 .isSynthetic(domain.isSynthetic())
                 .datasetRunId(domain.getDatasetRunId())
-                .petName(domain.getPetName())
-                .petSpecies(domain.getPetSpecies())
-                .petBreedId(domain.getPetBreedId())
-                .petAge(domain.getPetAge())
-                .petSex(domain.getPetSex())
-                .petNeutered(domain.isPetNeutered())
-                .petBreedSize(domain.getPetBreedSize())
-                .petWeight(domain.getPetWeight())
+                .pets(pets)
                 .petHealthConcernCodes(domain.getPetHealthConcernCodes())
                 .build();
+    }
+
+    private static ReviewPetSnapshot toDomainPet(ReviewPetSnapshotEmbeddable embeddable) {
+        return new ReviewPetSnapshot(
+                embeddable.getPetId(),
+                embeddable.getName(),
+                embeddable.getSpecies(),
+                embeddable.getBreedId(),
+                embeddable.getAge(),
+                embeddable.getSex(),
+                embeddable.isNeutered(),
+                embeddable.getBreedSize(),
+                embeddable.getWeight()
+        );
+    }
+
+    private static ReviewPetSnapshotEmbeddable toEmbeddablePet(ReviewPetSnapshot pet) {
+        return new ReviewPetSnapshotEmbeddable(
+                pet.getPetId(),
+                pet.getName(),
+                pet.getSpecies(),
+                pet.getBreedId(),
+                pet.getAge(),
+                pet.getSex(),
+                pet.isNeutered(),
+                pet.getBreedSize(),
+                pet.getWeight()
+        );
     }
 }

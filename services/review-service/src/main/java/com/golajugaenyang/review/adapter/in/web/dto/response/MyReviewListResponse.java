@@ -12,7 +12,7 @@ public record MyReviewListResponse(
             Long productId,
             String productName,
             String productImage,
-            int rating,
+            double rating,
             String text,
             LocalDate createdAt
     ) {

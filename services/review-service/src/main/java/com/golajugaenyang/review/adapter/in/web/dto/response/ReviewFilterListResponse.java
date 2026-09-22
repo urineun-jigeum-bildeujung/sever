@@ -11,8 +11,8 @@ public record ReviewFilterListResponse(
     public record Item(
             Long reviewId,
             String nickname,
-            Pet pet,
-            int rating,
+            List<Pet> pets,
+            double rating,
             String usagePeriod,
             String palatability,
             String text,
@@ -23,6 +23,7 @@ public record ReviewFilterListResponse(
     }
 
     public record Pet(
+            Long petId,
             String name,
             String sex,
             int age,

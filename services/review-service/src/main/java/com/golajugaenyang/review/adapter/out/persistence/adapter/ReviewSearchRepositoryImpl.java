@@ -3,6 +3,7 @@ package com.golajugaenyang.review.adapter.out.persistence.adapter;
 import static com.golajugaenyang.review.adapter.out.persistence.entity.QReviewJpaEntity.reviewJpaEntity;
 import static com.golajugaenyang.review.adapter.out.persistence.entity.QReviewRecommendJpaEntity.reviewRecommendJpaEntity;
 
+import com.golajugaenyang.review.adapter.out.persistence.entity.QReviewPetSnapshotEmbeddable;
 import com.golajugaenyang.review.adapter.out.persistence.entity.ReviewJpaEntity;
 import com.golajugaenyang.review.adapter.out.persistence.mapper.ReviewMapper;
 import com.golajugaenyang.review.domain.entity.Review;
@@ -69,46 +70,75 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
         BooleanBuilder where = new BooleanBuilder();
         where.and(reviewJpaEntity.productId.eq(criteria.productId()));
 
+        // 아래 필터(species~weightMax)는 전부 "리뷰에 딸린 펫들 중 같은 한 마리"가
+        // 전부 만족해야 함 - .any()를 필터 개수만큼 따로 부르면 QueryDSL이 그때마다
+        // 별도 EXISTS 서브쿼리를 만들어서, 조건마다 다른 펫이 걸려도 매칭돼버림
+        // (예: 대형견 1마리 + 5kg 고양이 1마리인 리뷰가 "대형견 AND 5kg 이하"에 걸림).
+        // 그래서 같은 QReviewPetSnapshotEmbeddable 참조 하나를 재사용해서 한 EXISTS
+        // 안에 모든 조건을 몰아넣는다.
+        QReviewPetSnapshotEmbeddable pet = reviewJpaEntity.pets.any();
+        BooleanBuilder petCondition = new BooleanBuilder();
+        boolean hasPetCondition = false;
+
         if (criteria.species() != null) {
-            where.and(reviewJpaEntity.petSpecies.eq(criteria.species()));
+            petCondition.and(pet.species.eq(criteria.species()));
+            hasPetCondition = true;
         }
         if (criteria.breedId() != null) {
-            where.and(reviewJpaEntity.petBreedId.eq(criteria.breedId()));
+            petCondition.and(pet.breedId.eq(criteria.breedId()));
+            hasPetCondition = true;
         }
         if (criteria.ageGroup() != null) {
-            where.and(ageGroupCondition(criteria.ageGroup()));
+            petCondition.and(ageGroupCondition(pet, criteria.ageGroup()));
+            hasPetCondition = true;
         }
         if (criteria.neutered() != null) {
-            where.and(reviewJpaEntity.petNeutered.eq(criteria.neutered()));
+            petCondition.and(pet.neutered.eq(criteria.neutered()));
+            hasPetCondition = true;
         }
         if (criteria.weightMin() != null) {
-            where.and(reviewJpaEntity.petWeight.goe(criteria.weightMin()));
+            petCondition.and(pet.weight.goe(criteria.weightMin()));
+            hasPetCondition = true;
         }
         if (criteria.weightMax() != null) {
-            where.and(reviewJpaEntity.petWeight.loe(criteria.weightMax()));
+            petCondition.and(pet.weight.loe(criteria.weightMax()));
+            hasPetCondition = true;
         }
+        if (hasPetCondition) {
+            where.and(petCondition);
+        }
+
         if (criteria.healthConcerns() != null && !criteria.healthConcerns().isEmpty()) {
             where.and(reviewJpaEntity.petHealthConcernCodes.any().in(criteria.healthConcerns()));
         }
         if (criteria.usagePeriod() != null) {
             where.and(usagePeriodCondition(criteria.usagePeriod()));
         }
-        if (criteria.personalizedSpecies() != null) {
-            where.and(reviewJpaEntity.petSpecies.eq(criteria.personalizedSpecies()));
+
+        // 맞춤보기(내 펫 기준)도 species+breedSize가 같은 한 마리를 가리켜야 하므로
+        // 위와 별개의 .any() 참조를 하나 더 둔다.
+        if (criteria.personalizedSpecies() != null || criteria.personalizedBreedSize() != null) {
+            QReviewPetSnapshotEmbeddable personalizedPet = reviewJpaEntity.pets.any();
+            BooleanBuilder personalizedCondition = new BooleanBuilder();
+            if (criteria.personalizedSpecies() != null) {
+                personalizedCondition.and(personalizedPet.species.eq(criteria.personalizedSpecies()));
+            }
+            if (criteria.personalizedBreedSize() != null) {
+                personalizedCondition.and(personalizedPet.breedSize.eq(criteria.personalizedBreedSize()));
+            }
+            where.and(personalizedCondition);
         }
-        if (criteria.personalizedBreedSize() != null) {
-            where.and(reviewJpaEntity.petBreedSize.eq(criteria.personalizedBreedSize()));
-        }
+
         return where;
     }
 
-    private BooleanBuilder ageGroupCondition(AgeGroup ageGroup) {
+    private BooleanBuilder ageGroupCondition(QReviewPetSnapshotEmbeddable pet, AgeGroup ageGroup) {
         BooleanBuilder condition = new BooleanBuilder();
         switch (ageGroup) {
-            case PUPPY -> condition.and(reviewJpaEntity.petAge.lt(PUPPY_MAX_AGE));
-            case SENIOR -> condition.and(reviewJpaEntity.petAge.goe(SENIOR_MIN_AGE));
-            case ADULT -> condition.and(reviewJpaEntity.petAge.goe(PUPPY_MAX_AGE))
-                    .and(reviewJpaEntity.petAge.lt(SENIOR_MIN_AGE));
+            case PUPPY -> condition.and(pet.age.lt(PUPPY_MAX_AGE));
+            case SENIOR -> condition.and(pet.age.goe(SENIOR_MIN_AGE));
+            case ADULT -> condition.and(pet.age.goe(PUPPY_MAX_AGE))
+                    .and(pet.age.lt(SENIOR_MIN_AGE));
         }
         return condition;
     }
