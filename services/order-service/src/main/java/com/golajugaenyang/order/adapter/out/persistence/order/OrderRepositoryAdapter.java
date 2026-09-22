@@ -97,7 +97,7 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
                 memberId, OrderStatus.CONFIRMED, PageRequest.ofSize(limit))
             .stream()
             .map(p -> new ConfirmedPurchaseItem(
-                p.productId(), p.orderId(), p.orderItemId(),
+                p.productId(), p.petId(), p.orderId(), p.orderItemId(),
                 p.orderStatus().name(), p.itemStatus().name(), p.confirmedAt()))
             .toList();
     }

@@ -39,7 +39,7 @@ public interface OrderItemJpaRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
         select new com.golajugaenyang.order.adapter.out.persistence.order.dto.ConfirmedPurchaseItemProjection(
-            oi.productId, o.id, oi.id, o.orderStatus, oi.itemStatus, o.confirmedAt)
+            oi.productId, oi.petId, o.id, oi.id, o.orderStatus, oi.itemStatus, o.confirmedAt)
         from OrderItem oi join oi.order o
         where o.memberId = :memberId and o.orderStatus = :orderStatus
         order by o.confirmedAt desc, oi.id desc
