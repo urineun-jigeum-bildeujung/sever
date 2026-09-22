@@ -72,6 +72,10 @@ public enum MemberErrorCode implements ErrorCode {
     FORBIDDEN_IMAGE(
             HttpStatus.FORBIDDEN,
             "MEMBER_403_FORBIDDEN_IMAGE", "본인이 업로드한 이미지만 사용할 수 있습니다."
+    ),
+    SIZE_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_SIZE_REQUIRED", "체구 정보가 필요합니다."
     );
 
 

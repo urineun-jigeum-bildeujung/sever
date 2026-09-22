@@ -20,7 +20,7 @@ public record PetRegisterRequest(
     @NotNull Species species,
     @NotNull @Positive Integer age,
     @PastOrPresent LocalDate birthDate,
-    @NotNull TargetBreedSize size,
+    TargetBreedSize size,
     @Positive double weight,
     @NotNull @Min(1) @Max(5) Integer bcs,
     String image,
