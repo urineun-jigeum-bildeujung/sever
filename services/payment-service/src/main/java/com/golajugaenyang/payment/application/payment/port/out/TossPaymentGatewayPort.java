@@ -7,5 +7,5 @@ public interface TossPaymentGatewayPort {
 
     TossConfirmResult confirm(String paymentKey, String orderId, BigDecimal amount);
 
-    void cancel(String paymentKey, String cancelReason);
+    void cancel(String paymentKey, String cancelReason, String idempotencyKey);
 }

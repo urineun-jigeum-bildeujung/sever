@@ -2,34 +2,34 @@ package com.golajugaenyang.payment.application.payment.service;
 
 
 import com.golajugaenyang.payment.application.payment.port.in.CancelPaymentUseCase;
-import com.golajugaenyang.payment.application.payment.port.out.PaymentRepositoryPort;
 import com.golajugaenyang.payment.application.payment.port.out.TossPaymentGatewayPort;
 import com.golajugaenyang.payment.domain.payment.Payment;
 import com.golajugaenyang.payment.domain.payment.PaymentStatus;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 @RequiredArgsConstructor
 public class CancelPaymentService implements CancelPaymentUseCase {
 
-    private final PaymentRepositoryPort paymentRepositoryPort;
+    private final CancelPaymentTransactionSupport transactionSupport;
     private final TossPaymentGatewayPort tossPaymentGatewayPort;
 
     @Override
-    @Transactional
     public void cancelPaymentForOrder(Long orderId) {
-        Optional<Payment> maybePayment = paymentRepositoryPort.findByOrderId(orderId);
-        if (maybePayment.isEmpty()) {
+        // Phase 1: 취소 의도 기록 (로컬 트랜잭션)
+        Payment payment = transactionSupport.beginCancellation(orderId);
+
+        if (payment == null || payment.getPaymentStatus() != PaymentStatus.CANCELLING) {
             return;
         }
-        Payment payment = maybePayment.get();
-        if (payment.getPaymentStatus() != PaymentStatus.DONE) {
-            return;
-        }
-        tossPaymentGatewayPort.cancel(payment.getPaymentKey(), "주문 취소로 인한 결제 취소");
-        payment.cancel("주문 취소");
+
+        // Phase 2: 원격 취소 (트랜잭션 밖)
+        tossPaymentGatewayPort.cancel(
+            payment.getPaymentKey(), payment.getCancelReason(), payment.getCancelIdempotencyKey());
+
+        // Phase 3: 로컬 확정 (원격 호출 없음)
+        transactionSupport.finalizeCancellation(payment.getId());
     }
 }

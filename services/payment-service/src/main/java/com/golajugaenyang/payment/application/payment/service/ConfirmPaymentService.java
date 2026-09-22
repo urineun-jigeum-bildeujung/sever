@@ -12,6 +12,7 @@ import com.golajugaenyang.payment.application.payment.port.out.dto.TossConfirmRe
 import com.golajugaenyang.payment.domain.payment.Payment;
 import com.golajugaenyang.payment.domain.payment.PaymentStatus;
 import com.golajugaenyang.payment.error.PaymentErrorCode;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +61,7 @@ public class ConfirmPaymentService implements ConfirmPaymentUseCase {
 
         if (tossResult.totalAmount().compareTo(payment.getAmount()) != 0) {
             tossPaymentGatewayPort.cancel(
-                tossResult.paymentKey(), "금액 불일치로 인한 자동 취소");
+                tossResult.paymentKey(), "금액 불일치로 인한 자동 취소", UUID.randomUUID().toString());
             transactionSupport.recordFailure(
                 payment.getId(), tossResult.paymentKey(), "승인 응답 금액 불일치", orderContext);
             throw new AppException(PaymentErrorCode.AMOUNT_MISMATCH);

@@ -45,10 +45,9 @@ public class TossPaymentGatewayAdapter implements TossPaymentGatewayPort {
     }
 
     @Override
-    public void cancel(String paymentKey, String reason) {
+    public void cancel(String paymentKey, String reason, String idempotencyKey) {
         try {
-            tossPaymentApiClient.cancel(
-                paymentKey, UUID.randomUUID().toString(), new TossCancelRequest(reason));
+            tossPaymentApiClient.cancel(paymentKey, idempotencyKey, new TossCancelRequest(reason));
         } catch (RestClientException e) {
             log.error("[TossCancel] 자동 취소 실패, 수동 확인 필요. paymentKey={}, reason={}",
                 paymentKey, reason, e);
