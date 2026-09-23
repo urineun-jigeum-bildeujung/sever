@@ -82,6 +82,32 @@ docker build -f platform/api-gateway/Dockerfile -t api-gateway:local .
 Dockerfile은 Jenkins가 먼저 만든 `platform/api-gateway/build/libs/*.jar`를 복사하므로,
 단독 `docker build` 전에는 반드시 `bootJar`를 실행한다.
 
+### Docker Compose로 Gateway 재빌드
+
+Gateway Agent와 보안 의존성 수정이 반영된 코드를 받은 뒤 저장소 루트에서 실행한다.
+독립적으로 만든 `api-gateway:local` 이미지는 Compose가 관리하는 이미지와 별개이므로,
+Dockerfile 변경 후에는 Compose 이미지도 다시 빌드해야 한다.
+
+```bash
+./gradlew :platform:api-gateway:test :platform:api-gateway:bootJar --no-daemon
+docker compose --profile all build --no-cache api-gateway
+docker compose --profile all run --rm --no-deps --entrypoint java api-gateway \
+  -javaagent:/app/opentelemetry-javaagent.jar -version
+docker compose --profile all up -d --no-deps --force-recreate api-gateway
+docker compose logs --tail=100 api-gateway
+```
+
+Agent 검사 성공은 JVM이 Agent 파일을 읽고 초기화했다는 뜻이다. Gateway 전체 기동은
+마지막 컨테이너 로그와 Health 응답으로 별도 확인한다. `--no-deps`를 사용할 때는
+Backend 서비스와 Redis 등 Gateway가 연결할 의존 서비스가 이미 실행 중이어야 한다.
+
+전체 로컬 스택을 처음 시작할 때는 실행 JAR을 모두 만든 뒤 Compose 이미지를 빌드한다.
+
+```bash
+./gradlew bootJar --no-daemon
+docker compose --profile all up -d --build
+```
+
 ### 배포 전 선행조건
 
 Jenkins는 `api-gateway` 변경을 감지해 테스트·bootJar·이미지 빌드·스캔 경로까지
