@@ -3,24 +3,32 @@ package com.golajugaenyang.member.application;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistItemResponse;
 import com.golajugaenyang.member.adapter.out.client.ProductClient;
+import com.golajugaenyang.member.adapter.out.client.ReviewClient;
 import com.golajugaenyang.member.adapter.out.client.dto.ProductInternalItemsResponse;
+import com.golajugaenyang.member.adapter.out.client.dto.ReviewRatingsInternalResponse;
 import com.golajugaenyang.member.domain.entity.Wishlist;
 import com.golajugaenyang.member.domain.repository.WishlistRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WishlistService {
 
     private final WishlistRepository wishlistRepo;
     private final ProductClient productClient;
+    private final ReviewClient reviewClient;
 
     @Transactional
     public boolean toggleWishlist(Long memberId, Long productId) {
@@ -56,14 +64,30 @@ public class WishlistService {
         List<Long> productIds = wishlists.stream().map(Wishlist::getProductId).toList();
         ProductInternalItemsResponse products = productClient.getProducts(productIds);
 
-        // TODO: 리뷰 벌크조회 API 연동 전까지 reviewScore/reviewCount는 임시로 비워둠
+        Map<Long, ReviewRatingsInternalResponse.Item> ratingsByProductId = getRatingsByProductId(productIds);
+
         return products.items().stream()
                 .filter(item -> category == null || category.equals(item.categoryCode()))
-                .map(item -> new WishlistItemResponse(
-                        item.productId(), item.thumbnailUrl(), true, item.productName(),
-                        item.price(), null, 0
-                ))
+                .map(item -> {
+                    ReviewRatingsInternalResponse.Item rating = ratingsByProductId.get(item.productId());
+                    BigDecimal reviewScore = rating != null ? BigDecimal.valueOf(rating.averageRating()) : null;
+                    int reviewCount = rating != null ? (int) rating.reviewCount() : 0;
+                    return new WishlistItemResponse(
+                            item.productId(), item.thumbnailUrl(), true, item.productName(),
+                            item.price(), item.originalPrice(), reviewScore, reviewCount
+                    );
+                })
                 .toList();
+    }
+
+    private Map<Long, ReviewRatingsInternalResponse.Item> getRatingsByProductId(List<Long> productIds) {
+        try {
+            return reviewClient.getProductRatings(productIds).items().stream()
+                    .collect(Collectors.toMap(ReviewRatingsInternalResponse.Item::productId, item -> item));
+        } catch (Exception e) {
+            log.warn("리뷰 평점 조회 실패, 평점 없이 찜 목록을 반환합니다: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
 }

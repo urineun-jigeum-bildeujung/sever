@@ -10,4 +10,6 @@ public interface ReviewSearchRepository {
     long count(ReviewSearchCriteria criteria);
 
     Double averageRating(Long productId);
+
+    List<ProductRatingSummary> findRatingSummaries(List<Long> productIds);
 }
