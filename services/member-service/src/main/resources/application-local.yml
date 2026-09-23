@@ -10,6 +10,9 @@ auth-service:
 product-service:
   url: http://${PRODUCT_SERVICE_HOST:localhost}:8083
 
+review-service:
+  url: http://${REVIEW_SERVICE_HOST:localhost}:8086
+
 storage:
   bucket: ${STORAGE_BUCKET:petflow-dev-uploads}
   region: ${STORAGE_REGION:ap-northeast-2}
