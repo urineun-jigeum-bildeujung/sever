@@ -14,24 +14,28 @@ import com.golajugaenyang.order.domain.claim.ClaimType;
 import com.golajugaenyang.order.domain.claim.OrderClaim;
 import com.golajugaenyang.order.domain.claim.OrderClaimItem;
 import com.golajugaenyang.order.error.OrderErrorCode;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateClaimService implements CreateClaimUseCase {
 
+    private static final int MAX_CONFIRM_ATTEMPTS = 3;
     private final OrderLookupPort orderLookupPort;
     private final ClaimRepositoryPort claimRepositoryPort;
     private final OrderItemClaimStatusPort orderItemClaimStatusPort;
     private final ObjectTagConfirmer objectTagConfirmer;
+    private final MeterRegistry meterRegistry;
 
     @Override
     @Transactional
@@ -81,9 +85,11 @@ public class CreateClaimService implements CreateClaimUseCase {
             claim.addItem(OrderClaimItem.of(requested.orderItemId(), requested.quantity()));
         }
 
-        confirmImageOwnershipAfterCommit(command.memberId(), command.imageUrls());
+        CreateClaimResult result = CreateClaimResult.from(claimRepositoryPort.save(claim));
 
-        return CreateClaimResult.from(claimRepositoryPort.save(claim));
+        confirmImagesAfterCommit(command.memberId(), command.imageUrls());
+
+        return result;
     }
 
     private void validateImageOwnership(Long memberId, List<String> imageUrls) {
@@ -100,7 +106,7 @@ public class CreateClaimService implements CreateClaimUseCase {
         }
     }
 
-    private void confirmImageOwnershipAfterCommit(Long memberId, List<String> imageUrls) {
+    private void confirmImagesAfterCommit(Long memberId, List<String> imageUrls) {
         if (imageUrls == null) {
             return;
         }
@@ -108,8 +114,27 @@ public class CreateClaimService implements CreateClaimUseCase {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                imageUrls.forEach(url -> objectTagConfirmer.confirm(url, ownerId));
+                for (String url : imageUrls) {
+                    confirmWithRetry(url, ownerId);
+                }
             }
         });
+    }
+
+    private void confirmWithRetry(String url, String ownerId) {
+        for (int attempt = 1; attempt <= MAX_CONFIRM_ATTEMPTS; attempt++) {
+            try {
+                objectTagConfirmer.confirm(url, ownerId);
+                return;
+            } catch (Exception e) {
+                if (attempt == MAX_CONFIRM_ATTEMPTS) {
+                    log.error("[ImageConfirm] 최종 실패 — 수동 확인 필요. url={}, ownerId={}",
+                        url, ownerId, e);
+                    meterRegistry.counter("order.image.confirmation.failed").increment();
+                } else {
+                    log.warn("[ImageConfirm] 확정 실패, 재시도. attempt={}, url={}", attempt, url, e);
+                }
+            }
+        }
     }
 }
