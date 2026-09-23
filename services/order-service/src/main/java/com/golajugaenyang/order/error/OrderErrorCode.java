@@ -101,6 +101,10 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.BAD_REQUEST,
         "ORDER_400_INVALID_IMAGE_EXTENSION",
         "지원하지 않는 이미지 확장자입니다."),
+    FORBIDDEN_IMAGE(
+        HttpStatus.FORBIDDEN,
+        "ORDER_403_FORBIDDEN_IMAGE",
+        "본인이 업로드한 이미지가 아닙니다."),
     ;
 
     private final HttpStatus httpStatus;

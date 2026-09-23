@@ -1,6 +1,7 @@
 package com.golajugaenyang.order.application.claim.service;
 
 import com.golajugaenyang.common.core.exception.AppException;
+import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.order.application.claim.port.in.CreateClaimUseCase;
 import com.golajugaenyang.order.application.claim.port.in.dto.CreateClaimCommand;
 import com.golajugaenyang.order.application.claim.port.in.dto.CreateClaimResult;
@@ -19,6 +20,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
 @Service
@@ -28,6 +31,7 @@ public class CreateClaimService implements CreateClaimUseCase {
     private final OrderLookupPort orderLookupPort;
     private final ClaimRepositoryPort claimRepositoryPort;
     private final OrderItemClaimStatusPort orderItemClaimStatusPort;
+    private final ObjectTagConfirmer objectTagConfirmer;
 
     @Override
     @Transactional
@@ -69,12 +73,43 @@ public class CreateClaimService implements CreateClaimUseCase {
             throw new AppException(OrderErrorCode.CLAIM_ALREADY_IN_PROGRESS);
         }
 
+        validateImageOwnership(command.memberId(), command.imageUrls());
+
         OrderClaim claim = OrderClaim.request(
             command.orderId(), claimType, command.reason(), command.imageUrls());
         for (CreateClaimCommand.Item requested : command.items()) {
             claim.addItem(OrderClaimItem.of(requested.orderItemId(), requested.quantity()));
         }
 
+        confirmImageOwnershipAfterCommit(command.memberId(), command.imageUrls());
+
         return CreateClaimResult.from(claimRepositoryPort.save(claim));
+    }
+
+    private void validateImageOwnership(Long memberId, List<String> imageUrls) {
+        if (imageUrls == null) {
+            return;
+        }
+        String ownerId = "member-" + memberId;
+        for (String url : imageUrls) {
+            try {
+                objectTagConfirmer.validateOwnership(url, ownerId);
+            } catch (IllegalArgumentException e) {
+                throw new AppException(OrderErrorCode.FORBIDDEN_IMAGE);
+            }
+        }
+    }
+
+    private void confirmImageOwnershipAfterCommit(Long memberId, List<String> imageUrls) {
+        if (imageUrls == null) {
+            return;
+        }
+        String ownerId = "member-" + memberId;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                imageUrls.forEach(url -> objectTagConfirmer.confirm(url, ownerId));
+            }
+        });
     }
 }
