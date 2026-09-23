@@ -72,7 +72,7 @@ public class ProductFeedbackCheckService {
                         item.orderProductId(), item.productId(),
                         item.product().productName(), item.product().thumbnailUrl(),
                         item.checkAvailableAt(),
-                        null)) // petId: order-service confirmed-items에 아직 미노출, 추후 연동
+                        item.petId()))
                 .toList();
 
         return new FeedbackCheckPendingListResponse(content);
@@ -168,7 +168,8 @@ public class ProductFeedbackCheckService {
         if (now.isBefore(checkAvailableAt)) {
             return null;
         }
-        return new EligibleItem(item.orderItemId(), item.productId(), checkAvailableAt, confirmedAt, product);
+        return new EligibleItem(
+                item.orderItemId(), item.productId(), item.petId(), checkAvailableAt, confirmedAt, product);
     }
 
     private Duration periodFor(String categoryCode) {
@@ -183,7 +184,7 @@ public class ProductFeedbackCheckService {
     }
 
     private record EligibleItem(
-            Long orderProductId, Long productId, Instant checkAvailableAt, Instant confirmedAt,
+            Long orderProductId, Long productId, Long petId, Instant checkAvailableAt, Instant confirmedAt,
             ProductInternalItemResponse product
     ) {
 
