@@ -97,6 +97,10 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.INTERNAL_SERVER_ERROR,
         "ORDER_500_MEMBER_SERVICE_REQUEST_INVALID",
         "배송지 정보를 확인하는 중 오류가 발생했습니다."),
+    INVALID_IMAGE_EXTENSION(
+        HttpStatus.BAD_REQUEST,
+        "ORDER_400_INVALID_IMAGE_EXTENSION",
+        "지원하지 않는 이미지 확장자입니다."),
     ;
 
     private final HttpStatus httpStatus;
