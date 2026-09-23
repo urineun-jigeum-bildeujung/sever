@@ -15,11 +15,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WishlistService {
@@ -62,9 +64,7 @@ public class WishlistService {
         List<Long> productIds = wishlists.stream().map(Wishlist::getProductId).toList();
         ProductInternalItemsResponse products = productClient.getProducts(productIds);
 
-        Map<Long, ReviewRatingsInternalResponse.Item> ratingsByProductId = reviewClient
-                .getProductRatings(productIds).items().stream()
-                .collect(Collectors.toMap(ReviewRatingsInternalResponse.Item::productId, item -> item));
+        Map<Long, ReviewRatingsInternalResponse.Item> ratingsByProductId = getRatingsByProductId(productIds);
 
         return products.items().stream()
                 .filter(item -> category == null || category.equals(item.categoryCode()))
@@ -78,6 +78,16 @@ public class WishlistService {
                     );
                 })
                 .toList();
+    }
+
+    private Map<Long, ReviewRatingsInternalResponse.Item> getRatingsByProductId(List<Long> productIds) {
+        try {
+            return reviewClient.getProductRatings(productIds).items().stream()
+                    .collect(Collectors.toMap(ReviewRatingsInternalResponse.Item::productId, item -> item));
+        } catch (Exception e) {
+            log.warn("리뷰 평점 조회 실패, 평점 없이 찜 목록을 반환합니다: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
 }
