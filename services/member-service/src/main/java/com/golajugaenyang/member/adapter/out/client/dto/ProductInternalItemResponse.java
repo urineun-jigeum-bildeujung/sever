@@ -7,6 +7,7 @@ public record ProductInternalItemResponse(
         String thumbnailUrl,
         String productName,
         String categoryCode,
-        BigDecimal price
+        BigDecimal price,
+        BigDecimal originalPrice
 ) {
 }

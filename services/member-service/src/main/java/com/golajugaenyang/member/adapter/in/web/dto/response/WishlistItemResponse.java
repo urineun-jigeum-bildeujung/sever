@@ -8,6 +8,7 @@ public record WishlistItemResponse(
         boolean wished,
         String productName,
         BigDecimal price,
+        BigDecimal originalPrice,
         BigDecimal reviewScore,
         int reviewCount
 ) {
