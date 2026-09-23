@@ -3,12 +3,17 @@ package com.golajugaenyang.member.application;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistItemResponse;
 import com.golajugaenyang.member.adapter.out.client.ProductClient;
+import com.golajugaenyang.member.adapter.out.client.ReviewClient;
 import com.golajugaenyang.member.adapter.out.client.dto.ProductInternalItemsResponse;
+import com.golajugaenyang.member.adapter.out.client.dto.ReviewRatingsInternalResponse;
 import com.golajugaenyang.member.domain.entity.Wishlist;
 import com.golajugaenyang.member.domain.repository.WishlistRepository;
 import com.golajugaenyang.member.error.MemberErrorCode;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -21,6 +26,7 @@ public class WishlistService {
 
     private final WishlistRepository wishlistRepo;
     private final ProductClient productClient;
+    private final ReviewClient reviewClient;
 
     @Transactional
     public boolean toggleWishlist(Long memberId, Long productId) {
@@ -56,13 +62,21 @@ public class WishlistService {
         List<Long> productIds = wishlists.stream().map(Wishlist::getProductId).toList();
         ProductInternalItemsResponse products = productClient.getProducts(productIds);
 
-        // TODO: 리뷰 벌크조회 API 연동 전까지 reviewScore/reviewCount는 임시로 비워둠
+        Map<Long, ReviewRatingsInternalResponse.Item> ratingsByProductId = reviewClient
+                .getProductRatings(productIds).items().stream()
+                .collect(Collectors.toMap(ReviewRatingsInternalResponse.Item::productId, item -> item));
+
         return products.items().stream()
                 .filter(item -> category == null || category.equals(item.categoryCode()))
-                .map(item -> new WishlistItemResponse(
-                        item.productId(), item.thumbnailUrl(), true, item.productName(),
-                        item.price(), item.originalPrice(), null, 0
-                ))
+                .map(item -> {
+                    ReviewRatingsInternalResponse.Item rating = ratingsByProductId.get(item.productId());
+                    BigDecimal reviewScore = rating != null ? BigDecimal.valueOf(rating.averageRating()) : null;
+                    int reviewCount = rating != null ? (int) rating.reviewCount() : 0;
+                    return new WishlistItemResponse(
+                            item.productId(), item.thumbnailUrl(), true, item.productName(),
+                            item.price(), item.originalPrice(), reviewScore, reviewCount
+                    );
+                })
                 .toList();
     }
 

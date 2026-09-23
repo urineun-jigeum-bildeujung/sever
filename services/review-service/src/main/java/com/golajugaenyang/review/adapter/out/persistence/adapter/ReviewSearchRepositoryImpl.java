@@ -10,11 +10,13 @@ import com.golajugaenyang.review.domain.entity.Review;
 import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
 import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
+import com.golajugaenyang.review.domain.repository.ProductRatingSummary;
 import com.golajugaenyang.review.domain.repository.ReviewSearchCriteria;
 import com.golajugaenyang.review.domain.repository.ReviewSearchRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -64,6 +66,22 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
                 .from(reviewJpaEntity)
                 .where(reviewJpaEntity.productId.eq(productId))
                 .fetchOne();
+    }
+
+    @Override
+    public List<ProductRatingSummary> findRatingSummaries(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory
+                .select(Projections.constructor(ProductRatingSummary.class,
+                        reviewJpaEntity.productId,
+                        reviewJpaEntity.starRate.avg(),
+                        reviewJpaEntity.count()))
+                .from(reviewJpaEntity)
+                .where(reviewJpaEntity.productId.in(productIds))
+                .groupBy(reviewJpaEntity.productId)
+                .fetch();
     }
 
     private BooleanBuilder baseWhere(ReviewSearchCriteria criteria) {

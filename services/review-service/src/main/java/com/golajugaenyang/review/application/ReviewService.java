@@ -7,6 +7,7 @@ import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.common.storage.PresignedUpload;
 import com.golajugaenyang.common.storage.PresignedUploadIssuer;
 import com.golajugaenyang.review.adapter.in.web.dto.request.ReviewCreateRequest;
+import com.golajugaenyang.review.adapter.in.internal.dto.ProductRatingsInternalResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.FeaturedReviewPhotosResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.MyReviewListResponse;
 import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewDetailResponse;
@@ -128,6 +129,13 @@ public class ReviewService {
         }
 
         return savedReview;
+    }
+
+    public ProductRatingsInternalResponse getProductRatings(List<Long> productIds) {
+        List<ProductRatingsInternalResponse.Item> items = reviewSearchRepo.findRatingSummaries(productIds).stream()
+                .map(ProductRatingsInternalResponse.Item::from)
+                .toList();
+        return new ProductRatingsInternalResponse(items);
     }
 
     private static final int FEATURED_PHOTO_LIMIT = 4;
