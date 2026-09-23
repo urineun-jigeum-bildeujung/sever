@@ -6,6 +6,7 @@ public record CreateClaimCommand(
     Long orderId,
     Long memberId,
     String claimType,
+    String reasonCode,
     String reason,
     List<Item> items,
     List<String> imageUrls

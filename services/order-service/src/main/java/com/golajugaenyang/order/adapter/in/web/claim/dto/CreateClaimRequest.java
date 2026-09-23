@@ -12,6 +12,7 @@ import java.util.List;
 
 public record CreateClaimRequest(
     @NotBlank String claimType,
+    @NotBlank String reasonCode,
     @Size(max = 1000) String reason,
     @NotEmpty @Valid List<Item> items,
     List<String> imageUrls
@@ -41,6 +42,6 @@ public record CreateClaimRequest(
             .map(i -> new CreateClaimCommand.Item(i.orderItemId(), i.quantity()))
             .toList();
         return new CreateClaimCommand(
-            orderId, memberId, claimType, reason, commandItems, imageUrls);
+            orderId, memberId, claimType, reasonCode, reason, commandItems, imageUrls);
     }
 }

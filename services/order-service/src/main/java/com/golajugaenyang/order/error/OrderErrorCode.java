@@ -105,6 +105,10 @@ public enum OrderErrorCode implements ErrorCode {
         HttpStatus.FORBIDDEN,
         "ORDER_403_FORBIDDEN_IMAGE",
         "본인이 업로드한 이미지가 아닙니다."),
+    INVALID_CLAIM_REASON_CODE(
+        HttpStatus.BAD_REQUEST,
+        "ORDER_400_INVALID_CLAIM_REASON_CODE",
+        "유효하지 않은 신청 사유입니다."),
     ;
 
     private final HttpStatus httpStatus;
