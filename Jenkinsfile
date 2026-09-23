@@ -188,6 +188,8 @@ spec:
     environment {
         IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
         GITOPS_VALUE_REPO = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
+        OTEL_AGENT_VERSION = '2.31.1'
+        OTEL_AGENT_SHA256 = 'bbf83c151b6400709e2f225bdd07a04f839d9d13b8b93464241333fd25d3e3ba'
     }
 
     stages {
@@ -325,8 +327,9 @@ spec:
                         sh "rm -f ecr-token.txt"
                     }
 
-                    // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Trivy로 CRITICAL 스캔
-                    // (걸리면 실패) -> 실배포일 때만 crane으로 그 tar를 그대로 ECR에 push.
+                    // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Gateway는 최종 tar의
+                    // Agent를 실제 appuser 권한으로 로드 -> Trivy로 CRITICAL 스캔(걸리면 실패)
+                    // -> 실배포일 때만 crane으로 검증한 그 tar를 그대로 ECR에 push.
                     // kaniko는 빌드만, crane은 push만 담당 — 스캔 통과 못 한 이미지는
                     // 애초에 push 코드 경로를 안 타서 물리적으로 못 올라감.
                     //
@@ -345,6 +348,24 @@ spec:
                                   --no-push \\
                                   --tarPath=${tarFile}
                             """
+                        }
+
+                        if (target.name == 'api-gateway') {
+                            // Docker 소켓/privileged Pod 없이 Kaniko가 만든 실제 Docker archive를
+                            // 풀어 최종 filesystem과 이미지 config를 재구성한다. 이미지 기본
+                            // 사용자인 appuser로 chroot 실행해 Agent 읽기·SHA256·JVM 로딩까지
+                            // 성공해야 다음 Trivy/Crane 단계로 진행한다.
+                            container('gradle') {
+                                sh """
+                                    chmod +x scripts/verify-api-gateway-image.sh
+                                    scripts/verify-api-gateway-image.sh \\
+                                      ${tarFile} \\
+                                      ${imageRef} \\
+                                      ${env.OTEL_AGENT_VERSION} \\
+                                      ${env.OTEL_AGENT_SHA256} \\
+                                      appuser
+                                """
+                            }
                         }
 
                         container('trivy') {
