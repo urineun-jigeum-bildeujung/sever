@@ -24,9 +24,11 @@ public record OrderListResponse(
 
     public record ItemSummary(
         Long orderItemId,
+        Long productId,
         String thumbnailUrl,
         String productName,
-        int quantity
+        int quantity,
+        BigDecimal amount
     ) {
 
     }
@@ -40,8 +42,8 @@ public record OrderListResponse(
                 o.totalAmount(),
                 o.items().stream()
                     .map(i -> new ItemSummary(
-                        i.orderItemId(), i.thumbnailUrl(),
-                        i.productName(), i.quantity()))
+                        i.orderItemId(), i.productId(), i.thumbnailUrl(),
+                        i.productName(), i.quantity(), i.amount()))
                     .toList()))
             .toList();
         return new OrderListResponse(
