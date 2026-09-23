@@ -61,7 +61,7 @@ public class WishlistService {
                 .filter(item -> category == null || category.equals(item.categoryCode()))
                 .map(item -> new WishlistItemResponse(
                         item.productId(), item.thumbnailUrl(), true, item.productName(),
-                        item.price(), null, 0
+                        item.price(), item.originalPrice(), null, 0
                 ))
                 .toList();
     }
