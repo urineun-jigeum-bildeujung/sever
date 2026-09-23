@@ -28,8 +28,9 @@ public class ProductFeedbackCheckAdapter implements ProductFeedbackCheckReposito
     }
 
     @Override
-    public boolean submitAnswer(Long memberId, Long productId, Long orderProductId, FeedbackCheckAnswer answer) {
-        return feedbackCheckJpaRepo.upsertAnswer(memberId, productId, orderProductId, answer.name()) > 0;
+    public boolean submitAnswer(
+            Long memberId, Long productId, Long orderProductId, Long petId, FeedbackCheckAnswer answer) {
+        return feedbackCheckJpaRepo.upsertAnswer(memberId, productId, orderProductId, petId, answer.name()) > 0;
     }
 
     @Override

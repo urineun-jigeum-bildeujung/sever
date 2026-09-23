@@ -81,7 +81,7 @@ public class ProductFeedbackCheckService {
     public void submitFeedback(
             Long memberId, Long productId, Long orderProductId, boolean postpone, FeedbackCheckAnswer answer
     ) {
-        validateEligibleForSubmission(memberId, productId, orderProductId);
+        ConfirmedItem target = validateEligibleForSubmission(memberId, productId, orderProductId);
 
         if (postpone) {
             boolean applied = feedbackCheckRepository.postpone(
@@ -95,7 +95,8 @@ public class ProductFeedbackCheckService {
         if (answer == null) {
             throw new AppException(ReviewErrorCode.INVALID_ANSWER);
         }
-        boolean applied = feedbackCheckRepository.submitAnswer(memberId, productId, orderProductId, answer);
+        boolean applied = feedbackCheckRepository.submitAnswer(
+                memberId, productId, orderProductId, target.petId(), answer);
         if (!applied) {
             throw new AppException(ReviewErrorCode.ALREADY_ANSWERED_FEEDBACK);
         }
@@ -106,7 +107,7 @@ public class ProductFeedbackCheckService {
      * 확인한다 - 그렇지 않으면 목록에 뜨지도 않은 항목을 기간 전에 바로 답변하거나,
      * 보류 중인 항목을 곧바로 재답변/재보류할 수 있게 된다.
      */
-    private void validateEligibleForSubmission(Long memberId, Long productId, Long orderProductId) {
+    private ConfirmedItem validateEligibleForSubmission(Long memberId, Long productId, Long orderProductId) {
         ConfirmedItem target = getPaidConfirmedItems(memberId).stream()
                 .filter(item -> item.orderItemId().equals(orderProductId) && item.productId().equals(productId))
                 .findFirst()
@@ -122,6 +123,7 @@ public class ProductFeedbackCheckService {
         if (toEligible(target, product, existing, Instant.now()) == null) {
             throw new AppException(ReviewErrorCode.FEEDBACK_NOT_AVAILABLE_YET);
         }
+        return target;
     }
 
     private boolean isAnswered(ProductFeedbackCheck existing) {

@@ -13,7 +13,8 @@ public interface ProductFeedbackCheckRepository {
     /**
      * @return 원자적으로 반영됐으면 true, 이미 ANSWERED 상태라 반영되지 않았으면 false
      */
-    boolean submitAnswer(Long memberId, Long productId, Long orderProductId, FeedbackCheckAnswer answer);
+    boolean submitAnswer(
+            Long memberId, Long productId, Long orderProductId, Long petId, FeedbackCheckAnswer answer);
 
     /**
      * @return 원자적으로 반영됐으면 true, 이미 ANSWERED 상태라 반영되지 않았으면 false
