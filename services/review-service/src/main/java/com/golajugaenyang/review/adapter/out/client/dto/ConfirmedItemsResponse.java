@@ -9,6 +9,7 @@ public record ConfirmedItemsResponse(
 
     public record ConfirmedItem(
             Long productId,
+            Long petId,
             Long orderId,
             Long orderItemId,
             String orderStatus,

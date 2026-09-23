@@ -21,12 +21,13 @@ public interface ProductFeedbackCheckJpaRepository extends JpaRepository<Product
     @Modifying
     @Query(value = """
         INSERT INTO product_feedback_check
-            (member_id, product_id, order_product_id, feedback_check_status, feedback_check_answer,
+            (member_id, product_id, order_product_id, pet_id, feedback_check_status, feedback_check_answer,
              answered_at, created_at, updated_at)
-        VALUES (:memberId, :productId, :orderProductId, 'ANSWERED', :answer, now(), now(), now())
+        VALUES (:memberId, :productId, :orderProductId, :petId, 'ANSWERED', :answer, now(), now(), now())
         ON CONFLICT ON CONSTRAINT uk_product_feedback_check_order_product DO UPDATE
         SET feedback_check_status = 'ANSWERED',
             feedback_check_answer = EXCLUDED.feedback_check_answer,
+            pet_id = EXCLUDED.pet_id,
             answered_at = now(),
             updated_at = now()
         WHERE product_feedback_check.feedback_check_status <> 'ANSWERED'
@@ -35,6 +36,7 @@ public interface ProductFeedbackCheckJpaRepository extends JpaRepository<Product
             @Param("memberId") Long memberId,
             @Param("productId") Long productId,
             @Param("orderProductId") Long orderProductId,
+            @Param("petId") Long petId,
             @Param("answer") String answer);
 
     /**
