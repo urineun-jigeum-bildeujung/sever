@@ -50,6 +50,10 @@ public class OrderClaim extends BaseTimeEntity {
     @Column(columnDefinition = "text")
     private String reason;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason_code", nullable = false, length = 30)
+    private ClaimReasonCode reasonCode;
+
     @ElementCollection
     @CollectionTable(name = "order_claim_images", joinColumns = @JoinColumn(name = "claim_id"))
     @Column(name = "image_url", length = 500)
@@ -65,11 +69,14 @@ public class OrderClaim extends BaseTimeEntity {
     private Instant completedAt;
 
     public static OrderClaim request(
-        Long orderId, ClaimType claimType, String reason, List<String> imageUrls) {
+        Long orderId, ClaimType claimType, ClaimReasonCode reasonCode,
+        String reason, List<String> imageUrls
+    ) {
         OrderClaim claim = new OrderClaim();
         claim.orderId = orderId;
         claim.claimType = claimType;
         claim.claimStatus = ClaimStatus.REQUESTED;
+        claim.reasonCode = reasonCode;
         claim.reason = reason;
         if (imageUrls != null) {
             claim.imageUrls.addAll(imageUrls);

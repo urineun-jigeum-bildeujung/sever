@@ -9,6 +9,7 @@ import com.golajugaenyang.order.application.claim.port.out.ClaimRepositoryPort;
 import com.golajugaenyang.order.application.claim.port.out.OrderItemClaimStatusPort;
 import com.golajugaenyang.order.application.claim.port.out.OrderLookupPort;
 import com.golajugaenyang.order.application.claim.port.out.dto.ClaimableOrder;
+import com.golajugaenyang.order.domain.claim.ClaimReasonCode;
 import com.golajugaenyang.order.domain.claim.ClaimStatus;
 import com.golajugaenyang.order.domain.claim.ClaimType;
 import com.golajugaenyang.order.domain.claim.OrderClaim;
@@ -53,6 +54,13 @@ public class CreateClaimService implements CreateClaimUseCase {
             throw new AppException(OrderErrorCode.INVALID_CLAIM_TYPE);
         }
 
+        ClaimReasonCode reasonCode;
+        try {
+            reasonCode = ClaimReasonCode.fromCode(command.reasonCode());
+        } catch (IllegalArgumentException e) {
+            throw new AppException(OrderErrorCode.INVALID_CLAIM_REASON_CODE);
+        }
+
         Map<Long, Integer> effectiveQuantityByItemId = order.items().stream()
             .collect(Collectors.toMap(
                 ClaimableOrder.Item::orderItemId,
@@ -80,7 +88,7 @@ public class CreateClaimService implements CreateClaimUseCase {
         validateImageOwnership(command.memberId(), command.imageUrls());
 
         OrderClaim claim = OrderClaim.request(
-            command.orderId(), claimType, command.reason(), command.imageUrls());
+            command.orderId(), claimType, reasonCode, command.reason(), command.imageUrls());
         for (CreateClaimCommand.Item requested : command.items()) {
             claim.addItem(OrderClaimItem.of(requested.orderItemId(), requested.quantity()));
         }

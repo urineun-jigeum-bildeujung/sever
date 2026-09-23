@@ -51,7 +51,7 @@ public class CreateClaimServiceTest {
             .thenReturn(List.of(102L));
 
         CreateClaimCommand command = new CreateClaimCommand(
-            10L, 1L, "RETURN", null,
+            10L, 1L, "RETURN", "DAMAGED", null,
             List.of(
                 new CreateClaimCommand.Item(101L, 1),
                 new CreateClaimCommand.Item(102L, 1)), null);

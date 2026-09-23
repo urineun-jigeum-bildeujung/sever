@@ -38,8 +38,9 @@ public class GetOrderListService implements GetOrderListUseCase {
     private OrderListResult.OrderSummary toSummary(Order order) {
         List<OrderListResult.ItemSummary> items = order.getItems().stream()
             .map(i -> new OrderListResult.ItemSummary(
-                i.getId(), i.getThumbnailUrlSnapshot(), i.getProductNameSnapshot(),
-                i.getQuantity()))
+                i.getId(), i.getProductId(),
+                i.getThumbnailUrlSnapshot(), i.getProductNameSnapshot(),
+                i.getQuantity(), i.lineAmount()))
             .toList();
         return new OrderListResult.OrderSummary(
             order.getId(), order.getOrderNumber(), order.getOrderedAt(),

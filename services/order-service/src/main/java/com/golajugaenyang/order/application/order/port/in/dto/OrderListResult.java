@@ -24,9 +24,11 @@ public record OrderListResult(
 
     public record ItemSummary(
         Long orderItemId,
+        Long productId,
         String thumbnailUrl,
         String productName,
-        int quantity
+        int quantity,
+        BigDecimal amount
     ) {
 
     }
