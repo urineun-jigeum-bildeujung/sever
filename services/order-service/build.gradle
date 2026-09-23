@@ -7,6 +7,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation project(':modules:common-jpa')
+    implementation project(':modules:common-storage')
     implementation project(':modules:common-security')
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'

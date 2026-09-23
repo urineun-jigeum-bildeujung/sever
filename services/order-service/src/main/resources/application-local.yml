@@ -30,6 +30,12 @@ spring:
     listener:
       ack-mode: RECORD
 
+storage:
+  bucket: ${STORAGE_BUCKET:petflow-dev-uploads}
+  region: ${STORAGE_REGION:ap-northeast-2}
+  cloudfront-domain: ${STORAGE_CLOUDFRONT_DOMAIN:https://image.leechs.shop}
+  prefix: orders
+
 member-service:
   base-url: http://${MEMBER_SERVICE_HOST:localhost}:8082
   connect-timeout: 1s
