@@ -25,6 +25,10 @@ spring:
             certificate: file:/etc/mtls/ca.crt
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: https://leechs.shop
       server:
         webflux:
           httpclient:
