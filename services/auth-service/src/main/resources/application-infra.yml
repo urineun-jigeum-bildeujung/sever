@@ -3,13 +3,13 @@ internal:
 
 spring:
   datasource:
-    url: ${DB_URL:}
-    username: ${DB_USERNAME:}
-    password: ${DB_PASSWORD:}
+    url: jdbc:postgresql://petflow-db-rw.database.svc.cluster.local:5432/auth_db
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      host: redis-master.redis.svc.cluster.local
+      port: 6379
   security:
     oauth2:
       client:
@@ -37,7 +37,7 @@ spring:
             user-name-attribute: id
 
 oauth2:
-  frontend-redirect-uri: https://${FRONTEND_DOMAIN:leechs.shop}/auth/callback
+  frontend-redirect-uri: https://leechs.shop/auth/callback
 
 jwt:
   expiration:
@@ -47,4 +47,4 @@ jwt:
     private-key: ${JWT_RSA_PRIVATE_KEY}
 
 member-service:
-  url: ${MEMBER_SERVICE_URL}
+  url: https://generic-service.member-service.svc.cluster.local:8443/
