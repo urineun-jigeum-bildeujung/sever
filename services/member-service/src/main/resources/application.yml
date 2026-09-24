@@ -4,6 +4,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  jpa:
+    properties:
+      hibernate:
+        jdbc.time_zone: Asia/Seoul
   cloud:
     openfeign:
       client:
