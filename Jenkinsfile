@@ -411,10 +411,17 @@ spec:
                         usernameVariable: 'GIT_USER',
                         passwordVariable: 'GIT_TOKEN'
                     )]) {
-                        sh """
+                        // 토큰을 URL에 넣으면 clone한 폴더의 .git/config에 평문으로 남고, 아래 push도
+                        // 그 저장된 주소에 기대게 된다. credential helper로 각 명령 한 번에만 넘긴다.
+                        // 작은따옴표(''')여야 $GIT_USER/$GIT_TOKEN을 Groovy가 아니라 쉘이 치환한다
+                        // (큰따옴표면 Groovy가 값을 미리 글자로 박는다). set +x는 명령이 로그에
+                        // 찍히는 것을 막는다. ai 레포 Jenkinsfile과 같은 방식이다.
+                        sh '''
+                            set +x
                             rm -rf gitops-value-checkout
-                            git clone https://\${GIT_USER}:\${GIT_TOKEN}@github.com/urineun-jigeum-bildeujung/gitops-value.git gitops-value-checkout
-                        """
+                            git -c credential.helper='!f() { echo "username=$GIT_USER"; echo "password=$GIT_TOKEN"; }; f' \
+                                clone https://github.com/urineun-jigeum-bildeujung/gitops-value.git gitops-value-checkout
+                        '''
                     }
 
                     // values.yaml의 tag 필드만 이번에 push한 커밋 SHA로 갱신.
@@ -448,8 +455,18 @@ spec:
                             git config user.name 'jenkins-ci'
                             git add values/
                             git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy ${services.collect { it }.join(", ")} @ ${imageTag}'
-                            git push
                         """
+
+                        withCredentials([usernamePassword(
+                            credentialsId: 'gitops-value-push',
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_TOKEN'
+                        )]) {
+                            sh '''
+                                set +x
+                                git -c credential.helper='!f() { echo "username=$GIT_USER"; echo "password=$GIT_TOKEN"; }; f' push
+                            '''
+                        }
                     }
                 }
             }
