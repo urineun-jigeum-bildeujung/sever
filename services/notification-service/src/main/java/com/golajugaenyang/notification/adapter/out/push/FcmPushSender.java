@@ -8,6 +8,7 @@ import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -15,10 +16,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FcmPushSender {
 
-    private final FirebaseApp firebaseApp;
+    private final ObjectProvider<FirebaseApp> firebaseAppProvider;
     private final FcmTokenRepository fcmTokenRepository;
 
     public void send(String token, String title, String body, String targetType, String targetId) {
+        FirebaseApp firebaseApp = firebaseAppProvider.getIfAvailable();
         if (firebaseApp == null) {
             log.debug("FCM 미설정으로 푸시 발송을 건너뜁니다. token={}", mask(token));
             return;
