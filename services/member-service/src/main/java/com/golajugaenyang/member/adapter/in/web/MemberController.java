@@ -81,6 +81,15 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/me/pets/{petId}/default")
+    public ResponseEntity<PetDefaultResponse> changeDefaultPet(
+            @AuthId Long authId,
+            @PathVariable Long petId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        Pet pet = petService.changeDefaultPet(memberId, petId);
+        return ResponseEntity.ok(new PetDefaultResponse(pet.getId(), pet.isDefault()));
+    }
+
     @DeleteMapping("/me/pets/{petId}")
     public ResponseEntity<Void> deletePet(
             @AuthId Long authId,

@@ -39,7 +39,7 @@ public class PetAdapter implements PetRepository {
 
     @Override
     public List<Pet> findByMemberId(Long memberId) {
-        return petJpaRepo.findByMemberIdAndDeletedAtIsNull(memberId).stream()
+        return petJpaRepo.findByMemberIdAndDeletedAtIsNullOrderByIsDefaultDescIdAsc(memberId).stream()
             .map(PetMapper::toDomain)
             .toList();
     }
@@ -59,5 +59,10 @@ public class PetAdapter implements PetRepository {
     public Optional<Pet> findByIdForUpdate(Long petId){
         return petJpaRepo.findByIdAndDeletedAtIsNullForUpdate(petId)
                 .map(PetMapper::toDomain);
+    }
+
+    @Override
+    public void flush() {
+        petJpaRepo.flush();
     }
 }
