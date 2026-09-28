@@ -180,6 +180,8 @@ public class PetService {
 
     @Transactional
     public Pet changeDefaultPet(Long memberId, Long petId) {
+        memberRepo.lockForUpdate(memberId);
+
         Pet target = petRepo.findById(petId)
                 .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
 
