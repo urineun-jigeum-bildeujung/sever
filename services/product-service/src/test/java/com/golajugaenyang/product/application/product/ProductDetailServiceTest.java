@@ -14,6 +14,7 @@ import com.golajugaenyang.product.application.product.port.out.ProductDetailQuer
 import com.golajugaenyang.product.application.product.port.out.dto.ProductDetailProjection;
 import com.golajugaenyang.product.domain.product.ProductStatus;
 import com.golajugaenyang.product.error.ProductErrorCode;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,7 @@ public class ProductDetailServiceTest {
             ProductStatus.ON_SALE,
             "제조사", "브랜드", "한국",
             java.math.BigDecimal.valueOf(2), QuantityUnit.KG,
-            java.util.Set.of(), "성견",
+            List.of(), "성견",
             TargetBreedSize.SMALL,
             TargetAgeGroup.ADULT,
             java.util.Set.of(Species.DOG),

@@ -5,10 +5,13 @@ import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.product.application.product.port.in.ProductDetailUseCase;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductDetailResult;
 import com.golajugaenyang.product.application.timedeal.port.in.TimeDealDetailUseCase;
+import com.golajugaenyang.product.application.timedeal.port.in.dto.TimeDealDetailInfo;
+import com.golajugaenyang.product.application.timedeal.port.in.dto.TimeDealItemAvailability;
 import com.golajugaenyang.product.application.timedeal.port.out.TimeDealPricingRepository;
 import com.golajugaenyang.product.application.timedeal.port.out.dto.TimeDealPricingProjection;
 import com.golajugaenyang.product.domain.timedeal.TimeDealItemStatus;
 import com.golajugaenyang.product.error.ProductErrorCode;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,10 +40,19 @@ public class TimeDealDetailService implements TimeDealDetailUseCase {
 
         int remaining = Math.max(
             pricing.quantityLimit() - pricing.reservedQuantity() - pricing.soldQuantity(), 0);
+
         boolean soldOut = pricing.itemStatus() == TimeDealItemStatus.SOLD_OUT || remaining == 0;
 
+        boolean purchasable = TimeDealItemAvailability.from(
+            pricing.dealStatus(), pricing.itemStatus(), remaining)
+            == TimeDealItemAvailability.AVAILABLE;
+
+        TimeDealDetailInfo timeDealInfo = new TimeDealDetailInfo(
+            timeDealItemId, pricing.dealId(), pricing.dealStatus(),
+            pricing.dealStartAt(), pricing.dealEndAt(), OffsetDateTime.now(), purchasable);
+
         return baseDetail.withPricing(
-            timeDealItemId, pricing.discountedPrice(), pricing.normalPrice(),
+            timeDealInfo, pricing.discountedPrice(), pricing.normalPrice(),
             pricing.discountRate(), soldOut);
     }
 }

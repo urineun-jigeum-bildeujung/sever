@@ -26,7 +26,7 @@ public record ProductDetailProjection(
     String originCountry,
     BigDecimal netQuantityValue,
     QuantityUnit netQuantityUnit,
-    Set<String> ingredients,
+    List<String> ingredients,
     String feedingTarget,
     TargetBreedSize targetBreedSize,
     TargetAgeGroup targetAgeGroup,
