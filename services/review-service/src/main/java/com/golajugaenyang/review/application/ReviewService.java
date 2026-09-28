@@ -44,6 +44,7 @@ import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -348,6 +349,9 @@ public class ReviewService {
                 .collect(Collectors.toMap(NicknameInternalItemResponse::memberId, NicknameInternalItemResponse::nickname));
 
         Map<Long, Long> likeCountByReviewId = reviewRecommendRepo.countByReviewIdIn(reviewIds);
+        Set<Long> likedReviewIds = memberId != null
+                ? reviewRecommendRepo.findLikedReviewIds(memberId, reviewIds)
+                : Collections.emptySet();
 
         Map<Long, List<String>> imagesByReviewId = reviewImageRepo.findByReviewIdIn(reviewIds).stream()
                 .collect(Collectors.groupingBy(ReviewImage::getReviewId,
@@ -366,13 +370,14 @@ public class ReviewService {
                                 .map(p -> new ReviewFilterListResponse.Pet(
                                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
                                         p.getBreedSize() != null ? p.getBreedSize().name() : null,
-                                        p.getSpecies().name()))
+                                        p.getSpecies().name(), p.getBreedId(), p.getWeight()))
                                 .toList(),
                         review.getStarRate(),
-                        formatUsagePeriod(review.getUsagePeriod()),
+                        review.getUsagePeriod(),
                         palatabilityByReviewId.get(review.getId()),
                         review.getText(),
                         imagesByReviewId.get(review.getId()),
+                        likedReviewIds.contains(review.getId()),
                         likeCountByReviewId.getOrDefault(review.getId(), 0L).intValue(),
                         review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
                 ))
@@ -415,24 +420,6 @@ public class ReviewService {
         } catch (IllegalArgumentException e) {
             throw new AppException(ReviewErrorCode.INVALID_FILTER);
         }
-    }
-
-    private static final int ONE_MONTH_DAYS = 30;
-    private static final int THREE_MONTHS_DAYS = 90;
-    private static final int SIX_MONTHS_DAYS = 180;
-    private static final int ONE_YEAR_DAYS = 365;
-
-    private String formatUsagePeriod(int usagePeriodDays) {
-        if (usagePeriodDays < ONE_MONTH_DAYS) {
-            return usagePeriodDays + "일";
-        }
-        if (usagePeriodDays < THREE_MONTHS_DAYS) {
-            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
-        }
-        if (usagePeriodDays < ONE_YEAR_DAYS) {
-            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
-        }
-        return (usagePeriodDays / ONE_YEAR_DAYS) + "년";
     }
 
     private String toPalatabilityDisplay(ReviewAnswer answer) {

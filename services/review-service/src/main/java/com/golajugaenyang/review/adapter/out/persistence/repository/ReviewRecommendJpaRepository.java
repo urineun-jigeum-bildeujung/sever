@@ -28,4 +28,11 @@ public interface ReviewRecommendJpaRepository extends JpaRepository<ReviewRecomm
         group by ri.reviewId
         """)
     List<ReviewLikeCountProjection> countByReviewIdIn(@Param("reviewIds") List<Long> reviewIds);
+
+    @Query("""
+        select ri.reviewId
+        from ReviewRecommendJpaEntity ri
+        where ri.memberId = :memberId and ri.reviewId in :reviewIds
+        """)
+    List<Long> findLikedReviewIds(@Param("memberId") Long memberId, @Param("reviewIds") List<Long> reviewIds);
 }

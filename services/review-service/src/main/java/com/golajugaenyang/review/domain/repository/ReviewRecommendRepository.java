@@ -4,6 +4,7 @@ import com.golajugaenyang.review.domain.entity.ReviewRecommend;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ReviewRecommendRepository {
 
@@ -18,4 +19,6 @@ public interface ReviewRecommendRepository {
     long countByReviewId(Long reviewId);
 
     Map<Long, Long> countByReviewIdIn(List<Long> reviewIds);
+
+    Set<Long> findLikedReviewIds(Long memberId, List<Long> reviewIds);
 }

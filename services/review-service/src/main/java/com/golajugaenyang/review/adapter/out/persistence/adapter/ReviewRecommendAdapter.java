@@ -8,6 +8,7 @@ import com.golajugaenyang.review.domain.repository.ReviewRecommendRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -50,5 +51,10 @@ public class ReviewRecommendAdapter implements ReviewRecommendRepository {
         return reviewRecommendJpaRepo.countByReviewIdIn(reviewIds).stream()
                 .collect(Collectors.toMap(
                         ReviewLikeCountProjection::getReviewId, ReviewLikeCountProjection::getCount));
+    }
+
+    @Override
+    public Set<Long> findLikedReviewIds(Long memberId, List<Long> reviewIds) {
+        return Set.copyOf(reviewRecommendJpaRepo.findLikedReviewIds(memberId, reviewIds));
     }
 }

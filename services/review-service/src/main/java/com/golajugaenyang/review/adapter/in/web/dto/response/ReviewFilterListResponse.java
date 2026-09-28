@@ -13,10 +13,11 @@ public record ReviewFilterListResponse(
             String nickname,
             List<Pet> pets,
             double rating,
-            String usagePeriod,
+            int usagePeriod,
             String palatability,
             String text,
             List<String> images,
+            boolean liked,
             int likeCount,
             LocalDate createdAt
     ) {
@@ -28,7 +29,9 @@ public record ReviewFilterListResponse(
             String sex,
             int age,
             String breedSize,
-            String species
+            String species,
+            Long breedId,
+            double weight
     ) {
     }
 }
