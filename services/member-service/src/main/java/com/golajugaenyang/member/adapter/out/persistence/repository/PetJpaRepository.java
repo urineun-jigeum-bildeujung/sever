@@ -13,7 +13,7 @@ public interface PetJpaRepository extends JpaRepository<PetJpaEntity, Long> {
 
     boolean existsByMemberIdAndDeletedAtIsNull(Long memberId);
 
-    List<PetJpaEntity> findByMemberIdAndDeletedAtIsNull(Long memberId);
+    List<PetJpaEntity> findByMemberIdAndDeletedAtIsNullOrderByIsDefaultDescIdAsc(Long memberId);
 
     Optional<PetJpaEntity> findByIdAndDeletedAtIsNull(Long id);
 
