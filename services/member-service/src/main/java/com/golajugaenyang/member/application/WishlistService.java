@@ -55,6 +55,10 @@ public class WishlistService {
         return true;
     }
 
+    public boolean isWished(Long memberId, Long productId) {
+        return wishlistRepo.findByMemberIdAndProductId(memberId, productId).isPresent();
+    }
+
     public List<WishlistItemResponse> getWishlist(Long memberId, String category) {
         List<Wishlist> wishlists = wishlistRepo.findByMemberId(memberId);
         if (wishlists.isEmpty()) {

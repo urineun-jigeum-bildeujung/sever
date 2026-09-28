@@ -2,6 +2,7 @@ package com.golajugaenyang.member.adapter.in.web;
 
 import com.golajugaenyang.common.security.annotation.AuthId;
 import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistItemResponse;
+import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistStatusResponse;
 import com.golajugaenyang.member.adapter.in.web.dto.response.WishlistToggleResponse;
 import com.golajugaenyang.member.application.MemberService;
 import com.golajugaenyang.member.application.WishlistService;
@@ -30,6 +31,15 @@ public class WishlistController {
         Long memberId = memberService.getMemberIdByAuthId(authId);
         boolean wished = wishlistService.toggleWishlist(memberId, productId);
         return ResponseEntity.ok(new WishlistToggleResponse(wished));
+    }
+
+    @GetMapping("/status/{productId}")
+    public ResponseEntity<WishlistStatusResponse> getWishlistStatus(
+            @AuthId Long authId,
+            @PathVariable Long productId) {
+        Long memberId = memberService.getMemberIdByAuthId(authId);
+        boolean wished = wishlistService.isWished(memberId, productId);
+        return ResponseEntity.ok(new WishlistStatusResponse(wished));
     }
 
     @GetMapping
