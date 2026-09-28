@@ -60,4 +60,9 @@ public class PetAdapter implements PetRepository {
         return petJpaRepo.findByIdAndDeletedAtIsNullForUpdate(petId)
                 .map(PetMapper::toDomain);
     }
+
+    @Override
+    public void flush() {
+        petJpaRepo.flush();
+    }
 }

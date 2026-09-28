@@ -178,6 +178,28 @@ public class PetService {
         }
     }
 
+    @Transactional
+    public Pet changeDefaultPet(Long memberId, Long petId) {
+        Pet target = petRepo.findById(petId)
+                .orElseThrow(() -> new AppException(MemberErrorCode.NOT_FOUND_PET));
+
+        if (!target.getMemberId().equals(memberId)) {
+            throw new AppException(MemberErrorCode.NOT_FOUND_PET);
+        }
+
+        if (target.isDefault()) {
+            return target;
+        }
+
+        petRepo.findByMemberId(memberId).stream()
+                .filter(Pet::isDefault)
+                .findFirst()
+                .ifPresent(current -> petRepo.save(current.withIsDefault(false)));
+        petRepo.flush();
+
+        return petRepo.save(target.withIsDefault(true));
+    }
+
     private void confirmOwnImage(Long memberId, String fileUrl) {
         String ownerId = "member-" + memberId;
         try {

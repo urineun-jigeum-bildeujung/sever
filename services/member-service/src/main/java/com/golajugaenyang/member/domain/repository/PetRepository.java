@@ -15,4 +15,6 @@ public interface PetRepository {
     Optional<Pet> findById(Long id);
 
     Optional<Pet> findByIdForUpdate(Long id);
+
+    void flush();
 }
