@@ -1,6 +1,7 @@
 package com.golajugaenyang.order.adapter.in.web.order.dto;
 
 import com.golajugaenyang.order.application.order.port.in.dto.OrderDetailResult;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -27,7 +28,12 @@ public record OrderDetailResponse(
         int cancelledQuantity,
         int returnedQuantity,
         int effectiveQuantity,
+        @Schema(description = "할인 전 단가")
         BigDecimal unitPrice,
+        @Schema(description = "할인이 반영된 실제 결제 단가")
+        BigDecimal paidUnitPrice,
+        @Schema(description = "주문 시점 기준 해당 품목 실제 결제 금액 (paidUnitPrice × quantity)")
+        BigDecimal amount,
         String itemStatus,
         List<ClaimSummary> claims
     ) {
@@ -67,7 +73,7 @@ public record OrderDetailResponse(
                 i.orderItemId(), i.thumbnailUrl(), i.productName(),
                 i.quantity(), i.cancelledQuantity(),
                 i.returnedQuantity(), i.effectiveQuantity(),
-                i.unitPrice(), i.itemStatus(),
+                i.unitPrice(), i.paidUnitPrice(), i.amount(), i.itemStatus(),
                 i.claims().stream()
                     .map(c -> new ClaimSummary(
                         c.claimId(), c.claimType(), c.claimStatus(),

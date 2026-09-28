@@ -68,7 +68,8 @@ public class GetOrderDetailService implements GetOrderDetailUseCase {
             item.getId(), item.getThumbnailUrlSnapshot(), item.getProductNameSnapshot(),
             item.getQuantity(), item.getCancelledQuantity(),
             item.getReturnedQuantity(), item.effectiveQuantity(),
-            item.getUnitPrice(), item.getItemStatus().name(), claims);
+            item.getUnitPrice(), item.paidUnitPrice(), item.lineAmount(),
+            item.getItemStatus().name(), claims);
     }
 
     private OrderDetailResult.DeliveryAddressDetail toAddressDetail(DeliveryAddress address) {

@@ -145,6 +145,14 @@ public class OrderItem extends BaseTimeEntity {
             .multiply(BigDecimal.valueOf(quantity));
     }
 
+    /**
+     * 할인이 반영된 실제 결제 단가 = 단가 - 단위당 할인액
+     */
+    public BigDecimal paidUnitPrice() {
+        return unitPrice.subtract(unitDiscountAmount);
+    }
+
+
     void assignTo(Order o) {
         this.order = o;
     }
