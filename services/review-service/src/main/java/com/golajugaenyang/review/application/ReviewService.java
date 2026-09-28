@@ -1,7 +1,6 @@
 package com.golajugaenyang.review.application;
 
 import com.golajugaenyang.common.core.domain.Species;
-import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.common.storage.PresignedUpload;
@@ -408,19 +407,28 @@ public class ReviewService {
         ReviewSortType sortType = sort != null ? parseEnum(sort, ReviewSortType.class) : ReviewSortType.LATEST;
 
         Species personalizedSpecies = null;
-        TargetBreedSize personalizedBreedSize = null;
+        Integer personalizedAge = null;
+        Double personalizedWeight = null;
+        Boolean personalizedNeutered = null;
+        Set<String> personalizedHealthConcerns = null;
         if (personalized && petId != null) {
             if (memberId == null) {
                 throw new AppException(ReviewErrorCode.INVALID_FILTER);
             }
             PetSnapshotResponse target = fetchPetSnapshot(memberId, petId);
             personalizedSpecies = target.species();
-            personalizedBreedSize = target.size();
+            personalizedAge = target.age();
+            personalizedWeight = target.weight();
+            personalizedNeutered = target.isNeutered();
+            personalizedHealthConcerns = target.healthConcerns() != null
+                    ? Set.copyOf(target.healthConcerns()) : null;
         }
 
         return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageMin, ageMax, neutered,
                 weightMin, weightMax, healthConcerns != null ? Set.copyOf(healthConcerns) : null,
-                usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size, personalizedSpecies, personalizedBreedSize);
+                usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
+                personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,
+                personalizedHealthConcerns);
     }
 
     private <E extends Enum<E>> E parseEnum(String value, Class<E> type) {

@@ -25,6 +25,9 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
 
+    private static final int AGE_TOLERANCE_YEARS = 2;
+    private static final double WEIGHT_TOLERANCE_RATIO = 0.2;
+
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -130,18 +133,34 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             where.and(reviewJpaEntity.usagePeriod.loe(criteria.usagePeriodMaxDays()));
         }
 
-        // 맞춤보기(내 펫 기준)도 species+breedSize가 같은 한 마리를 가리켜야 하므로
+        // 맞춤보기(내 펫 기준)도 species+age+weight+neutered가 같은 한 마리를 가리켜야 하므로
         // 위와 별개의 .any() 참조를 하나 더 둔다.
-        if (criteria.personalizedSpecies() != null || criteria.personalizedBreedSize() != null) {
+        if (criteria.personalizedSpecies() != null || criteria.personalizedAge() != null
+                || criteria.personalizedWeight() != null || criteria.personalizedNeutered() != null) {
             QReviewPetSnapshotEmbeddable personalizedPet = reviewJpaEntity.pets.any();
             BooleanBuilder personalizedCondition = new BooleanBuilder();
             if (criteria.personalizedSpecies() != null) {
                 personalizedCondition.and(personalizedPet.species.eq(criteria.personalizedSpecies()));
             }
-            if (criteria.personalizedBreedSize() != null) {
-                personalizedCondition.and(personalizedPet.breedSize.eq(criteria.personalizedBreedSize()));
+            if (criteria.personalizedAge() != null) {
+                personalizedCondition.and(personalizedPet.age.goe(criteria.personalizedAge() - AGE_TOLERANCE_YEARS))
+                        .and(personalizedPet.age.loe(criteria.personalizedAge() + AGE_TOLERANCE_YEARS));
+            }
+            if (criteria.personalizedWeight() != null) {
+                double min = criteria.personalizedWeight() * (1 - WEIGHT_TOLERANCE_RATIO);
+                double max = criteria.personalizedWeight() * (1 + WEIGHT_TOLERANCE_RATIO);
+                personalizedCondition.and(personalizedPet.weight.goe(min)).and(personalizedPet.weight.loe(max));
+            }
+            if (criteria.personalizedNeutered() != null) {
+                personalizedCondition.and(personalizedPet.neutered.eq(criteria.personalizedNeutered()));
             }
             where.and(personalizedCondition);
+        }
+
+        // 건강 관심정보는 펫 단위가 아니라 리뷰 단위 컬렉션이라, 대상 펫의 건강 관심정보 중
+        // 하나라도 겹치면 매칭으로 본다 (기존 healthConcerns 필터와 동일한 방식).
+        if (criteria.personalizedHealthConcerns() != null && !criteria.personalizedHealthConcerns().isEmpty()) {
+            where.and(reviewJpaEntity.petHealthConcernCodes.any().in(criteria.personalizedHealthConcerns()));
         }
 
         return where;
