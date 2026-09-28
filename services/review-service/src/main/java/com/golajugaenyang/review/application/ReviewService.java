@@ -274,6 +274,14 @@ public class ReviewService {
 
         boolean isMine = memberId != null && memberId.equals(review.getMemberId());
 
+        String nickname = memberClient.getNicknames(List.of(review.getMemberId())).items().stream()
+                .findFirst()
+                .map(NicknameInternalItemResponse::nickname)
+                .orElse("");
+
+        long likeCount = reviewRecommendRepo.countByReviewId(reviewId);
+        boolean liked = memberId != null && reviewRecommendRepo.findByMemberIdAndReviewId(memberId, reviewId).isPresent();
+
         ProductInternalItemsResponse products = productClient.getProducts(List.of(review.getProductId()));
         ProductInternalItemResponse product = products.items().stream().findFirst().orElse(null);
         ReviewDetailResponse.Product productSummary = new ReviewDetailResponse.Product(
@@ -304,16 +312,20 @@ public class ReviewService {
         List<ReviewDetailResponse.Pet> pets = review.getPets().stream()
                 .map(p -> new ReviewDetailResponse.Pet(
                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
-                        p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name()))
+                        p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name(),
+                        p.getBreedId(), p.getWeight()))
                 .toList();
 
         return new ReviewDetailResponse(
                 review.getId(),
                 isMine,
+                nickname,
                 productSummary,
                 pets,
                 review.getStarRate(),
                 review.getUsagePeriod(),
+                liked,
+                (int) likeCount,
                 answerValues,
                 goodPoints.isEmpty() ? null : goodPoints,
                 badPoints.isEmpty() ? null : badPoints,
