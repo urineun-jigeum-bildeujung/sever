@@ -353,8 +353,7 @@ public class ReviewService {
         List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
         List<Long> reviewerIds = reviews.stream().map(Review::getMemberId).distinct().toList();
 
-        Map<Long, String> nicknameByMemberId = memberClient.getNicknames(reviewerIds).items().stream()
-                .collect(Collectors.toMap(NicknameInternalItemResponse::memberId, NicknameInternalItemResponse::nickname));
+        Map<Long, String> nicknameByMemberId = fetchNicknamesByMemberId(reviewerIds);
 
         Map<Long, Long> likeCountByReviewId = reviewRecommendRepo.countByReviewIdIn(reviewIds);
         Set<Long> likedReviewIds = memberId != null
@@ -492,6 +491,15 @@ public class ReviewService {
                     .orElse("");
         } catch (FeignException e) {
             return "";
+        }
+    }
+
+    private Map<Long, String> fetchNicknamesByMemberId(List<Long> memberIds) {
+        try {
+            return memberClient.getNicknames(memberIds).items().stream()
+                    .collect(Collectors.toMap(NicknameInternalItemResponse::memberId, NicknameInternalItemResponse::nickname));
+        } catch (FeignException e) {
+            return Map.of();
         }
     }
 
