@@ -30,12 +30,10 @@ import com.golajugaenyang.review.domain.entity.ReviewImage;
 import com.golajugaenyang.review.domain.entity.ReviewPetSnapshot;
 import com.golajugaenyang.review.domain.entity.ReviewQuestion;
 import com.golajugaenyang.review.domain.entity.ReviewRecommend;
-import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
 import com.golajugaenyang.review.domain.entity.enums.ReviewAnswer;
 import com.golajugaenyang.review.domain.entity.enums.ReviewQuestionType;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
-import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import com.golajugaenyang.review.domain.repository.ReviewImageRepository;
 import com.golajugaenyang.review.domain.repository.ReviewQuestionRepository;
 import com.golajugaenyang.review.domain.repository.ReviewRecommendRepository;
@@ -326,12 +324,13 @@ public class ReviewService {
     }
 
     public ReviewFilterListResponse getProductReviews(
-            Long productId, String species, Long breedId, String ageGroup, Boolean neutered,
-            Integer weightMin, Integer weightMax, List<String> healthConcerns, String usagePeriod,
-            String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
+            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
+            Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
 
-        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedId, ageGroup, neutered,
-                weightMin, weightMax, healthConcerns, usagePeriod, sort, page, size, personalized, petId, memberId);
+        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedId, ageMin, ageMax, neutered,
+                weightMin, weightMax, healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size,
+                personalized, petId, memberId);
 
         List<Review> reviews = reviewSearchRepo.search(criteria);
         long totalCount = reviewSearchRepo.count(criteria);
@@ -383,13 +382,12 @@ public class ReviewService {
     }
 
     private ReviewSearchCriteria buildSearchCriteria(
-            Long productId, String species, Long breedId, String ageGroup, Boolean neutered,
-            Integer weightMin, Integer weightMax, List<String> healthConcerns, String usagePeriod,
-            String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
+            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
+            Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId,
+            Long memberId) {
 
         Species speciesEnum = parseEnum(species, Species.class);
-        AgeGroup ageGroupEnum = parseEnum(ageGroup, AgeGroup.class);
-        UsagePeriod usagePeriodEnum = parseEnum(usagePeriod, UsagePeriod.class);
         ReviewSortType sortType = sort != null ? parseEnum(sort, ReviewSortType.class) : ReviewSortType.LATEST;
 
         Species personalizedSpecies = null;
@@ -403,9 +401,9 @@ public class ReviewService {
             personalizedBreedSize = target.size();
         }
 
-        return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageGroupEnum, neutered,
+        return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageMin, ageMax, neutered,
                 weightMin, weightMax, healthConcerns != null ? Set.copyOf(healthConcerns) : null,
-                usagePeriodEnum, sortType, page, size, personalizedSpecies, personalizedBreedSize);
+                usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size, personalizedSpecies, personalizedBreedSize);
     }
 
     private <E extends Enum<E>> E parseEnum(String value, Class<E> type) {

@@ -7,9 +7,7 @@ import com.golajugaenyang.review.adapter.out.persistence.entity.QReviewPetSnapsh
 import com.golajugaenyang.review.adapter.out.persistence.entity.ReviewJpaEntity;
 import com.golajugaenyang.review.adapter.out.persistence.mapper.ReviewMapper;
 import com.golajugaenyang.review.domain.entity.Review;
-import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
-import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import com.golajugaenyang.review.domain.repository.ProductRatingSummary;
 import com.golajugaenyang.review.domain.repository.ReviewSearchCriteria;
 import com.golajugaenyang.review.domain.repository.ReviewSearchRepository;
@@ -26,14 +24,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
-
-    private static final int PUPPY_MAX_AGE = 1;
-    private static final int SENIOR_MIN_AGE = 8;
-
-    private static final int ONE_MONTH_DAYS = 30;
-    private static final int THREE_MONTHS_DAYS = 90;
-    private static final int SIX_MONTHS_DAYS = 180;
-    private static final int ONE_YEAR_DAYS = 365;
 
     private final JPAQueryFactory queryFactory;
 
@@ -106,8 +96,12 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             petCondition.and(pet.breedId.eq(criteria.breedId()));
             hasPetCondition = true;
         }
-        if (criteria.ageGroup() != null) {
-            petCondition.and(ageGroupCondition(pet, criteria.ageGroup()));
+        if (criteria.ageMin() != null) {
+            petCondition.and(pet.age.goe(criteria.ageMin()));
+            hasPetCondition = true;
+        }
+        if (criteria.ageMax() != null) {
+            petCondition.and(pet.age.loe(criteria.ageMax()));
             hasPetCondition = true;
         }
         if (criteria.neutered() != null) {
@@ -129,8 +123,11 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
         if (criteria.healthConcerns() != null && !criteria.healthConcerns().isEmpty()) {
             where.and(reviewJpaEntity.petHealthConcernCodes.any().in(criteria.healthConcerns()));
         }
-        if (criteria.usagePeriod() != null) {
-            where.and(usagePeriodCondition(criteria.usagePeriod()));
+        if (criteria.usagePeriodMinDays() != null) {
+            where.and(reviewJpaEntity.usagePeriod.goe(criteria.usagePeriodMinDays()));
+        }
+        if (criteria.usagePeriodMaxDays() != null) {
+            where.and(reviewJpaEntity.usagePeriod.loe(criteria.usagePeriodMaxDays()));
         }
 
         // 맞춤보기(내 펫 기준)도 species+breedSize가 같은 한 마리를 가리켜야 하므로
@@ -148,30 +145,6 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
         }
 
         return where;
-    }
-
-    private BooleanBuilder ageGroupCondition(QReviewPetSnapshotEmbeddable pet, AgeGroup ageGroup) {
-        BooleanBuilder condition = new BooleanBuilder();
-        switch (ageGroup) {
-            case PUPPY -> condition.and(pet.age.lt(PUPPY_MAX_AGE));
-            case SENIOR -> condition.and(pet.age.goe(SENIOR_MIN_AGE));
-            case ADULT -> condition.and(pet.age.goe(PUPPY_MAX_AGE))
-                    .and(pet.age.lt(SENIOR_MIN_AGE));
-        }
-        return condition;
-    }
-
-    private BooleanBuilder usagePeriodCondition(UsagePeriod usagePeriod) {
-        BooleanBuilder condition = new BooleanBuilder();
-        switch (usagePeriod) {
-            case ONE_MONTH -> condition.and(reviewJpaEntity.usagePeriod.lt(THREE_MONTHS_DAYS));
-            case THREE_MONTHS -> condition.and(reviewJpaEntity.usagePeriod.goe(THREE_MONTHS_DAYS))
-                    .and(reviewJpaEntity.usagePeriod.lt(SIX_MONTHS_DAYS));
-            case SIX_MONTHS -> condition.and(reviewJpaEntity.usagePeriod.goe(SIX_MONTHS_DAYS))
-                    .and(reviewJpaEntity.usagePeriod.lt(ONE_YEAR_DAYS));
-            case ONE_YEAR -> condition.and(reviewJpaEntity.usagePeriod.goe(ONE_YEAR_DAYS));
-        }
-        return condition;
     }
 
     private OrderSpecifier<?> orderSpecifier(ReviewSortType sort) {
