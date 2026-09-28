@@ -8,10 +8,16 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.junit.jupiter.api.Test;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class KafkaConsumerConfigTest {
+
+    @Test
+    void enablesKafkaListenerInfrastructure() {
+        assertThat(KafkaConsumerConfig.class).hasAnnotation(EnableKafka.class);
+    }
 
     @Test
     void consumerFactoryPropagatesSaslSslProperties() {
