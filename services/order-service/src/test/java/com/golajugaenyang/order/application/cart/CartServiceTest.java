@@ -22,6 +22,7 @@ import com.golajugaenyang.order.application.cart.port.out.ProductCatalogPort;
 import com.golajugaenyang.order.application.cart.port.out.dto.CartCatalogLookupResult;
 import com.golajugaenyang.order.application.cart.port.out.dto.ProductSummary;
 import com.golajugaenyang.order.application.cart.port.out.dto.TimeDealSummary;
+import com.golajugaenyang.order.domain.cart.CartItem;
 import com.golajugaenyang.order.domain.cart.CartItemKey;
 import com.golajugaenyang.order.domain.cart.CartItemType;
 import java.math.BigDecimal;
@@ -52,6 +53,15 @@ public class CartServiceTest {
     private static final Long PRODUCT_ID = 100L;
     private static final Long TIME_DEAL_ITEM_ID = 200L;
 
+    private static CartItem cartItem(CartItemKey key, int quantity) {
+        return new CartItem(key, quantity, java.time.Instant.EPOCH);
+    }
+
+    private static CartItem cartItem(CartItemKey key, int quantity, java.time.Instant addedAt) {
+        return new CartItem(key, quantity, addedAt);
+    }
+
+
     @BeforeEach
     void setUp() {
         cartService = new CartService(cartRepository, productCatalogPort);
@@ -63,7 +73,7 @@ public class CartServiceTest {
         @Test
         @DisplayName("장바구니에 담긴 상품이 없으면 빈 결과를 반환한다.")
         void getCart_returns_empty_result_when_cart_has_no_items() {
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of());
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of());
 
             CartResult result = cartService.getCart(MEMBER_ID);
 
@@ -75,7 +85,7 @@ public class CartServiceTest {
         @DisplayName("구매 가능한 일반 상품은 available=true와 소계 금액을 포함해 반환한다.")
         void getCart_returns_available_item_with_subtotal_when_product_is_purchasable() {
             CartItemKey key = new CartItemKey(CartItemType.NORMAL, PRODUCT_ID);
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 3));
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(cartItem(key, 3)));
 
             ProductSummary summary = new ProductSummary(
                 PRODUCT_ID, "테스트 상품", "http://thumbnail",
@@ -101,7 +111,7 @@ public class CartServiceTest {
         @DisplayName("카탈로그 조회 결과에 없는 상품은 NOT_FOUND 사유로 표시되고 합계에서 제외된다.")
         void getCart_marks_item_as_not_found_when_missing_from_catalog_result() {
             CartItemKey key = new CartItemKey(CartItemType.NORMAL, PRODUCT_ID);
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 1));
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(cartItem(key, 1)));
             given(productCatalogPort.lookup(List.of(PRODUCT_ID), List.of()))
                 .willReturn(new CartCatalogLookupResult(
                     Map.of(), Map.of(), List.of(PRODUCT_ID), List.of(), List.of(), List.of()));
@@ -118,7 +128,7 @@ public class CartServiceTest {
         @DisplayName("호출 자체가 실패한 상품은 삭제(NOT_FOUND)가 아니라 일시적 조회불가로 표시된다.")
         void getCart_marks_item_as_temporarily_unavailable_when_catalog_call_is_unreachable() {
             CartItemKey key = new CartItemKey(CartItemType.NORMAL, PRODUCT_ID);
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 1));
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(cartItem(key, 1)));
             given(productCatalogPort.lookup(List.of(PRODUCT_ID), List.of()))
                 .willReturn(new CartCatalogLookupResult(
                     Map.of(), Map.of(), List.of(), List.of(), List.of(PRODUCT_ID), List.of()));
@@ -135,7 +145,7 @@ public class CartServiceTest {
         @DisplayName("종료 시각이 지난 타임딜 상품은 DEAL_ENDED 사유로 표시된다.")
         void getCart_marks_time_deal_item_as_deal_ended_when_deal_end_time_has_passed() {
             CartItemKey key = new CartItemKey(CartItemType.TIME_DEAL, TIME_DEAL_ITEM_ID);
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 1));
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(cartItem(key, 1)));
 
             TimeDealSummary summary = new TimeDealSummary(
                 TIME_DEAL_ITEM_ID, PRODUCT_ID, "타임딜 상품", "http://thumbnail",
@@ -159,7 +169,7 @@ public class CartServiceTest {
         @DisplayName("품절 등으로 구매 불가능하지만 상품 정보는 존재하는 상품도 이름/썸네일/가격을 포함해 반환한다.")
         void getCart_includes_product_info_when_item_exists_but_not_purchasable() {
             CartItemKey key = new CartItemKey(CartItemType.NORMAL, PRODUCT_ID);
-            given(cartRepository.findAll(MEMBER_ID)).willReturn(Map.of(key, 2));
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(cartItem(key, 2)));
 
             ProductSummary summary = new ProductSummary(
                 PRODUCT_ID, "품절된 상품", "http://thumbnail",
@@ -168,7 +178,8 @@ public class CartServiceTest {
             );
             given(productCatalogPort.lookup(List.of(PRODUCT_ID), List.of()))
                 .willReturn(new CartCatalogLookupResult(
-                    Map.of(PRODUCT_ID, summary), Map.of(), List.of(), List.of(), List.of(), List.of()));
+                    Map.of(PRODUCT_ID, summary), Map.of(), List.of(), List.of(), List.of(),
+                    List.of()));
 
             CartResult result = cartService.getCart(MEMBER_ID);
 
@@ -180,6 +191,46 @@ public class CartServiceTest {
             assertThat(item.price()).isEqualByComparingTo(BigDecimal.valueOf(1000));
             assertThat(item.subtotal()).isNull();
             assertThat(result.totalAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+
+        @Test
+        @DisplayName("저장소가 어떤 순서로 반환해도 결과는 담은 순서로 정렬된다.")
+        void getCart_returns_items_sorted_by_added_order_regardless_of_repository_order() {
+            Long firstId = 1L;
+            Long secondId = 2L;
+            Long thirdId = 3L;
+            java.time.Instant base = java.time.Instant.parse("2026-09-16T00:00:00Z");
+
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(
+                cartItem(new CartItemKey(CartItemType.NORMAL, thirdId), 1, base.plusSeconds(20)),
+                cartItem(new CartItemKey(CartItemType.NORMAL, firstId), 1, base),
+                cartItem(new CartItemKey(CartItemType.NORMAL, secondId), 1, base.plusSeconds(10))
+            ));
+            given(productCatalogPort.lookup(any(), any())).willReturn(new CartCatalogLookupResult(
+                Map.of(), Map.of(), List.of(firstId, secondId, thirdId), List.of(), List.of(),
+                List.of()));
+
+            CartResult result = cartService.getCart(MEMBER_ID);
+
+            assertThat(result.items()).extracting(CartItemResult::itemId)
+                .containsExactly(firstId, secondId, thirdId);
+            assertThat(result.items().getFirst().addedAt()).isEqualTo(base);
+        }
+
+        @Test
+        @DisplayName("담은 시각이 같으면 키 기준으로 정렬되어 결과가 항상 동일하다.")
+        void getCart_uses_key_as_tie_breaker_when_added_at_is_same() {
+            java.time.Instant same = java.time.Instant.parse("2026-09-16T00:00:00Z");
+            given(cartRepository.findAll(MEMBER_ID)).willReturn(List.of(
+                cartItem(new CartItemKey(CartItemType.TIME_DEAL, 5L), 1, same),
+                cartItem(new CartItemKey(CartItemType.NORMAL, 9L), 1, same)
+            ));
+            given(productCatalogPort.lookup(any(), any())).willReturn(new CartCatalogLookupResult(
+                Map.of(), Map.of(), List.of(9L), List.of(5L), List.of(), List.of()));
+
+            CartResult result = cartService.getCart(MEMBER_ID);
+            assertThat(result.items()).extracting(CartItemResult::itemType)
+                .containsExactly("NORMAL", "TIME_DEAL");
         }
     }
 

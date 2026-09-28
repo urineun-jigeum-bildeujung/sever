@@ -16,6 +16,7 @@ import com.golajugaenyang.order.application.cart.port.out.ProductCatalogPort;
 import com.golajugaenyang.order.application.cart.port.out.dto.CartCatalogLookupResult;
 import com.golajugaenyang.order.application.cart.port.out.dto.ProductSummary;
 import com.golajugaenyang.order.application.cart.port.out.dto.TimeDealSummary;
+import com.golajugaenyang.order.domain.cart.CartItem;
 import com.golajugaenyang.order.domain.cart.CartItemKey;
 import com.golajugaenyang.order.domain.cart.CartItemType;
 import com.golajugaenyang.order.error.OrderErrorCode;
@@ -24,7 +25,6 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -48,11 +48,11 @@ public class CartService implements
 
     @Override
     public CartResult getCart(Long memberId) {
-        Map<CartItemKey, Integer> storedItems = cartRepository.findAll(memberId);
-        if (storedItems.isEmpty()) {
+        List<CartItem> cartItems = cartRepository.findAll(memberId);
+        if (cartItems.isEmpty()) {
             return CartResult.empty(memberId);
         }
-        return buildCartResult(memberId, storedItems);
+        return buildCartResult(memberId, cartItems);
     }
 
     @Override
@@ -93,100 +93,86 @@ public class CartService implements
         }
     }
 
-    private CartResult buildCartResult(Long memberId, Map<CartItemKey, Integer> storedItems) {
+    private CartResult buildCartResult(Long memberId, List<CartItem> cartItems) {
+        List<CartItem> ordered = cartItems.stream().sorted(CartItem.ADDED_ORDER).toList();
+
         List<Long> productIds = new ArrayList<>();
         List<Long> timeDealIds = new ArrayList<>();
-
-        storedItems.keySet().forEach(key -> {
-            if (key.itemType() == CartItemType.NORMAL) {
-                productIds.add(key.itemId());
+        ordered.forEach(item -> {
+            if (item.key().itemType() == CartItemType.NORMAL) {
+                productIds.add(item.key().itemId());
             } else {
-                timeDealIds.add(key.itemId());
+                timeDealIds.add(item.key().itemId());
             }
         });
 
-        CartCatalogLookupResult lookup =
-            productCatalogPort.lookup(productIds, timeDealIds);
+        CartCatalogLookupResult lookup = productCatalogPort.lookup(productIds, timeDealIds);
 
-        List<CartItemResult> items = new ArrayList<>();
+        List<CartItemResult> results = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
-        for (Map.Entry<CartItemKey, Integer> entry : storedItems.entrySet()) {
-            CartItemKey key = entry.getKey();
-            int quantity = entry.getValue();
+        for (CartItem item : ordered) {
+            CartItemKey key = item.key();
             boolean unreachable = lookup.isUnreachable(key.itemType(), key.itemId());
 
             CartItemResult result = key.itemType() == CartItemType.NORMAL
-                ? toResult(key, quantity, lookup.products().get(key.itemId()), unreachable)
-                : toResult(key, quantity, lookup.timeDealItems().get(key.itemId()), unreachable);
-            items.add(result);
+                ? toResult(item, lookup.products().get(key.itemId()), unreachable)
+                : toResult(item, lookup.timeDealItems().get(key.itemId()), unreachable);
+            results.add(result);
             if (result.available()) {
                 totalAmount = totalAmount.add(result.subtotal());
             }
         }
 
-        return new CartResult(memberId, items, totalAmount);
+        return new CartResult(memberId, results, totalAmount);
     }
 
-    private CartItemResult toResult(
-        CartItemKey key, int quantity, ProductSummary summary, boolean unreachable) {
-
+    private CartItemResult toResult(CartItem item, ProductSummary summary, boolean unreachable) {
         if (unreachable) {
-            return unavailableWithoutInfo(
-                key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+            return unavailableWithoutInfo(item, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
         }
-
         if (summary == null) {
-            return unavailableWithoutInfo(key, quantity, CartItemResult.REASON_NOT_FOUND);
+            return unavailableWithoutInfo(item, CartItemResult.REASON_NOT_FOUND);
         }
-
         if (!summary.purchasable()) {
             return unavailableWithInfo(
-                key, quantity, summary.availability(),
+                item, summary.availability(),
                 summary.productName(), summary.thumbnailUrl(),
-                summary.price(), summary.originalPrice(), summary.discountRate(),
-                null
+                summary.price(), summary.originalPrice(), summary.discountRate(), null
             );
         }
-
-        BigDecimal subtotal = summary.price().multiply(BigDecimal.valueOf(quantity));
-
+        BigDecimal subtotal = summary.price().multiply(BigDecimal.valueOf(item.quantity()));
         return new CartItemResult(
-            key.itemType().name(), key.itemId(), quantity, true, null,
+            item.key().itemType().name(), item.key().itemId(), item.quantity(), item.addedAt(),
+            true, null,
             summary.productName(), summary.thumbnailUrl(),
             summary.price(), summary.originalPrice(), summary.discountRate(),
             subtotal, null
         );
     }
 
-    private CartItemResult toResult(
-        CartItemKey key, int quantity, TimeDealSummary summary, boolean unreachable) {
-
+    private CartItemResult toResult(CartItem item, TimeDealSummary summary, boolean unreachable) {
         if (unreachable) {
-            return unavailableWithoutInfo(
-                key, quantity, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
+            return unavailableWithoutInfo(item, CartItemResult.REASON_TEMPORARILY_UNAVAILABLE);
         }
-
         if (summary == null) {
-            return unavailableWithoutInfo(key, quantity, CartItemResult.REASON_NOT_FOUND);
+            return unavailableWithoutInfo(item, CartItemResult.REASON_NOT_FOUND);
         }
-
         boolean dealEnded = isDealEnded(summary);
-
         if (!summary.purchasable() || dealEnded) {
             String reason = dealEnded ? CartItemResult.REASON_DEAL_ENDED : summary.availability();
             return unavailableWithInfo(
-                key, quantity, reason,
+                item, reason,
                 summary.productName(), summary.thumbnailUrl(),
                 summary.discountedPrice(), summary.normalPrice(), summary.discountRate(),
                 summary.dealEndAt()
             );
         }
-
-        BigDecimal subtotal = summary.discountedPrice().multiply(BigDecimal.valueOf(quantity));
-
+        BigDecimal subtotal = summary.discountedPrice()
+            .multiply(BigDecimal.valueOf(item.quantity()));
         return new CartItemResult(
-            key.itemType().name(), key.itemId(), quantity, true, null,
+            item.key().itemType().name(), item.key().itemId(), item.quantity(), item.addedAt(),
+            true, null,
             summary.productName(), summary.thumbnailUrl(),
             summary.discountedPrice(), summary.normalPrice(), summary.discountRate(),
             subtotal, summary.dealEndAt()
@@ -194,25 +180,27 @@ public class CartService implements
     }
 
     private boolean isDealEnded(TimeDealSummary summary) {
-        return summary.dealEndAt() != null
-            && summary.dealEndAt().isBefore(OffsetDateTime.now());
+        return summary.dealEndAt() != null && summary.dealEndAt().isBefore(OffsetDateTime.now());
     }
 
-    private CartItemResult unavailableWithoutInfo(CartItemKey key, int quantity, String reason) {
+    private CartItemResult unavailableWithoutInfo(CartItem item, String reason) {
         return new CartItemResult(
-            key.itemType().name(), key.itemId(), quantity, false, reason,
-            null, null, null, null, null, null, null
+            item.key().itemType().name(), item.key().itemId(), item.quantity(), item.addedAt(),
+            false, reason,
+            null, null, null, null,
+            null, null, null
         );
     }
 
     private CartItemResult unavailableWithInfo(
-        CartItemKey key, int quantity, String reason,
+        CartItem item, String reason,
         String productName, String thumbnailUrl,
         BigDecimal price, BigDecimal originalPrice, BigDecimal discountRate,
         OffsetDateTime dealEndAt
     ) {
         return new CartItemResult(
-            key.itemType().name(), key.itemId(), quantity, false, reason,
+            item.key().itemType().name(), item.key().itemId(), item.quantity(), item.addedAt(),
+            false, reason,
             productName, thumbnailUrl, price, originalPrice, discountRate,
             null, dealEndAt
         );

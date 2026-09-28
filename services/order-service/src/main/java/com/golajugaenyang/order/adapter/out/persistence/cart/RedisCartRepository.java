@@ -2,6 +2,7 @@ package com.golajugaenyang.order.adapter.out.persistence.cart;
 
 
 import com.golajugaenyang.order.application.cart.port.out.CartRepository;
+import com.golajugaenyang.order.domain.cart.CartItem;
 import com.golajugaenyang.order.domain.cart.CartItemKey;
 import com.golajugaenyang.order.domain.cart.CartItemQuantity;
 import java.time.Duration;
@@ -39,14 +40,19 @@ public class RedisCartRepository implements CartRepository {
     }
 
     @Override
-    public Map<CartItemKey, Integer> findAll(Long memberId) {
-        Map<Object, Object> entries = redisTemplate.opsForHash()
-            .entries(keyGenerator.generate(memberId));
+    public List<CartItem> findAll(Long memberId) {
+        Map<Object, Object> entries =
+            redisTemplate.opsForHash().entries(keyGenerator.generate(memberId));
         return entries.entrySet().stream()
-            .collect(Collectors.toMap(
-                entry -> CartItemKey.fromRedisField((String) entry.getKey()),
-                entry -> Integer.valueOf((String) entry.getValue())
-            ));
+            .map(entry -> {
+                CartRedisValue value = CartRedisValue.parse((String) entry.getValue());
+                return new CartItem(
+                    CartItemKey.fromRedisField((String) entry.getKey()),
+                    value.quantity(),
+                    value.addedAt()
+                );
+            })
+            .toList();
     }
 
     @Override
