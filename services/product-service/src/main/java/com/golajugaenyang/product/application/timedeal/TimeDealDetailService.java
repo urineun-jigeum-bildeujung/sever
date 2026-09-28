@@ -43,13 +43,18 @@ public class TimeDealDetailService implements TimeDealDetailUseCase {
 
         boolean soldOut = pricing.itemStatus() == TimeDealItemStatus.SOLD_OUT || remaining == 0;
 
-        boolean purchasable = TimeDealItemAvailability.from(
+        OffsetDateTime serverTime = OffsetDateTime.now();
+
+        boolean withinDealWindow = !serverTime.isBefore(pricing.dealStartAt())
+            && serverTime.isBefore(pricing.dealEndAt());
+
+        boolean purchasable = withinDealWindow && TimeDealItemAvailability.from(
             pricing.dealStatus(), pricing.itemStatus(), remaining)
             == TimeDealItemAvailability.AVAILABLE;
 
         TimeDealDetailInfo timeDealInfo = new TimeDealDetailInfo(
             timeDealItemId, pricing.dealId(), pricing.dealStatus(),
-            pricing.dealStartAt(), pricing.dealEndAt(), OffsetDateTime.now(), purchasable);
+            pricing.dealStartAt(), pricing.dealEndAt(), serverTime, purchasable);
 
         return baseDetail.withPricing(
             timeDealInfo, pricing.discountedPrice(), pricing.normalPrice(),
