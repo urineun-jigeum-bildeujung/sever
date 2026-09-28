@@ -41,7 +41,14 @@ public class Member {
     }
 
     public Member update(String nickname, String name, LocalDate birth, String image) {
-        return new Member(id, nickname, image, name, birth, phone, carrier, deletedAt, createdAt, updatedAt, authId);
+        return new Member(
+                id,
+                nickname != null ? nickname : this.nickname,
+                image != null ? image : this.profileImage,
+                name != null ? name : this.name,
+                birth != null ? birth : this.birth,
+                phone, carrier, deletedAt, createdAt, updatedAt, authId
+        );
     }
 
     public Member delete() {
