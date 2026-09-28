@@ -273,10 +273,7 @@ public class ReviewService {
 
         boolean isMine = memberId != null && memberId.equals(review.getMemberId());
 
-        String nickname = memberClient.getNicknames(List.of(review.getMemberId())).items().stream()
-                .findFirst()
-                .map(NicknameInternalItemResponse::nickname)
-                .orElse("");
+        String nickname = fetchNickname(review.getMemberId());
 
         long likeCount = reviewRecommendRepo.countByReviewId(reviewId);
         boolean liked = memberId != null && reviewRecommendRepo.findByMemberIdAndReviewId(memberId, reviewId).isPresent();
@@ -484,6 +481,17 @@ public class ReviewService {
             return memberClient.getPetSnapshot(memberId, petId);
         } catch (FeignException.NotFound e) {
             throw new AppException(ReviewErrorCode.INVALID_PET);
+        }
+    }
+
+    private String fetchNickname(Long memberId) {
+        try {
+            return memberClient.getNicknames(List.of(memberId)).items().stream()
+                    .findFirst()
+                    .map(NicknameInternalItemResponse::nickname)
+                    .orElse("");
+        } catch (FeignException e) {
+            return "";
         }
     }
 
