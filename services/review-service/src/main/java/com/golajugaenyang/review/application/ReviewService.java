@@ -1,7 +1,6 @@
 package com.golajugaenyang.review.application;
 
 import com.golajugaenyang.common.core.domain.Species;
-import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.common.storage.PresignedUpload;
@@ -30,12 +29,10 @@ import com.golajugaenyang.review.domain.entity.ReviewImage;
 import com.golajugaenyang.review.domain.entity.ReviewPetSnapshot;
 import com.golajugaenyang.review.domain.entity.ReviewQuestion;
 import com.golajugaenyang.review.domain.entity.ReviewRecommend;
-import com.golajugaenyang.review.domain.entity.enums.AgeGroup;
 import com.golajugaenyang.review.domain.entity.enums.DataOrigin;
 import com.golajugaenyang.review.domain.entity.enums.ReviewAnswer;
 import com.golajugaenyang.review.domain.entity.enums.ReviewQuestionType;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
-import com.golajugaenyang.review.domain.entity.enums.UsagePeriod;
 import com.golajugaenyang.review.domain.repository.ReviewImageRepository;
 import com.golajugaenyang.review.domain.repository.ReviewQuestionRepository;
 import com.golajugaenyang.review.domain.repository.ReviewRecommendRepository;
@@ -46,6 +43,7 @@ import com.golajugaenyang.review.error.ReviewErrorCode;
 import feign.FeignException;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -275,6 +273,11 @@ public class ReviewService {
 
         boolean isMine = memberId != null && memberId.equals(review.getMemberId());
 
+        String nickname = fetchNickname(review.getMemberId());
+
+        long likeCount = reviewRecommendRepo.countByReviewId(reviewId);
+        boolean liked = memberId != null && reviewRecommendRepo.findByMemberIdAndReviewId(memberId, reviewId).isPresent();
+
         ProductInternalItemsResponse products = productClient.getProducts(List.of(review.getProductId()));
         ProductInternalItemResponse product = products.items().stream().findFirst().orElse(null);
         ReviewDetailResponse.Product productSummary = new ReviewDetailResponse.Product(
@@ -305,16 +308,20 @@ public class ReviewService {
         List<ReviewDetailResponse.Pet> pets = review.getPets().stream()
                 .map(p -> new ReviewDetailResponse.Pet(
                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
-                        p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name()))
+                        p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name(),
+                        p.getBreedId(), p.getWeight()))
                 .toList();
 
         return new ReviewDetailResponse(
                 review.getId(),
                 isMine,
+                nickname,
                 productSummary,
                 pets,
                 review.getStarRate(),
                 review.getUsagePeriod(),
+                liked,
+                (int) likeCount,
                 answerValues,
                 goodPoints.isEmpty() ? null : goodPoints,
                 badPoints.isEmpty() ? null : badPoints,
@@ -326,12 +333,13 @@ public class ReviewService {
     }
 
     public ReviewFilterListResponse getProductReviews(
-            Long productId, String species, Long breedId, String ageGroup, Boolean neutered,
-            Integer weightMin, Integer weightMax, List<String> healthConcerns, String usagePeriod,
-            String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
+            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
+            Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
 
-        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedId, ageGroup, neutered,
-                weightMin, weightMax, healthConcerns, usagePeriod, sort, page, size, personalized, petId, memberId);
+        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedId, ageMin, ageMax, neutered,
+                weightMin, weightMax, healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size,
+                personalized, petId, memberId);
 
         List<Review> reviews = reviewSearchRepo.search(criteria);
         long totalCount = reviewSearchRepo.count(criteria);
@@ -345,10 +353,12 @@ public class ReviewService {
         List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
         List<Long> reviewerIds = reviews.stream().map(Review::getMemberId).distinct().toList();
 
-        Map<Long, String> nicknameByMemberId = memberClient.getNicknames(reviewerIds).items().stream()
-                .collect(Collectors.toMap(NicknameInternalItemResponse::memberId, NicknameInternalItemResponse::nickname));
+        Map<Long, String> nicknameByMemberId = fetchNicknamesByMemberId(reviewerIds);
 
         Map<Long, Long> likeCountByReviewId = reviewRecommendRepo.countByReviewIdIn(reviewIds);
+        Set<Long> likedReviewIds = memberId != null
+                ? reviewRecommendRepo.findLikedReviewIds(memberId, reviewIds)
+                : Collections.emptySet();
 
         Map<Long, List<String>> imagesByReviewId = reviewImageRepo.findByReviewIdIn(reviewIds).stream()
                 .collect(Collectors.groupingBy(ReviewImage::getReviewId,
@@ -367,13 +377,14 @@ public class ReviewService {
                                 .map(p -> new ReviewFilterListResponse.Pet(
                                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
                                         p.getBreedSize() != null ? p.getBreedSize().name() : null,
-                                        p.getSpecies().name()))
+                                        p.getSpecies().name(), p.getBreedId(), p.getWeight()))
                                 .toList(),
                         review.getStarRate(),
-                        formatUsagePeriod(review.getUsagePeriod()),
+                        review.getUsagePeriod(),
                         palatabilityByReviewId.get(review.getId()),
                         review.getText(),
                         imagesByReviewId.get(review.getId()),
+                        likedReviewIds.contains(review.getId()),
                         likeCountByReviewId.getOrDefault(review.getId(), 0L).intValue(),
                         review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
                 ))
@@ -383,29 +394,37 @@ public class ReviewService {
     }
 
     private ReviewSearchCriteria buildSearchCriteria(
-            Long productId, String species, Long breedId, String ageGroup, Boolean neutered,
-            Integer weightMin, Integer weightMax, List<String> healthConcerns, String usagePeriod,
-            String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
+            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
+            Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId,
+            Long memberId) {
 
         Species speciesEnum = parseEnum(species, Species.class);
-        AgeGroup ageGroupEnum = parseEnum(ageGroup, AgeGroup.class);
-        UsagePeriod usagePeriodEnum = parseEnum(usagePeriod, UsagePeriod.class);
         ReviewSortType sortType = sort != null ? parseEnum(sort, ReviewSortType.class) : ReviewSortType.LATEST;
 
         Species personalizedSpecies = null;
-        TargetBreedSize personalizedBreedSize = null;
+        Integer personalizedAge = null;
+        Double personalizedWeight = null;
+        Boolean personalizedNeutered = null;
+        Set<String> personalizedHealthConcerns = null;
         if (personalized && petId != null) {
             if (memberId == null) {
                 throw new AppException(ReviewErrorCode.INVALID_FILTER);
             }
             PetSnapshotResponse target = fetchPetSnapshot(memberId, petId);
             personalizedSpecies = target.species();
-            personalizedBreedSize = target.size();
+            personalizedAge = target.age();
+            personalizedWeight = target.weight();
+            personalizedNeutered = target.isNeutered();
+            personalizedHealthConcerns = target.healthConcerns() != null
+                    ? Set.copyOf(target.healthConcerns()) : null;
         }
 
-        return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageGroupEnum, neutered,
+        return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageMin, ageMax, neutered,
                 weightMin, weightMax, healthConcerns != null ? Set.copyOf(healthConcerns) : null,
-                usagePeriodEnum, sortType, page, size, personalizedSpecies, personalizedBreedSize);
+                usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
+                personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,
+                personalizedHealthConcerns);
     }
 
     private <E extends Enum<E>> E parseEnum(String value, Class<E> type) {
@@ -417,24 +436,6 @@ public class ReviewService {
         } catch (IllegalArgumentException e) {
             throw new AppException(ReviewErrorCode.INVALID_FILTER);
         }
-    }
-
-    private static final int ONE_MONTH_DAYS = 30;
-    private static final int THREE_MONTHS_DAYS = 90;
-    private static final int SIX_MONTHS_DAYS = 180;
-    private static final int ONE_YEAR_DAYS = 365;
-
-    private String formatUsagePeriod(int usagePeriodDays) {
-        if (usagePeriodDays < ONE_MONTH_DAYS) {
-            return usagePeriodDays + "일";
-        }
-        if (usagePeriodDays < THREE_MONTHS_DAYS) {
-            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
-        }
-        if (usagePeriodDays < ONE_YEAR_DAYS) {
-            return (usagePeriodDays / ONE_MONTH_DAYS) + "개월";
-        }
-        return (usagePeriodDays / ONE_YEAR_DAYS) + "년";
     }
 
     private String toPalatabilityDisplay(ReviewAnswer answer) {
@@ -479,6 +480,26 @@ public class ReviewService {
             return memberClient.getPetSnapshot(memberId, petId);
         } catch (FeignException.NotFound e) {
             throw new AppException(ReviewErrorCode.INVALID_PET);
+        }
+    }
+
+    private String fetchNickname(Long memberId) {
+        try {
+            return memberClient.getNicknames(List.of(memberId)).items().stream()
+                    .findFirst()
+                    .map(NicknameInternalItemResponse::nickname)
+                    .orElse("");
+        } catch (FeignException e) {
+            return "";
+        }
+    }
+
+    private Map<Long, String> fetchNicknamesByMemberId(List<Long> memberIds) {
+        try {
+            return memberClient.getNicknames(memberIds).items().stream()
+                    .collect(Collectors.toMap(NicknameInternalItemResponse::memberId, NicknameInternalItemResponse::nickname));
+        } catch (FeignException e) {
+            return Map.of();
         }
     }
 

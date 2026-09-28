@@ -6,10 +6,13 @@ import java.util.List;
 public record ReviewDetailResponse(
         Long reviewId,
         boolean isMine,
+        String nickname,
         Product product,
         List<Pet> pets,
         double rating,
         int usagePeriod,
+        boolean liked,
+        int likeCount,
         List<AnswerValue> answerValues,
         List<String> goodPoints,
         List<String> badPoints,
@@ -31,7 +34,9 @@ public record ReviewDetailResponse(
             String sex,
             int age,
             String breedSize,
-            String species
+            String species,
+            Long breedId,
+            double weight
     ) {
     }
 

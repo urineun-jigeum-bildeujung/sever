@@ -106,12 +106,14 @@ public class ReviewController {
             @PathVariable Long productId,
             @RequestParam(required = false) String species,
             @RequestParam(required = false) Long breedId,
-            @RequestParam(required = false) String ageGroup,
+            @RequestParam(required = false) Integer ageMin,
+            @RequestParam(required = false) Integer ageMax,
             @RequestParam(required = false) Boolean neutered,
             @RequestParam(required = false) Integer weightMin,
             @RequestParam(required = false) Integer weightMax,
             @RequestParam(required = false) List<String> healthConcerns,
-            @RequestParam(required = false) String usagePeriod,
+            @RequestParam(required = false) Integer usagePeriodMinDays,
+            @RequestParam(required = false) Integer usagePeriodMaxDays,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
@@ -120,8 +122,8 @@ public class ReviewController {
             @RequestHeader(value = "X-Member-Id", required = false) Long memberId
     ) {
         ReviewFilterListResponse response = reviewService.getProductReviews(
-                productId, species, breedId, ageGroup, neutered, weightMin, weightMax,
-                healthConcerns, usagePeriod, sort, page, size, personalized, petId, memberId);
+                productId, species, breedId, ageMin, ageMax, neutered, weightMin, weightMax,
+                healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size, personalized, petId, memberId);
         return ResponseEntity.ok(response);
     }
 }
