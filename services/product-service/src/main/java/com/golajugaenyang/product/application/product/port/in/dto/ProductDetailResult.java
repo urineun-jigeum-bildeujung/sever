@@ -8,6 +8,7 @@ import com.golajugaenyang.common.core.domain.TargetAgeGroup;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.core.pricing.PriceCalculator;
 import com.golajugaenyang.product.application.product.port.out.dto.ProductDetailProjection;
+import com.golajugaenyang.product.application.timedeal.port.in.dto.TimeDealDetailInfo;
 import com.golajugaenyang.product.domain.product.ProductStatus;
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 
 public record ProductDetailResult(
     Long productId,
-    Long timeDealItemId,
+    TimeDealDetailInfo timeDeal,
     List<String> images,
     String productName,
     BigDecimal price,
@@ -31,7 +32,7 @@ public record ProductDetailResult(
     String originCountry,
     BigDecimal netQuantityValue,
     QuantityUnit netQuantityUnit,
-    Set<String> ingredients,
+    List<String> ingredients,
     String feedingTarget,
     TargetBreedSize targetBreedSize,
     TargetAgeGroup targetAgeGroup,
@@ -86,11 +87,11 @@ public record ProductDetailResult(
     }
 
     public ProductDetailResult withPricing(
-        Long timeDealItemId, BigDecimal price, BigDecimal originalPrice,
+        TimeDealDetailInfo timeDeal, BigDecimal price, BigDecimal originalPrice,
         BigDecimal discountRate, boolean soldOut
     ) {
         return new ProductDetailResult(
-            productId, timeDealItemId,
+            productId, timeDeal,
             images, productName, price, originalPrice, discountRate,
             avgRating, reviewCount, soldOut,
             manufacturer, brandName, originCountry,

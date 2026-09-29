@@ -18,6 +18,7 @@ import com.golajugaenyang.product.domain.timedeal.TimeDealItemStatus;
 import com.golajugaenyang.product.domain.timedeal.TimeDealStatus;
 import com.golajugaenyang.product.error.ProductErrorCode;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +39,9 @@ public class TimeDealDetailServiceTest {
 
     @InjectMocks
     private TimeDealDetailService timeDealDetailService;
+
+    private static final OffsetDateTime START = OffsetDateTime.parse("2026-09-20T10:00:00+09:00");
+    private static final OffsetDateTime END = OffsetDateTime.parse("2026-09-20T12:00:00+09:00");
 
     @Test
     @DisplayName("존재하지 않는 타임딜 아이템이면 TIME_DEAL_ITEM_NOT_FOUND 예외가 발생한다.")
@@ -64,18 +68,20 @@ public class TimeDealDetailServiceTest {
     }
 
     @Test
-    @DisplayName("가격 관련 필드는 타임딜 값으로, 나머지는 기본 상세 조회 값을 그대로 사용한다.")
+    @DisplayName("가격은 타임딜 값으로, 나머지는 기본 상세 값을 그대로 사용한다")
     void merges_time_deal_pricing_with_base_product_detail() {
         when(timeDealPricingRepository.findByTimeDealItemId(1L))
-            .thenReturn(Optional.of(pricing(100, 10, 10, TimeDealItemStatus.ACTIVE, TimeDealStatus.ACTIVE)));
+            .thenReturn(Optional.of(
+                pricing(100, 10, 10, TimeDealItemStatus.ACTIVE, TimeDealStatus.ACTIVE)));
         when(productDetailUseCase.getProductDetail(999L)).thenReturn(baseDetail());
 
         ProductDetailResult result = timeDealDetailService.getTimeDealDetail(1L);
 
-        assertThat(result.timeDealItemId()).isEqualTo(1L);
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(15000));
         assertThat(result.originalPrice()).isEqualByComparingTo(BigDecimal.valueOf(20000));
+        assertThat(result.discountRate()).isEqualByComparingTo(BigDecimal.valueOf(25));
         assertThat(result.productName()).isEqualTo("상품명");
+        assertThat(result.ingredients()).containsExactly("닭고기", "쌀");
         assertThat(result.soldOut()).isFalse();
     }
 
@@ -93,13 +99,12 @@ public class TimeDealDetailServiceTest {
     }
 
     private TimeDealPricingProjection pricing(
-        int limit, int reserved, int sold,
-        TimeDealItemStatus itemStatus, TimeDealStatus dealStatus
-    ) {
+        int limit, int reserved, int sold, TimeDealItemStatus itemStatus,
+        TimeDealStatus dealStatus) {
         return new TimeDealPricingProjection(
             1L, 10L, 999L,
             BigDecimal.valueOf(20000), BigDecimal.valueOf(15000), BigDecimal.valueOf(25),
-            limit, reserved, sold, itemStatus, dealStatus);
+            limit, reserved, sold, itemStatus, dealStatus, START, END);
     }
 
     private ProductDetailResult baseDetail() {
@@ -108,8 +113,8 @@ public class TimeDealDetailServiceTest {
             BigDecimal.valueOf(30000), BigDecimal.valueOf(30000), BigDecimal.ZERO,
             BigDecimal.valueOf(4.5), 10, false,
             "제조사", "브랜드", "한국", BigDecimal.valueOf(2), QuantityUnit.KG,
-            Set.of(), "성견", TargetBreedSize.SMALL, TargetAgeGroup.ADULT, Set.of(Species.DOG),
-            "1일 2회", Set.of(), Set.of(),
-            "12개월", 30, "서늘한 곳");
+            List.of("닭고기", "쌀"), "성견", TargetBreedSize.SMALL, TargetAgeGroup.ADULT,
+            Set.of(Species.DOG), "1일 2회",
+            Set.of(), Set.of(), "12개월", 30, "서늘한 곳");
     }
 }

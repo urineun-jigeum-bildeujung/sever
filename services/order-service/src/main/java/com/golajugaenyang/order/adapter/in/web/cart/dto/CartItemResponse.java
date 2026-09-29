@@ -2,12 +2,14 @@ package com.golajugaenyang.order.adapter.in.web.cart.dto;
 
 import com.golajugaenyang.order.application.cart.port.in.dto.CartItemResult;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 public record CartItemResponse(
     String itemType,
     Long itemId,
     int quantity,
+    Instant addedAt,
     boolean available,
     String unavailableReason,
     String productName,
@@ -22,8 +24,8 @@ public record CartItemResponse(
     public static CartItemResponse from(CartItemResult result) {
         return new CartItemResponse(
             result.itemType(), result.itemId(),
-            result.quantity(), result.available(),
-            result.unavailableReason(),
+            result.quantity(), result.addedAt(),
+            result.available(), result.unavailableReason(),
             result.productName(), result.thumbnailUrl(),
             result.price(), result.originalPrice(), result.discountRate(),
             result.subtotal(), result.dealEndAt()

@@ -24,11 +24,11 @@ public class TimeDealPricingRepositoryImpl implements TimeDealPricingRepository 
         TimeDealPricingProjection result = queryFactory
             .select(Projections.constructor(TimeDealPricingProjection.class,
                 timeDealItem.id, timeDealItem.dealId, timeDealItem.productId,
-                timeDealItem.normalPrice, timeDealItem.discountedPrice,
-                timeDealItem.discountRate,
+                timeDealItem.normalPrice, timeDealItem.discountedPrice, timeDealItem.discountRate,
                 timeDealItem.quantityLimit, timeDealItem.reservedQuantity,
                 timeDealItem.soldQuantity,
-                timeDealItem.itemStatus, timeDeal.status))
+                timeDealItem.itemStatus, timeDeal.status,
+                timeDeal.startAt, timeDeal.endAt))
             .from(timeDealItem)
             .join(timeDeal).on(timeDealItem.dealId.eq(timeDeal.id))
             .where(timeDealItem.id.eq(timeDealItemId))

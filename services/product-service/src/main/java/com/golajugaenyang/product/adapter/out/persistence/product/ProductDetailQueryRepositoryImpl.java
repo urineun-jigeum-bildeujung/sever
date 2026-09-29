@@ -57,7 +57,7 @@ public class ProductDetailQueryRepositoryImpl implements ProductDetailQueryRepos
             .map(ProductImage::getImageUrl)
             .toList();
 
-        Set<String> ingredients = Set.copyOf(entity.getIngredients());
+        List<String> ingredients = List.copyOf(entity.getIngredients());
         Set<AllergenCode> allergenFlags = Set.copyOf(entity.getAllergenFlags());
         Set<CautionIngredientCode> cautionFlags = Set.copyOf(entity.getCautionFlags());
         Set<Species> targetSpecies = Set.copyOf(entity.getTargetSpecies());

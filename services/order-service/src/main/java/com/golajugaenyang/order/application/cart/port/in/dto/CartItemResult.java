@@ -1,12 +1,14 @@
 package com.golajugaenyang.order.application.cart.port.in.dto;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 public record CartItemResult(
     String itemType,
     Long itemId,
     int quantity,
+    Instant addedAt,
     boolean available,
     String unavailableReason,
     String productName,

@@ -25,6 +25,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
@@ -118,8 +119,9 @@ public class Product extends BaseTimeEntity {
     @CollectionTable(
         name = "product_ingredients",
         joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "sort_order")
     @Column(name = "ingredient_code", length = 50)
-    private Set<String> ingredients = new HashSet<>();
+    private List<String> ingredients = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_breed_size", length = 20)
@@ -138,7 +140,7 @@ public class Product extends BaseTimeEntity {
     @Column(precision = 12, scale = 2)
     private BigDecimal cost;
 
-    @Column(name = "avg_rating", precision = 3, scale = 2)
+    @Column(name = "avg_rating", nullable = false, precision = 3, scale = 2)
     private BigDecimal avgRating = BigDecimal.ZERO;
 
     @Column(name = "review_count", nullable = false)

@@ -27,6 +27,8 @@ public record OrderDetailResult(
         int returnedQuantity,
         int effectiveQuantity,
         BigDecimal unitPrice,
+        BigDecimal paidUnitPrice,
+        BigDecimal amount,
         String itemStatus,
         List<ClaimSummary> claims
     ) {

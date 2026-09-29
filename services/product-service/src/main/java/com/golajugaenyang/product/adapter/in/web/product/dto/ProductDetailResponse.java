@@ -4,16 +4,29 @@ import com.golajugaenyang.common.core.domain.CautionIngredientCode;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.product.application.product.port.in.dto.ProductDetailResult;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public record ProductDetailResponse(
     Long productId,
-    Long timeDealItemId,
+    TimeDealResponse timeDeal,
     Summary summary,
     DetailInfo detailInfo
 ) {
+
+    public record TimeDealResponse(
+        Long timeDealItemId,
+        Long dealId,
+        String dealStatus,
+        OffsetDateTime startAt,
+        OffsetDateTime endAt,
+        OffsetDateTime serverTime,
+        boolean purchasable
+    ) {
+
+    }
 
     public record Summary(
         List<String> images,
@@ -34,7 +47,7 @@ public record ProductDetailResponse(
         String originCountry,
         BigDecimal netQuantityValue,
         String netQuantityUnit,
-        Set<String> ingredients,
+        List<String> ingredients,
         String feedingTarget,
         String targetBreedSize,
         String targetAgeGroup,
@@ -58,6 +71,13 @@ public record ProductDetailResponse(
     }
 
     public static ProductDetailResponse from(ProductDetailResult r) {
+        TimeDealResponse timeDeal = r.timeDeal() == null ? null
+            : new TimeDealResponse(
+                r.timeDeal().timeDealItemId(), r.timeDeal().dealId(),
+                r.timeDeal().dealStatus().name(),
+                r.timeDeal().startAt(), r.timeDeal().endAt(), r.timeDeal().serverTime(),
+                r.timeDeal().purchasable());
+
         Summary summary = new Summary(
             r.images(), r.productName(), r.price(), r.originalPrice(),
             r.discountRate(),
@@ -98,7 +118,7 @@ public record ProductDetailResponse(
         );
 
         return new ProductDetailResponse(
-            r.productId(), r.timeDealItemId(), summary, detailInfo);
+            r.productId(), timeDeal, summary, detailInfo);
     }
 
 }
