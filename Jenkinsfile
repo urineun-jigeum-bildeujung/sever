@@ -56,8 +56,16 @@ pipeline {
     // HEAD를 기준으로 clone해서, 먼저 push한 쪽 다음 push가 non-fast-forward로
     // 실패할 수 있음(2026-09-13 CodeRabbit 리뷰로 발견). 같은 파이프라인의 빌드를
     // 한 번에 하나씩만 돌게 줄 세워서 막는다.
+    //
+    // disableConcurrentBuilds()는 같은 브랜치(같은 job) 재실행만 막고, 서로 다른
+    // 브랜치의 빌드가 동시에 도는 건 못 막는다. web-ci에서 실제로 서로 다른 브랜치의
+    // 빌드 2개가 동시에 돌면서 2vCPU 빌드 노드 CPU가 포화돼 kubelet이 NotReady로
+    // 전환된 장애가 있었다(web#545). sever-ci 컨테이너도 동일하게 limits.cpu: 2를
+    // 쓰고 있어(컨테이너 2개라 버스트 시 최대 4코어) 같은 위험이 있다(#174).
+    // ci-build는 web-ci/ai-ci와 공용으로 쓰는 lock 이름이라 레포가 달라도 직렬화된다.
     options {
         disableConcurrentBuilds()
+        lock(resource: 'ci-build')
     }
 
     // Jenkins가 K8s 파드로 떠서 도커 데몬이 없음 — kaniko가 daemon 없이 이미지를 빌드함.
