@@ -106,7 +106,15 @@ spec:
           ephemeral-storage: 512Mi
         limits:
           cpu: "2"
-          memory: 2Gi
+          # 8개 서비스를 전부 빌드하는 실제 dev 배포 빌드(#174, sever-ci dev #5)를
+          # Prometheus 실측치로 확인해보니 gradle 컨테이너가 최대 2007Mi까지 찍음 —
+          # 기존 limit 2Gi(2048Mi)의 98%라 서비스가 하나만 더 끼어도 OOMKilled될
+          # 뻔했다. limit은 request와 달리 스케줄링에 반영되지 않는 값이라(노드
+          # 예약량에 안 잡힘) 다른 워크로드에 영향 없이 여유만 늘릴 수 있어 3Gi로 올림.
+          # request(50m/256Mi)는 그대로 둠 — 실제 사용량(최대 1.75코어)에 맞춰 올리려면
+          # 현재 클러스터 CPU 예약률이 이미 63~91%라 Jenkins 빌드 파드 자체가 스케줄링
+          # 안 될 위험이 있음. 이건 노드 증설이 필요한 별개 문제라 #174에 남겨둔다.
+          memory: 3Gi
           ephemeral-storage: 3Gi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
