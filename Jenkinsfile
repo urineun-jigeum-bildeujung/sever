@@ -291,7 +291,7 @@ spec:
                     container('gradle') {
                         sh """
                             chmod +x gradlew
-                            ./gradlew ${testTasks} --no-daemon
+                            ./gradlew ${testTasks} --no-daemon --max-workers=2
                         """
                     }
                 }
@@ -325,7 +325,7 @@ spec:
                     container('gradle') {
                         sh """
                             chmod +x gradlew
-                            ./gradlew ${bootJarTasks} -x test --no-daemon
+                            ./gradlew ${bootJarTasks} -x test --no-daemon --max-workers=2
                         """
                     }
 
