@@ -99,6 +99,15 @@ spec:
         - sleep
       args:
         - 99d
+      env:
+        # 기본 GRADLE_USER_HOME(컨테이너 기본 유저의 $HOME/.gradle)은 workspace-volume이
+        # 아니라 컨테이너 자체 파일시스템이라 Pod와 함께 사라진다. gradle-cache PVC에
+        # 명시적으로 고정해야 의존성/빌드 캐시가 다음 빌드에서도 그대로 남는다(#174).
+        - name: GRADLE_USER_HOME
+          value: /gradle-cache
+      volumeMounts:
+        - mountPath: /gradle-cache
+          name: gradle-cache
       resources:
         requests:
           cpu: 50m
@@ -192,6 +201,10 @@ spec:
       - mountPath: "/home/jenkins/agent"
         name: "workspace-volume"
         readOnly: false
+  volumes:
+    - name: gradle-cache
+      persistentVolumeClaim:
+        claimName: sever-ci-gradle-cache
 """
         }
     }
