@@ -127,11 +127,15 @@ public class InventoryCommandService implements InventoryCommandUseCase {
 
         // 원자적 업데이트
         Timer.Sample sample = Timer.start(meterRegistry);
-        int affected = dispatchUpdate(subjectType, subjectId, type, quantity);
-        sample.stop(Timer.builder("inventory.stock.update.duration")
-            .tag("subjectType", subjectType.name())
-            .tag("movementType", type.name())
-            .register(meterRegistry));
+        int affected;
+        try {
+            affected = dispatchUpdate(subjectType, subjectId, type, quantity);
+        } finally {
+            sample.stop(Timer.builder("inventory.stock.update.duration")
+                .tag("subjectType", subjectType.name())
+                .tag("movementType", type.name())
+                .register(meterRegistry));
+        }
         if (affected == 0) {
             return false;
         }
