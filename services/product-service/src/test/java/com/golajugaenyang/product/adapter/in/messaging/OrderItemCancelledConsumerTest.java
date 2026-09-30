@@ -43,12 +43,12 @@ public class OrderItemCancelledConsumerTest {
     }
 
     @Test
-    @DisplayName("이 서비스가 모르는 필드(orderId)가 있어도 역직렬화에 실패하지 않는다.")
+    @DisplayName("DTO에 없는 필드가 있어도 역직렬화에 실패하지 않는다.")
     void ignores_unknown_field() {
-        OrderItemCancelledConsumer consumer = new OrderItemCancelledConsumer(
-            inventoryCommandUseCase, kafkaMessageMapper);
+        OrderItemCancelledConsumer consumer =
+            new OrderItemCancelledConsumer(inventoryCommandUseCase, kafkaMessageMapper);
         String rawMessage = """
-            {"orderId": 500, "orderItemId": 1, "subjectType": "PRODUCT", "subjectId": 100, "quantity": 2}
+            {"orderId": 500, "orderItemId": 1, "subjectType": "PRODUCT", "subjectId": 100, "quantity": 2, "promotionCode": "WELCOME10"}
             """;
 
         assertThatCode(() -> consumer.onMessage(rawMessage)).doesNotThrowAnyException();
