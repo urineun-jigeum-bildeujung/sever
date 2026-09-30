@@ -334,11 +334,11 @@ public class ReviewService {
     }
 
     public ReviewFilterListResponse getProductReviews(
-            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Long productId, String species, List<Long> breedIds, Integer ageMin, Integer ageMax, Boolean neutered,
             Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
             Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId, Long memberId) {
 
-        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedId, ageMin, ageMax, neutered,
+        ReviewSearchCriteria criteria = buildSearchCriteria(productId, species, breedIds, ageMin, ageMax, neutered,
                 weightMin, weightMax, healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size,
                 personalized, petId, memberId);
 
@@ -395,7 +395,7 @@ public class ReviewService {
     }
 
     private ReviewSearchCriteria buildSearchCriteria(
-            Long productId, String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Long productId, String species, List<Long> breedIds, Integer ageMin, Integer ageMax, Boolean neutered,
             Integer weightMin, Integer weightMax, List<String> healthConcerns, Integer usagePeriodMinDays,
             Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId,
             Long memberId) {
@@ -421,7 +421,8 @@ public class ReviewService {
                     ? Set.copyOf(target.healthConcerns()) : null;
         }
 
-        return new ReviewSearchCriteria(productId, speciesEnum, breedId, ageMin, ageMax, neutered,
+        return new ReviewSearchCriteria(productId, speciesEnum,
+                breedIds != null && !breedIds.isEmpty() ? Set.copyOf(breedIds) : null, ageMin, ageMax, neutered,
                 weightMin, weightMax, healthConcerns != null ? Set.copyOf(healthConcerns) : null,
                 usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
                 personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,

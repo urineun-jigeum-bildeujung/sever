@@ -109,7 +109,7 @@ public class ReviewController {
     public ResponseEntity<ReviewFilterListResponse> getProductReviews(
             @PathVariable Long productId,
             @RequestParam(required = false) String species,
-            @RequestParam(required = false) Long breedId,
+            @RequestParam(required = false) List<Long> breedIds,
             @RequestParam(required = false) Integer ageMin,
             @RequestParam(required = false) Integer ageMax,
             @RequestParam(required = false) Boolean neutered,
@@ -125,18 +125,18 @@ public class ReviewController {
             @RequestParam(required = false) Long petId,
             @RequestHeader(value = "X-Member-Id", required = false) Long memberId
     ) {
-        recordFilterUsage(species, breedId, ageMin, ageMax, neutered, weightMin, weightMax,
+        recordFilterUsage(species, breedIds, ageMin, ageMax, neutered, weightMin, weightMax,
                 healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, personalized, petId);
 
         ReviewFilterListResponse response = reviewService.getProductReviews(
-                productId, species, breedId, ageMin, ageMax, neutered, weightMin, weightMax,
+                productId, species, breedIds, ageMin, ageMax, neutered, weightMin, weightMax,
                 healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size, personalized, petId, memberId);
         return ResponseEntity.ok(response);
     }
 
     // 실제로 어떤 필터가 얼마나 쓰이는지 보기 위한 계측. 요청에 실제로 실린 필터별로만 카운트 증가.
     private void recordFilterUsage(
-            String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            String species, List<Long> breedIds, Integer ageMin, Integer ageMax, Boolean neutered,
             Integer weightMin, Integer weightMax, List<String> healthConcerns,
             Integer usagePeriodMinDays, Integer usagePeriodMaxDays, String sort,
             boolean personalized, Long petId
@@ -144,7 +144,7 @@ public class ReviewController {
         if (species != null) {
             incrementFilterUsage("species");
         }
-        if (breedId != null) {
+        if (breedIds != null && !breedIds.isEmpty()) {
             incrementFilterUsage("breedId");
         }
         if (ageMin != null || ageMax != null) {

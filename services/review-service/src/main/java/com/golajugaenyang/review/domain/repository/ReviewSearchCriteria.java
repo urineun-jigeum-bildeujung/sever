@@ -7,7 +7,7 @@ import java.util.Set;
 public record ReviewSearchCriteria(
         Long productId,
         Species species,
-        Long breedId,
+        Set<Long> breedIds,
         Integer ageMin,
         Integer ageMax,
         Boolean neutered,
