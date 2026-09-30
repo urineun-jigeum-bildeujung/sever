@@ -101,4 +101,52 @@ public class InventoryCommandServiceTest {
             .extracting(e -> ((AppException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.STOCK_MOVEMENT_CONFLICT);
     }
+
+    @Test
+    @DisplayName("CONFIRM이 이미 기록된 주문 항목에 RELEASE를 시도하면 STOCK_MOVEMENT_CONFLICT 예외가 발생한다.")
+    void throws_conflict_when_release_is_attempted_after_confirm() {
+        when(stockMovementRepository.find(1L, StockMovementType.RESERVE))
+            .thenReturn(Optional.of(StockMovement.of(
+                StockSubjectType.PRODUCT, 100L, 1L, StockMovementType.RESERVE, 2)));
+        when(stockMovementRepository.find(1L, StockMovementType.CONFIRM))
+            .thenReturn(Optional.of(StockMovement.of(
+                StockSubjectType.PRODUCT, 100L, 1L, StockMovementType.CONFIRM, 2)));
+
+        assertThatThrownBy(() -> inventoryCommandService.release(
+            StockSubjectType.PRODUCT, 100L, 1L, 2))
+            .isInstanceOf(AppException.class)
+            .extracting(e -> ((AppException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.STOCK_MOVEMENT_CONFLICT);
+
+        verify(inventoryCommandRepository, never()).release(anyLong(), anyInt());
+    }
+
+    @Test
+    @DisplayName("RELEASE가 이미 기록된 주문 항목에 CONFIRM을 시도하면 STOCK_MOVEMENT_CONFLICT 예외가 발생한다.")
+    void throws_conflict_when_confirm_is_attempted_after_release() {
+        when(stockMovementRepository.find(1L, StockMovementType.RESERVE))
+            .thenReturn(Optional.of(StockMovement.of(
+                StockSubjectType.PRODUCT, 100L, 1L, StockMovementType.RESERVE, 2)));
+        when(stockMovementRepository.find(1L, StockMovementType.RELEASE))
+            .thenReturn(Optional.of(StockMovement.of(
+                StockSubjectType.PRODUCT, 100L, 1L, StockMovementType.RELEASE, 2)));
+
+        assertThatThrownBy(() -> inventoryCommandService.confirm(
+            StockSubjectType.PRODUCT, 100L, 1L, 2))
+            .isInstanceOf(AppException.class)
+            .extracting(e -> ((AppException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.STOCK_MOVEMENT_CONFLICT);
+    }
+
+    @Test
+    @DisplayName("모든 재고 이동은 처리 전 orderItemId 단위로 잠금을 획득한다.")
+    void locks_order_item_before_processing() {
+        when(stockMovementRepository.recordIfAbsent(any())).thenReturn(true);
+        when(inventoryCommandRepository.reserve(100L, 2)).thenReturn(1);
+
+        inventoryCommandService.reserveBulk(List.of(
+            new ReserveItemCommand(1L, StockSubjectType.PRODUCT, 100L, 2)));
+
+        verify(stockMovementRepository).lockOrderItem(1L);
+    }
 }
