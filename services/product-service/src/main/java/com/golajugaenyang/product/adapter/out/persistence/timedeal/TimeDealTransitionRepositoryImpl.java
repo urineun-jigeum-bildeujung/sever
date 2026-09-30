@@ -23,6 +23,7 @@ public class TimeDealTransitionRepositoryImpl implements TimeDealTransitionRepos
     public int activateScheduledDeals(OffsetDateTime now) {
         return (int) queryFactory.update(timeDeal)
             .set(timeDeal.status, TimeDealStatus.ACTIVE)
+            .set(timeDeal.updatedAt, now.toInstant())
             .where(timeDeal.status.eq(TimeDealStatus.SCHEDULED).and(timeDeal.startAt.loe(now)))
             .execute();
     }
@@ -34,6 +35,7 @@ public class TimeDealTransitionRepositoryImpl implements TimeDealTransitionRepos
     public int endActiveDeals(OffsetDateTime now) {
         return (int) queryFactory.update(timeDeal)
             .set(timeDeal.status, TimeDealStatus.ENDED)
+            .set(timeDeal.updatedAt, now.toInstant())
             .where(timeDeal.status.eq(TimeDealStatus.ACTIVE).and(timeDeal.endAt.loe(now)))
             .execute();
     }
