@@ -400,6 +400,9 @@ public class ReviewService {
             Integer usagePeriodMaxDays, String sort, int page, int size, boolean personalized, Long petId,
             Long memberId) {
 
+        rejectIfContainsNull(breedIds);
+        rejectIfContainsNull(healthConcerns);
+
         Species speciesEnum = parseEnum(species, Species.class);
         ReviewSortType sortType = sort != null ? parseEnum(sort, ReviewSortType.class) : ReviewSortType.LATEST;
 
@@ -427,6 +430,12 @@ public class ReviewService {
                 usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
                 personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,
                 personalizedHealthConcerns);
+    }
+
+    private void rejectIfContainsNull(List<?> values) {
+        if (values != null && values.contains(null)) {
+            throw new AppException(ReviewErrorCode.INVALID_FILTER);
+        }
     }
 
     private <E extends Enum<E>> E parseEnum(String value, Class<E> type) {
