@@ -71,3 +71,9 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URL}
               predicates:
                 - Path=/api/v1/notifications/**
+            - id: nutrition-service-product-detail
+              uri: ${NUTRITION_SERVICE_URL}
+              predicates:
+                - Path=/api/v1/nutrition/analyze/by-service-id
+              filters:
+                - SetPath=/api/nutrition/analyze/by-service-id
