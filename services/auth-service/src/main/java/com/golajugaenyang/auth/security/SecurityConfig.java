@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -15,9 +16,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private static final String AUTHORIZATION_REQUEST_BASE_URI = "/api/auth/oauth2/authorization";
+
     @Bean
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
+        ClientRegistrationRepository clientRegistrationRepository,
         CustomOAuth2UserService customOAuth2UserService,
         OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
         OAuth2LoginFailureHandler oAuth2LoginFailureHandler
@@ -35,7 +39,10 @@ public class SecurityConfig {
                 .anyRequest().authenticated())
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                .authorizationEndpoint(auth -> auth.baseUri("/api/auth/oauth2/authorization"))
+                .authorizationEndpoint(auth -> auth
+                    .baseUri(AUTHORIZATION_REQUEST_BASE_URI)
+                    .authorizationRequestResolver(new CustomAuthorizationRequestResolver(
+                        clientRegistrationRepository, AUTHORIZATION_REQUEST_BASE_URI)))
                 .redirectionEndpoint(redirect -> redirect.baseUri("/api/auth/login/oauth2/code/*"))
                 .successHandler(oAuth2LoginSuccessHandler)
                 .failureHandler(oAuth2LoginFailureHandler)
