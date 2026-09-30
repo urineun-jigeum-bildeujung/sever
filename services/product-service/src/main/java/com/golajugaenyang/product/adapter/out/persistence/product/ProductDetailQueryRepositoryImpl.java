@@ -14,6 +14,8 @@ import com.golajugaenyang.product.domain.product.ProductImage;
 import com.golajugaenyang.product.domain.product.ProductStatus;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,22 +28,32 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ProductDetailQueryRepositoryImpl implements ProductDetailQueryRepository {
 
+    // QueryDSL(JPAQueryFactory)로 직접 조회하는 구조라 Spring Data 레포지토리
+    // 메트릭(spring_data_repository_invocations_seconds)이 자동으로 안 잡힌다 —
+    // 이 쿼리만 수동으로 타이머를 감싸서 노출한다.
     private final JPAQueryFactory queryFactory;
+    private final MeterRegistry meterRegistry;
 
     @Override
     public Optional<ProductDetailProjection> findDetailById(Long productId) {
-        List<Tuple> rows = queryFactory
-            .select(product, brand.name)
-            .from(product)
-            .leftJoin(brand).on(product.brandId.eq(brand.id))
-            .leftJoin(product.images, productImage)
-            .fetchJoin()
-            .where(
-                product.id.eq(productId),
-                product.status.in(ProductStatus.ON_SALE, ProductStatus.SOLD_OUT)
-            )
-            .distinct()
-            .fetch();
+        Timer.Sample sample = Timer.start(meterRegistry);
+        List<Tuple> rows;
+        try {
+            rows = queryFactory
+                .select(product, brand.name)
+                .from(product)
+                .leftJoin(brand).on(product.brandId.eq(brand.id))
+                .leftJoin(product.images, productImage)
+                .fetchJoin()
+                .where(
+                    product.id.eq(productId),
+                    product.status.in(ProductStatus.ON_SALE, ProductStatus.SOLD_OUT)
+                )
+                .distinct()
+                .fetch();
+        } finally {
+            sample.stop(Timer.builder("product.detail.query").register(meterRegistry));
+        }
 
         if (rows.isEmpty()) {
             return Optional.empty();

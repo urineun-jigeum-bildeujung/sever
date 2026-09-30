@@ -8,6 +8,7 @@ import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import com.golajugaenyang.notification.domain.repository.NotificationRepository;
 import com.golajugaenyang.notification.domain.repository.NotificationSubscriptionRepository;
 import com.golajugaenyang.notification.domain.repository.TimeDealNotificationLogRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,12 +27,16 @@ public class TimeDealNotificationPersistenceService {
     private final TimeDealNotificationLogRepository logRepository;
     private final NotificationSubscriptionRepository subscriptionRepository;
     private final NotificationRepository notificationRepository;
+    private final MeterRegistry meterRegistry;
 
     @Transactional
     public List<Long> markAndPersist(
             Long dealId, TimeDealTrigger trigger, String title, String body, String targetId
     ) {
         if (!logRepository.tryMarkAsSent(dealId, trigger)) {
+            // tryMarkAsSent의 원자적 insert가 막았다는 건 같은 (dealId, trigger)에 대해
+            // 이미 다른 폴링(멀티 pod 동시 실행 포함)이 먼저 처리했다는 뜻 — 중복 발송 감지.
+            meterRegistry.counter("fcm_send_duplicate_total").increment();
             return List.of();
         }
 

@@ -6,6 +6,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,8 +16,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FcmPushSender {
 
+    private static final String SEND_METRIC = "fcm_send_total";
+
     private final FirebaseApp firebaseApp;
     private final FcmTokenRepository fcmTokenRepository;
+    private final MeterRegistry meterRegistry;
 
     public void send(String token, String title, String body, String targetType, String targetId) {
         if (firebaseApp == null) {
@@ -39,8 +43,10 @@ public class FcmPushSender {
 
         try {
             FirebaseMessaging.getInstance(firebaseApp).send(builder.build());
+            meterRegistry.counter(SEND_METRIC, "result", "success").increment();
         } catch (FirebaseMessagingException e) {
             log.warn("FCM 푸시 발송 실패: token={}, error={}", mask(token), e.getMessage());
+            meterRegistry.counter(SEND_METRIC, "result", "failure").increment();
             if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
                 fcmTokenRepository.deleteByToken(token);
             }

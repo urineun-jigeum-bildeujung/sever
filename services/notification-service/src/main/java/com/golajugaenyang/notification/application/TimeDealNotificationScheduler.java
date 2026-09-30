@@ -6,6 +6,7 @@ import com.golajugaenyang.notification.adapter.out.push.FcmPushSender;
 import com.golajugaenyang.notification.domain.entity.enums.NotificationTargetType;
 import com.golajugaenyang.notification.domain.entity.enums.TimeDealTrigger;
 import com.golajugaenyang.notification.domain.repository.FcmTokenRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class TimeDealNotificationScheduler {
     private final TimeDealNotificationPersistenceService persistenceService;
     private final FcmTokenRepository fcmTokenRepository;
     private final FcmPushSender fcmPushSender;
+    private final MeterRegistry meterRegistry;
 
     @Scheduled(fixedRate = 60_000)
     public void checkTimeDeals() {
@@ -97,6 +99,9 @@ public class TimeDealNotificationScheduler {
         Map<Long, List<String>> tokensByMember = fcmTokenRepository.findTokensByMemberIds(memberIds);
         for (Long memberId : memberIds) {
             for (String token : tokensByMember.getOrDefault(memberId, List.of())) {
+                // 발송 대상 건수(target) — FcmPushSender가 찍는 success/failure와 같은 단위(토큰 1개당 1건)로
+                // 맞춰야 "대상 건수 vs 실제 발송 성공 건수"를 그대로 비교할 수 있다.
+                meterRegistry.counter("fcm_send_total", "result", "target").increment();
                 fcmPushSender.send(token, title, body, NotificationTargetType.TIMEDEAL.name(), targetId);
             }
         }

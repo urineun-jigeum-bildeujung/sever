@@ -11,6 +11,8 @@ import com.golajugaenyang.product.domain.inventory.StockMovement;
 import com.golajugaenyang.product.domain.inventory.StockMovementType;
 import com.golajugaenyang.product.domain.inventory.StockSubjectType;
 import com.golajugaenyang.product.error.ProductErrorCode;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class InventoryCommandService implements InventoryCommandUseCase {
     private final TimeDealStockCommandRepository timeDealStockCommandRepository;
     private final StockMovementRepository stockMovementRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MeterRegistry meterRegistry;
 
     @Override
     @Transactional
@@ -123,7 +126,16 @@ public class InventoryCommandService implements InventoryCommandUseCase {
         }
 
         // 원자적 업데이트
-        int affected = dispatchUpdate(subjectType, subjectId, type, quantity);
+        Timer.Sample sample = Timer.start(meterRegistry);
+        int affected;
+        try {
+            affected = dispatchUpdate(subjectType, subjectId, type, quantity);
+        } finally {
+            sample.stop(Timer.builder("inventory.stock.update.duration")
+                .tag("subjectType", subjectType.name())
+                .tag("movementType", type.name())
+                .register(meterRegistry));
+        }
         if (affected == 0) {
             return false;
         }

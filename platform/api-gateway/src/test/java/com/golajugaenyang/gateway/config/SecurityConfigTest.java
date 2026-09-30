@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class SecurityConfigTest {
     @BeforeEach
     void setUp() {
         securityConfig = new SecurityConfig();
-        blacklistCache = new TokenBlacklistCache();
+        blacklistCache = new TokenBlacklistCache(new SimpleMeterRegistry());
     }
 
     @Test
