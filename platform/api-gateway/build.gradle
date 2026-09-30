@@ -18,6 +18,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     implementation 'com.github.ben-manes.caffeine:caffeine'
+    // actuator만 있고 이 레지스트리가 없어서 /actuator/prometheus 자체가 없었음
+    // (Prometheus에 이 서비스 job이 아예 안 잡히던 원인).
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 
 // Jenkins/Kaniko는 미리 생성된 실행 JAR 하나만 이미지에 복사한다. plain JAR가 같이

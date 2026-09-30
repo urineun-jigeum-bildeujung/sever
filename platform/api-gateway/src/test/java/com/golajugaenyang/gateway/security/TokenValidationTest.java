@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.golajugaenyang.gateway.config.AccessTokenTypeValidator;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -29,7 +30,7 @@ class TokenValidationTest {
 
     @Test
     void rejectsBlacklistedTokenAndAllowsOtherToken() {
-        TokenBlacklistCache cache = new TokenBlacklistCache();
+        TokenBlacklistCache cache = new TokenBlacklistCache(new SimpleMeterRegistry());
         TokenBlacklistValidator validator = new TokenBlacklistValidator(cache);
         Jwt blacklisted = jwt("access", "blacklisted-token", Instant.now().plusSeconds(60));
         Jwt allowed = jwt("access", "allowed-token", Instant.now().plusSeconds(60));
@@ -42,7 +43,7 @@ class TokenValidationTest {
 
     @Test
     void ignoresNonPositiveBlacklistTtl() {
-        TokenBlacklistCache cache = new TokenBlacklistCache();
+        TokenBlacklistCache cache = new TokenBlacklistCache(new SimpleMeterRegistry());
         Jwt token = jwt("access", Instant.now().plusSeconds(60));
 
         cache.blacklist(token.getTokenValue(), 0);

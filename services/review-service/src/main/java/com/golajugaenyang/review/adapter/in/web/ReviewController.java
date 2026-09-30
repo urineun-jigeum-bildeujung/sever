@@ -14,6 +14,7 @@ import com.golajugaenyang.review.adapter.in.web.dto.response.ReviewRecommendResp
 import com.golajugaenyang.review.adapter.in.web.dto.response.WritableProductListResponse;
 import com.golajugaenyang.review.application.ReviewService;
 import com.golajugaenyang.review.domain.entity.Review;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
@@ -37,7 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class ReviewController {
 
+    private static final String FILTER_USAGE_METRIC = "review_filter_usage_total";
+
     private final ReviewService reviewService;
+    private final MeterRegistry meterRegistry;
 
     @PostMapping
     public ResponseEntity<ReviewCreateResponse> createReview(
@@ -121,9 +125,55 @@ public class ReviewController {
             @RequestParam(required = false) Long petId,
             @RequestHeader(value = "X-Member-Id", required = false) Long memberId
     ) {
+        recordFilterUsage(species, breedId, ageMin, ageMax, neutered, weightMin, weightMax,
+                healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, personalized, petId);
+
         ReviewFilterListResponse response = reviewService.getProductReviews(
                 productId, species, breedId, ageMin, ageMax, neutered, weightMin, weightMax,
                 healthConcerns, usagePeriodMinDays, usagePeriodMaxDays, sort, page, size, personalized, petId, memberId);
         return ResponseEntity.ok(response);
+    }
+
+    // 실제로 어떤 필터가 얼마나 쓰이는지 보기 위한 계측. 요청에 실제로 실린 필터별로만 카운트 증가.
+    private void recordFilterUsage(
+            String species, Long breedId, Integer ageMin, Integer ageMax, Boolean neutered,
+            Integer weightMin, Integer weightMax, List<String> healthConcerns,
+            Integer usagePeriodMinDays, Integer usagePeriodMaxDays, String sort,
+            boolean personalized, Long petId
+    ) {
+        if (species != null) {
+            incrementFilterUsage("species");
+        }
+        if (breedId != null) {
+            incrementFilterUsage("breedId");
+        }
+        if (ageMin != null || ageMax != null) {
+            incrementFilterUsage("age");
+        }
+        if (neutered != null) {
+            incrementFilterUsage("neutered");
+        }
+        if (weightMin != null || weightMax != null) {
+            incrementFilterUsage("weight");
+        }
+        if (healthConcerns != null && !healthConcerns.isEmpty()) {
+            incrementFilterUsage("healthConcerns");
+        }
+        if (usagePeriodMinDays != null || usagePeriodMaxDays != null) {
+            incrementFilterUsage("usagePeriod");
+        }
+        if (sort != null) {
+            incrementFilterUsage("sort");
+        }
+        if (personalized) {
+            incrementFilterUsage("personalized");
+        }
+        if (petId != null) {
+            incrementFilterUsage("petId");
+        }
+    }
+
+    private void incrementFilterUsage(String filterType) {
+        meterRegistry.counter(FILTER_USAGE_METRIC, "filter_type", filterType).increment();
     }
 }
