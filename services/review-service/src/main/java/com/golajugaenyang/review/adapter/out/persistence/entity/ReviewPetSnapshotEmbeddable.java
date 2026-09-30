@@ -30,6 +30,9 @@ public class ReviewPetSnapshotEmbeddable {
     @Column(name = "breed_id", nullable = false)
     private Long breedId;
 
+    @Column(name = "breed_name")
+    private String breedName;
+
     @Column(nullable = false)
     private int age;
 
