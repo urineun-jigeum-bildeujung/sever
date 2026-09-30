@@ -36,7 +36,9 @@ class ApplicationInfraConfigTest {
             {"order-service", "${ORDER_SERVICE_URL}", "Path=/api/v1/orders/**,/api/v1/carts/**"},
             {"payment-service", "${PAYMENT_SERVICE_URL}", "Path=/api/v1/payments/**"},
             {"review-service", "${REVIEW_SERVICE_URL}", "Path=/api/v1/reviews/**"},
-            {"notification-service", "${NOTIFICATION_SERVICE_URL}", "Path=/api/v1/notifications/**"}
+            {"notification-service", "${NOTIFICATION_SERVICE_URL}", "Path=/api/v1/notifications/**"},
+            {"nutrition-service-product-detail", "${NUTRITION_SERVICE_URL}",
+                "Path=/api/v1/nutrition/analyze/by-service-id"}
         };
 
         for (int index = 0; index < expectedRoutes.length; index++) {
@@ -45,6 +47,13 @@ class ApplicationInfraConfigTest {
             assertEquals(expectedRoutes[index][1], property(prefix + ".uri"));
             assertEquals(expectedRoutes[index][2], property(prefix + ".predicates[0]"));
         }
+    }
+
+    @Test
+    void rewritesNutritionProductDetailPath() {
+        String prefix = "spring.cloud.gateway.server.webflux.routes[9]";
+        assertEquals("SetPath=/api/nutrition/analyze/by-service-id",
+            property(prefix + ".filters[0]"));
     }
 
     @Test
