@@ -33,6 +33,12 @@ public class InventoryCommandService implements InventoryCommandUseCase {
     @Override
     @Transactional
     public void reserveBulk(List<ReserveItemCommand> items) {
+        items.stream()
+            .map(ReserveItemCommand::orderItemId)
+            .distinct()
+            .sorted()
+            .forEach(stockMovementRepository::lockOrderItem);
+
         List<ReserveItemCommand> sorted = items.stream()
             .sorted(Comparator.comparing(ReserveItemCommand::subjectType)
                 .thenComparing(ReserveItemCommand::subjectId))
