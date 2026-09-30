@@ -91,6 +91,8 @@ public class InventoryCommandService implements InventoryCommandUseCase {
             throw new AppException(ProductErrorCode.STOCK_MOVEMENT_PRECONDITION_NOT_MET);
         }
 
+        stockMovementRepository.lockOrderItem(orderItemId);
+
         // 이력 검증
         if (type.requiresPrecedingMovement()) {
             StockMovement preceding = stockMovementRepository
@@ -102,6 +104,15 @@ public class InventoryCommandService implements InventoryCommandUseCase {
                     "[InventoryCommand] 선행 이력 불일치. orderItemId={}, type={}", orderItemId, type);
                 throw new AppException(ProductErrorCode.STOCK_MOVEMENT_PRECONDITION_NOT_MET);
             }
+        }
+
+        // CONFIRM과 RELEASE는 상호 배타적 - 한쪽이 이미 기록되어 있으면 다른 쪽은 거부되도록 한다.
+        StockMovementType conflictingType = type.conflictingType();
+        if (conflictingType != null &&
+            stockMovementRepository.find(orderItemId, conflictingType).isPresent()) {
+            log.warn("[InventoryCommand] 상호 배타적인 재고 이동 충돌. orderItemId={}, 시도={}, 이미 존재={}",
+                orderItemId, type, conflictingType);
+            throw new AppException(ProductErrorCode.STOCK_MOVEMENT_CONFLICT);
         }
 
         // 이력 삽입

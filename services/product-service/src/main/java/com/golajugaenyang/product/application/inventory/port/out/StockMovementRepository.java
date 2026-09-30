@@ -9,4 +9,6 @@ public interface StockMovementRepository {
     boolean recordIfAbsent(StockMovement movement);
 
     Optional<StockMovement> find(Long orderItemId, StockMovementType movementType);
+
+    void lockOrderItem(Long orderItemId);
 }
