@@ -36,6 +36,7 @@ public record ReviewDetailResponse(
             String breedSize,
             String species,
             Long breedId,
+            String breedName,
             double weight
     ) {
     }

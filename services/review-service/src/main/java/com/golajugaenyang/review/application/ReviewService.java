@@ -96,7 +96,8 @@ public class ReviewService {
         for (Long petId : petIds) {
             PetSnapshotResponse snapshot = fetchPetSnapshot(memberId, petId);
             pets.add(new ReviewPetSnapshot(petId, snapshot.name(), snapshot.species(), snapshot.breedId(),
-                    snapshot.age(), snapshot.sex(), snapshot.isNeutered(), snapshot.size(), snapshot.weight()));
+                    snapshot.breedName(), snapshot.age(), snapshot.sex(), snapshot.isNeutered(), snapshot.size(),
+                    snapshot.weight()));
             if (snapshot.healthConcerns() != null) {
                 healthConcernCodes.addAll(snapshot.healthConcerns());
             }
@@ -309,7 +310,7 @@ public class ReviewService {
                 .map(p -> new ReviewDetailResponse.Pet(
                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
                         p.getBreedSize() != null ? p.getBreedSize().name() : null, p.getSpecies().name(),
-                        p.getBreedId(), p.getWeight()))
+                        p.getBreedId(), p.getBreedName(), p.getWeight()))
                 .toList();
 
         return new ReviewDetailResponse(
@@ -377,7 +378,7 @@ public class ReviewService {
                                 .map(p -> new ReviewFilterListResponse.Pet(
                                         p.getPetId(), p.getName(), p.getSex().name(), p.getAge(),
                                         p.getBreedSize() != null ? p.getBreedSize().name() : null,
-                                        p.getSpecies().name(), p.getBreedId(), p.getWeight()))
+                                        p.getSpecies().name(), p.getBreedId(), p.getBreedName(), p.getWeight()))
                                 .toList(),
                         review.getStarRate(),
                         review.getUsagePeriod(),

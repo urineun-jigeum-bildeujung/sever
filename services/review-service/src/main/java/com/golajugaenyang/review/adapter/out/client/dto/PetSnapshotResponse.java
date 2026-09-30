@@ -9,6 +9,7 @@ public record PetSnapshotResponse(
         String name,
         Species species,
         Long breedId,
+        String breedName,
         int age,
         Sex sex,
         boolean isNeutered,
