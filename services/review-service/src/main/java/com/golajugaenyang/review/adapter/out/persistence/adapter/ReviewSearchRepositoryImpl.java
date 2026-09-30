@@ -95,8 +95,8 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             petCondition.and(pet.species.eq(criteria.species()));
             hasPetCondition = true;
         }
-        if (criteria.breedId() != null) {
-            petCondition.and(pet.breedId.eq(criteria.breedId()));
+        if (criteria.breedIds() != null && !criteria.breedIds().isEmpty()) {
+            petCondition.and(pet.breedId.in(criteria.breedIds()));
             hasPetCondition = true;
         }
         if (criteria.ageMin() != null) {
