@@ -346,7 +346,7 @@ public class ReviewService {
         List<Review> reviews = reviewSearchRepo.search(criteria);
         long totalCount = reviewSearchRepo.count(criteria);
         Double averageRating = reviewSearchRepo.averageRating(productId);
-        double roundedAverage = averageRating != null ? averageRating : 0.0;
+        double roundedAverage = averageRating != null ? Math.round(averageRating * 10.0) / 10.0 : 0.0;
 
         if (reviews.isEmpty()) {
             return new ReviewFilterListResponse(roundedAverage, (int) totalCount, List.of());
