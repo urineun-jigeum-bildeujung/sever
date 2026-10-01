@@ -16,4 +16,12 @@ public enum StockMovementType {
     public boolean requiresPrecedingMovement() {
         return requiredPrecedingType != null;
     }
+
+    public StockMovementType conflictingType() {
+        return switch (this) {
+            case CONFIRM -> RELEASE;
+            case RELEASE -> CONFIRM;
+            default -> null;
+        };
+    }
 }
