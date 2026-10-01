@@ -1,6 +1,7 @@
 package com.golajugaenyang.review.domain.repository;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.review.domain.entity.enums.ReviewSortType;
 import java.util.Set;
 
@@ -23,6 +24,7 @@ public record ReviewSearchCriteria(
         Integer personalizedAge,
         Double personalizedWeight,
         Boolean personalizedNeutered,
+        TargetBreedSize personalizedBreedSize,
         Set<String> personalizedHealthConcerns
 ) {
 }

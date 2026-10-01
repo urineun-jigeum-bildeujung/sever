@@ -133,10 +133,9 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             where.and(reviewJpaEntity.usagePeriod.loe(criteria.usagePeriodMaxDays()));
         }
 
-        // 맞춤보기(내 펫 기준)도 species+age+weight+neutered가 같은 한 마리를 가리켜야 하므로
-        // 위와 별개의 .any() 참조를 하나 더 둔다.
         if (criteria.personalizedSpecies() != null || criteria.personalizedAge() != null
-                || criteria.personalizedWeight() != null || criteria.personalizedNeutered() != null) {
+                || criteria.personalizedWeight() != null || criteria.personalizedNeutered() != null
+                || criteria.personalizedBreedSize() != null) {
             QReviewPetSnapshotEmbeddable personalizedPet = reviewJpaEntity.pets.any();
             BooleanBuilder personalizedCondition = new BooleanBuilder();
             if (criteria.personalizedSpecies() != null) {
@@ -153,6 +152,9 @@ public class ReviewSearchRepositoryImpl implements ReviewSearchRepository {
             }
             if (criteria.personalizedNeutered() != null) {
                 personalizedCondition.and(personalizedPet.neutered.eq(criteria.personalizedNeutered()));
+            }
+            if (criteria.personalizedBreedSize() != null) {
+                personalizedCondition.and(personalizedPet.breedSize.eq(criteria.personalizedBreedSize()));
             }
             where.and(personalizedCondition);
         }
