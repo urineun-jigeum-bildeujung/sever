@@ -1,6 +1,7 @@
 package com.golajugaenyang.review.application;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.common.storage.ObjectTagConfirmer;
 import com.golajugaenyang.common.storage.PresignedUpload;
@@ -410,6 +411,7 @@ public class ReviewService {
         Integer personalizedAge = null;
         Double personalizedWeight = null;
         Boolean personalizedNeutered = null;
+        TargetBreedSize personalizedBreedSize = null;
         Set<String> personalizedHealthConcerns = null;
         if (personalized && petId != null) {
             if (memberId == null) {
@@ -420,6 +422,7 @@ public class ReviewService {
             personalizedAge = target.age();
             personalizedWeight = target.weight();
             personalizedNeutered = target.isNeutered();
+            personalizedBreedSize = target.size();
             personalizedHealthConcerns = target.healthConcerns() != null
                     ? Set.copyOf(target.healthConcerns()) : null;
         }
@@ -429,7 +432,7 @@ public class ReviewService {
                 weightMin, weightMax, healthConcerns != null ? Set.copyOf(healthConcerns) : null,
                 usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
                 personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,
-                personalizedHealthConcerns);
+                personalizedBreedSize, personalizedHealthConcerns);
     }
 
     private void rejectIfContainsNull(List<?> values) {
