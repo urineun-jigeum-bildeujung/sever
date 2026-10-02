@@ -442,8 +442,13 @@ public class ReviewService {
     }
 
     private void rejectIfContainsNull(List<?> values, ReviewErrorCode errorCode) {
-        if (values != null && values.contains(null)) {
-            throw new AppException(errorCode);
+        if (values == null) {
+            return;
+        }
+        for (Object value : values) {
+            if (value == null) {
+                throw new AppException(errorCode);
+            }
         }
     }
 
