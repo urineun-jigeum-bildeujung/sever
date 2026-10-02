@@ -13,6 +13,7 @@ public record MyReviewListResponse(
             String productName,
             String productImage,
             double rating,
+            int repurchaseCount,
             String text,
             LocalDate createdAt
     ) {

@@ -221,6 +221,7 @@ public class ReviewService {
                 product != null ? product.productName() : "",
                 product != null ? product.thumbnailUrl() : null,
                 review.getStarRate(),
+                review.getRepurchaseCount(),
                 review.getText(),
                 review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
         );
