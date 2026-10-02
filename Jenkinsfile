@@ -126,6 +126,28 @@ spec:
           # 안 될 위험이 있음. 이건 노드 증설이 필요한 별개 문제라 #174에 남겨둔다.
           memory: 3Gi
           ephemeral-storage: 3Gi
+    - name: postgres
+      # Test 스테이지의 PostgresIntegrationTestSupport(Testcontainers 기반)가 쓸 고정
+      # Postgres. 이 Jenkins Pod엔 Docker 데몬이 없어서 Testcontainers가 직접 컨테이너를
+      # 못 띄운다(DockerClientProviderStrategy 실패, 2026-10-02 dev #4/#5 실제 확인).
+      # 같은 Pod 안의 사이드카라 gradle 컨테이너에서 localhost:5432로 바로 붙을 수 있다.
+      image: postgres:16
+      env:
+        - name: POSTGRES_USER
+          value: test
+        - name: POSTGRES_PASSWORD
+          value: test
+        - name: POSTGRES_DB
+          value: test
+      resources:
+        requests:
+          cpu: 30m
+          memory: 128Mi
+          ephemeral-storage: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: 512Mi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command:
@@ -302,11 +324,60 @@ spec:
                         return target
                     }
                     def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
+
+                    // 서비스 하나의 테스트 실패가 무관한 다른 서비스들의 빌드·배포까지
+                    // 막지 않도록 --continue로 전체 실행한다. 실패 유무는 종료 코드로,
+                    // 어느 서비스가 실패했는지는 콘솔 출력(tee)으로 따로 판별해서
+                    // Build 스테이지 대상에서만 제외한다(2026-10-02: product-service
+                    // 테스트 실패 하나로 review-service 등 무관한 서비스 재배포까지
+                    // 전부 막혔던 사고 이후 도입).
+                    def testExitCode
                     container('gradle') {
-                        sh """
-                            chmod +x gradlew
-                            ./gradlew ${testTasks} --no-daemon --max-workers=2
-                        """
+                        // postgres 사이드카가 같은 Pod 안에서 거의 동시에 뜨기 시작하므로,
+                        // 초기 기동(수 초) 중 바로 테스트가 접속을 시도하면 connection
+                        // refused로 flaky하게 실패할 수 있다. 포트가 열릴 때까지 대기한다.
+                        testExitCode = sh(
+                            returnStatus: true,
+                            script: """#!/bin/bash
+                                chmod +x gradlew
+                                for i in \$(seq 1 30); do
+                                  (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1 && break
+                                  sleep 1
+                                done
+                                CI_POSTGRES_URL=jdbc:postgresql://localhost:5432/test \\
+                                CI_POSTGRES_USER=test \\
+                                CI_POSTGRES_PASSWORD=test \\
+                                ./gradlew ${testTasks} --continue --no-daemon --max-workers=2 2>&1 | tee test-output.log
+                                exit \${PIPESTATUS[0]}
+                            """
+                        )
+                    }
+
+                    if (testExitCode != 0) {
+                        def testOutput = readFile('test-output.log')
+                        def failedTargets = targets.findAll { target ->
+                            testOutput.contains("${target.gradleProject}:test FAILED")
+                        }
+                        def failedNames = failedTargets.collect { it.name }
+
+                        // 실패했는데 어느 서비스 탓인지 특정이 안 되면(예: modules/ 공용
+                        // 모듈 컴파일 에러처럼 서비스 test 태스크 자체가 FAILED로 안
+                        // 찍히는 경우) 안전한 쪽(전체 배포 중단)으로 처리한다 — 원인
+                        //불명인 실패를 전부 통과시켜버리는 사고를 막기 위함.
+                        if (failedNames.isEmpty()) {
+                            error("테스트가 실패했지만 어느 서비스 탓인지 특정할 수 없습니다(공용 모듈 문제 가능성) — 전체 배포를 중단합니다.")
+                        }
+
+                        echo "⚠ 테스트 실패로 이번 배포에서 제외: ${failedNames}"
+                        currentBuild.result = 'UNSTABLE'
+
+                        // groovy.json.JsonOutput은 Jenkins Groovy 샌드박스에서 승인되지
+                        // 않은 staticMethod라 RejectedAccessException으로 막힌다
+                        // (2026-10-02 실제 dev #7에서 재현). detect-services.sh의
+                        // to_json_array와 같은 방식으로 직접 문자열을 만든다 — 서비스
+                        // 디렉토리명은 영숫자+하이픈뿐이라 이스케이프 없이 안전하다.
+                        def remaining = services.findAll { !failedNames.contains(it) }
+                        detectedServices = '[' + remaining.collect { "\"${it}\"" }.join(',') + ']'
                     }
                 }
             }

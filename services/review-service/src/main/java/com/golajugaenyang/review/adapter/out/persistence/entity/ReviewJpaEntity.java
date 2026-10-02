@@ -23,6 +23,7 @@ public class ReviewJpaEntity extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 300)
     private String text;
 
     @Column(nullable = false)
