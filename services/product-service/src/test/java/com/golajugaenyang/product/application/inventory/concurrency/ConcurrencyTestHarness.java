@@ -20,7 +20,8 @@ public final class ConcurrencyTestHarness {
         CountDownLatch done = new CountDownLatch(n);
         List<ConcurrentOutcome> outcomes = Collections.synchronizedList(new ArrayList<>());
 
-        try (ExecutorService executor = Executors.newFixedThreadPool(n)) {
+        ExecutorService executor = Executors.newFixedThreadPool(n);
+        try {
             for (Runnable task : tasks) {
                 executor.submit(() -> {
                     ready.countDown();
@@ -38,6 +39,10 @@ public final class ConcurrencyTestHarness {
 
             awaitReadyThenStart(ready, start);
             awaitDone(done);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+            awaitTerminationQuietly(executor);
         }
 
         return outcomes;
@@ -58,11 +63,22 @@ public final class ConcurrencyTestHarness {
     private static void awaitDone(CountDownLatch done) {
         try {
             if (!done.await(30, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("동시 실행 작업이 제한 시간 내에 끝나지 않았습니다.");
+                throw new IllegalStateException(
+                    "동시 실행 작업이 제한 시간 내에 끝나지 않았습니다. 교착 상태일 수 있습니다.");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
+        }
+    }
+
+    private static void awaitTerminationQuietly(ExecutorService executor) {
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                System.err.println("[ConcurrencyTestHarness] 일부 워커 스레드가 5초 내에 종료되지 않았습니다.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }
