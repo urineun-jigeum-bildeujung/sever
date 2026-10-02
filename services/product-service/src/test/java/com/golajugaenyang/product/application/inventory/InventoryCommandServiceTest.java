@@ -21,16 +21,19 @@ import com.golajugaenyang.product.domain.inventory.StockMovement;
 import com.golajugaenyang.product.domain.inventory.StockMovementType;
 import com.golajugaenyang.product.domain.inventory.StockSubjectType;
 import com.golajugaenyang.product.error.ProductErrorCode;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+
 
 @ExtendWith(MockitoExtension.class)
 public class InventoryCommandServiceTest {
@@ -47,8 +50,16 @@ public class InventoryCommandServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
-    InventoryCommandService inventoryCommandService;
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
+    private InventoryCommandService inventoryCommandService;
+
+    @BeforeEach
+    void setUp() {
+        inventoryCommandService = new InventoryCommandService(
+            inventoryCommandRepository, timeDealStockCommandRepository,
+            stockMovementRepository, eventPublisher, meterRegistry);
+    }
 
     @Test
     @DisplayName("동일 orderItemId+유형에 대해 같은 내용의 재요청은 멱등하게 성공 처리된다.")
