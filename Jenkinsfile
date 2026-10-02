@@ -126,6 +126,28 @@ spec:
           # 안 될 위험이 있음. 이건 노드 증설이 필요한 별개 문제라 #174에 남겨둔다.
           memory: 3Gi
           ephemeral-storage: 3Gi
+    - name: postgres
+      # Test 스테이지의 PostgresIntegrationTestSupport(Testcontainers 기반)가 쓸 고정
+      # Postgres. 이 Jenkins Pod엔 Docker 데몬이 없어서 Testcontainers가 직접 컨테이너를
+      # 못 띄운다(DockerClientProviderStrategy 실패, 2026-10-02 dev #4/#5 실제 확인).
+      # 같은 Pod 안의 사이드카라 gradle 컨테이너에서 localhost:5432로 바로 붙을 수 있다.
+      image: postgres:16
+      env:
+        - name: POSTGRES_USER
+          value: test
+        - name: POSTGRES_PASSWORD
+          value: test
+        - name: POSTGRES_DB
+          value: test
+      resources:
+        requests:
+          cpu: 30m
+          memory: 128Mi
+          ephemeral-storage: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: 512Mi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command:
@@ -303,8 +325,18 @@ spec:
                     }
                     def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
                     container('gradle') {
-                        sh """
+                        // postgres 사이드카가 같은 Pod 안에서 거의 동시에 뜨기 시작하므로,
+                        // 초기 기동(수 초) 중 바로 테스트가 접속을 시도하면 connection
+                        // refused로 flaky하게 실패할 수 있다. 포트가 열릴 때까지 대기한다.
+                        sh """#!/bin/bash
                             chmod +x gradlew
+                            for i in \$(seq 1 30); do
+                              (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1 && break
+                              sleep 1
+                            done
+                            CI_POSTGRES_URL=jdbc:postgresql://localhost:5432/test \\
+                            CI_POSTGRES_USER=test \\
+                            CI_POSTGRES_PASSWORD=test \\
                             ./gradlew ${testTasks} --no-daemon --max-workers=2
                         """
                     }
