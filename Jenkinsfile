@@ -371,8 +371,13 @@ spec:
                         echo "⚠ 테스트 실패로 이번 배포에서 제외: ${failedNames}"
                         currentBuild.result = 'UNSTABLE'
 
+                        // groovy.json.JsonOutput은 Jenkins Groovy 샌드박스에서 승인되지
+                        // 않은 staticMethod라 RejectedAccessException으로 막힌다
+                        // (2026-10-02 실제 dev #7에서 재현). detect-services.sh의
+                        // to_json_array와 같은 방식으로 직접 문자열을 만든다 — 서비스
+                        // 디렉토리명은 영숫자+하이픈뿐이라 이스케이프 없이 안전하다.
                         def remaining = services.findAll { !failedNames.contains(it) }
-                        detectedServices = groovy.json.JsonOutput.toJson(remaining)
+                        detectedServices = '[' + remaining.collect { "\"${it}\"" }.join(',') + ']'
                     }
                 }
             }
