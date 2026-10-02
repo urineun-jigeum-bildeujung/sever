@@ -1,6 +1,7 @@
 # 🐾 골라주개냥 (golajugaenyang-server)
 
 > **우리 아이에게 꼭 맞는 선택, 맞춤형 펫 커머스 플랫폼**
+
 <br/>
 
 ## 🎯 Core Features
@@ -8,6 +9,7 @@
 ### 타임딜 & 재고 동시성 제어
 - **상태 자동 전이:** 지정된 시각을 기준으로 타임딜 상품의 상태가 자동으로 오픈/마감되도록 스케줄링 및 이벤트 처리를 적용했습니다.
 - **안전한 주문/결제:** 대량의 트래픽이 몰리는 상황에서도 재고 동시성 문제를 제어하고, 결제 승인/실패/완료 이벤트를 비동기로 안전하게 처리합니다.
+
 ### 강화된 보안 및 인증 처리
 - **안전한 JWT 관리:** 게이트웨이 단에서 위조 헤더를 검증하고, 토큰 로테이션 및 재사용 탐지 방어 로직을 적용했습니다.
 - **성능을 고려한 즉시 로그아웃:** Redis Pub/Sub과 로컬 캐시(Caffeine)를 조합하여 성능 저하 없이 즉각적인 로그아웃 및 토큰 무효화를 구현했습니다.
@@ -17,58 +19,65 @@
 ## 👥 Member
 
 | 노여진 | 문시원 |
-| --- | --- |
+| :---: | :---: |
 | 인증 · 회원 · 리뷰 · 알림 | 상품 · 주문 · 결제 |
 | [@jinjinjala-ish](https://github.com/jinjinjala-ish) | [@muncool39](https://github.com/muncool39) |
 
 <br/>
-## 핵심 기능
+
+## 📌 핵심 기능
 
 | 기능 | 설명 |
 | --- | --- |
-| 인증 | OAuth2 소셜 로그인(Google/Kakao), JWT 발급·rotation·재사용 탐지, Redis 기반 즉시 로그아웃 |
-| 회원 | 반려동물 다중 등록(종/품종/체중/중성화/건강 관심사), 배송지·약관 동의 관리 |
-| 상품 | 카테고리·조건별 검색, 타임딜 시각 기준 상태 자동 전이, 재고 동시성 제어 |
-| 주문 | 장바구니, 주문/결제 연동, 구매확정 처리 |
-| 결제 | 결제 승인·실패·완료 이벤트 처리 |
-| 리뷰 | 맞춤보기 개인화 필터, 품종 다중 선택, 리뷰 이미지 업로드, 구매 후 반응 체크 |
-| 알림 | FCM 푸시 토큰 관리, 카테고리별 구독, 공지 발송 |
+| **인증** | OAuth2 소셜 로그인(Google/Kakao), JWT 발급·rotation·재사용 탐지, Redis 기반 즉시 로그아웃 |
+| **회원** | 반려동물 다중 등록(종/품종/체중/중성화/건강 관심사), 배송지·약관 동의 관리 |
+| **상품** | 카테고리·조건별 검색, 타임딜 시각 기준 상태 자동 전이, 재고 동시성 제어 |
+| **주문** | 장바구니, 주문/결제 연동, 구매확정 처리 |
+| **결제** | 결제 승인·실패·완료 이벤트 처리 |
+| **리뷰** | 맞춤보기 개인화 필터, 품종 다중 선택, 리뷰 이미지 업로드, 구매 후 반응 체크 |
+| **알림** | FCM 푸시 토큰 관리, 카테고리별 구독, 공지 발송 |
 
 <br/>
+
 ## 📄 Documents
 
 - [API 명세서](https://app.notion.com/p/API-3bb9e3e335cc800f89a7da87c1a4cc48?source=copy_link)
 - [ERD](https://www.erdcloud.com/d/tFD2rewSKvKfDQ9ne)
 
 <br/>
+
 ## 🛠 Stack
 
 | 분류 | 상세 기술 스택 |
 | --- | --- |
-| 아키텍처 & 언어 | MSA (Microservices Architecture), Java 25 |
-| 프레임워크 | Spring Boot 4.1.0, Spring Cloud Gateway |
-| 인증 | Spring Security, JWT, OAuth2 (Google/Kakao) |
-| MSA 통신 & 라우팅 | Kafka(+ Outbox 패턴), OpenFeign, Spring Cloud Gateway |
-| 테스트 & 인프라 | Testcontainers, Docker / Docker Compose, Kubernetes |
-| 데이터베이스 & ORM | PostgreSQL, Spring Data JPA, Flyway, Redis |
-| 클라우드 & 배포 | AWS (S3, CloudFront, ECR), Jenkins |
-| 모니터링 | Prometheus, Micrometer, OpenTelemetry |
+| **아키텍처 & 언어** | MSA (Microservices Architecture), Java 25 |
+| **프레임워크** | Spring Boot 4.1.0, Spring Cloud Gateway |
+| **인증** | Spring Security, JWT, OAuth2 (Google/Kakao) |
+| **MSA 통신 & 라우팅** | Kafka(+ Outbox 패턴), OpenFeign, Spring Cloud Gateway |
+| **테스트 & 인프라** | Testcontainers, Docker / Docker Compose, Kubernetes |
+| **데이터베이스 & ORM** | PostgreSQL, Spring Data JPA, Flyway, Redis |
+| **클라우드 & 배포** | AWS (S3, CloudFront, ECR), Jenkins |
+| **모니터링** | Prometheus, Micrometer, OpenTelemetry |
+
 <br/>
-## 아키텍처
+
+## 🏗️ 아키텍처
 
 Java 25 / Spring Boot 4.1.0 / Gradle(Groovy DSL) 기반 모노레포 + MSA 멀티모듈 구조다.
-서비스 간 메서드 직접 호출은 금지하며, 동기 통신은 OpenFeign REST, 비동기 통신은
-Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴다. DB는 서비스별로 완전히
-분리돼 있다.
+서비스 간 메서드 직접 호출은 금지하며, 동기 통신은 OpenFeign REST, 비동기 통신은 Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴다. DB는 서비스별로 완전히 분리돼 있다.
 
-<img width="747" height="358" alt="스크린샷 2026-10-02 오후 4 38 07" src="https://github.com/user-attachments/assets/3a952e2d-6e8b-4b49-bf06-ceb7ae98cd9f" />
+<img width="747" height="358" alt="스크린샷 2026-10-02 오후 4 38 07" src="https://github.com/user-attachments/assets/3a952e2d-6e8b-4b49-bf06-ceb7ae98cd9f" />
+
 <br/>
-## 요구사항
+
+## ⚙️ 요구사항
+
 - Java 25
 - Docker / Docker Compose (v2.20+)
 
+<br/>
 
-### 모듈 구성
+### 📦 모듈 구성
 
 | 디렉토리 | 설명 |
 | --- | --- |
@@ -87,11 +96,11 @@ Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴�
 | `modules/common-storage` | S3 presigned URL 발급 등 공통 스토리지 로직 |
 | `modules/common-test` | Testcontainers 등 통합테스트 지원. `testImplementation`으로만 의존 |
 
-각 서비스는 DDL을 Flyway로 관리하며(`src/main/resources/db/migration`), `ddl-auto: validate`를
-쓴다. 로컬 프로필(`application-local.yml`)은 Flyway가 자동 적용되지만, 배포 프로필
-(`application-infra.yml`)은 Flyway가 꺼져 있어 마이그레이션을 별도로 실행해야 한다.
+각 서비스는 DDL을 Flyway로 관리하며(`src/main/resources/db/migration`), `ddl-auto: validate`를 쓴다. 로컬 프로필(`application-local.yml`)은 Flyway가 자동 적용되지만, 배포 프로필(`application-infra.yml`)은 Flyway가 꺼져 있어 마이그레이션을 별도로 실행해야 한다.
 
-## 로컬 실행
+<br/>
+
+## 💻 로컬 실행
 
 ```bash
 # 인프라(Postgres/Redis/Kafka 등)만 기동
@@ -99,7 +108,6 @@ docker compose -f local-infra/docker-compose.yml up -d
 
 # 특정 서비스 실행
 ./gradlew :services:{service-name}:bootRun --args='--spring.profiles.active=local'
-```
 
 ## 빌드/검증
 
