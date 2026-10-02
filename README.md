@@ -15,6 +15,12 @@
   "잘 맞았어요?" 상태 체크를 받아 다음 구매를 돕습니다.
 - 🔔 **실시간 알림** — FCM 푸시로 타임딜 오픈·공지 등 핵심 소식을 전달합니다.
 
+## 👥 Member
+
+| 노여진 | 문시원 |
+| --- | --- |
+| 인증 · 회원 · 리뷰 · 알림 | 상품 · 주문 · 결제 |
+| [@jinjinjala-ish](https://github.com/jinjinjala-ish) | [@muncool39](https://github.com/muncool39) |
 ## 핵심 기능
 
 | 기능 | 설명 |
@@ -30,10 +36,9 @@
 
 ## 📄 Documents
 
-- [API 명세서]
-- [프로젝트 개요]
-- [아키텍처 의사결정 문서]
-- [발표 자료]
+- [API 명세서](https://app.notion.com/p/API-3bb9e3e335cc800f89a7da87c1a4cc48?source=copy_link)
+- [ERD](https://www.erdcloud.com/d/tFD2rewSKvKfDQ9ne)
+
 
 ## 🛠 Stack
 
@@ -48,19 +53,6 @@
 | 클라우드 & 배포 | AWS (S3, CloudFront, ECR), Jenkins |
 | 모니터링 | Prometheus, Micrometer, OpenTelemetry |
 
-## 👥 Member
-
-| 노여진 | 문시원 |
-| --- | --- |
-| 인증 · 회원 · 리뷰 · 알림 | 상품 · 주문 · 결제 |
-| [@jinjinjala-ish](https://github.com/jinjinjala-ish) | [@muncool39](https://github.com/muncool39) |
-
----
-
-## 요구사항
-- Java 25
-- Docker / Docker Compose (v2.20+)
-
 ## 아키텍처
 
 Java 25 / Spring Boot 4.1.0 / Gradle(Groovy DSL) 기반 모노레포 + MSA 멀티모듈 구조다.
@@ -68,9 +60,14 @@ Java 25 / Spring Boot 4.1.0 / Gradle(Groovy DSL) 기반 모노레포 + MSA 멀�
 Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴다. DB는 서비스별로 완전히
 분리돼 있다.
 
-```
-Client → API Gateway → Auth / Member / Product / Order / Payment / Review / Notification
-```
+![백엔드 전체 시스템 구성 - MSA](docs/images/architecture-msa.png)
+
+---
+
+## 요구사항
+- Java 25
+- Docker / Docker Compose (v2.20+)
+
 
 ### 모듈 구성
 
@@ -114,7 +111,6 @@ docker compose -f local-infra/docker-compose.yml up -d
 공통 모듈(`modules/`) 변경은 여러 서비스에 영향을 주므로 전체 빌드로 영향도를 확인한다.
 
 ---
-
 
 ## API Gateway DEV 실행 계약
 
@@ -229,3 +225,4 @@ Jenkins는 `api-gateway` 변경을 감지해 테스트·bootJar·이미지 빌�
 - `gitops-value/values/dev/services/api-gateway/values.yaml`
 - Gateway egress 및 Backend/Redis ingress NetworkPolicy
 - Public ALB의 `/api/v1`, `/api/auth` Gateway 규칙
+
