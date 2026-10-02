@@ -324,21 +324,55 @@ spec:
                         return target
                     }
                     def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
+
+                    // 서비스 하나의 테스트 실패가 무관한 다른 서비스들의 빌드·배포까지
+                    // 막지 않도록 --continue로 전체 실행한다. 실패 유무는 종료 코드로,
+                    // 어느 서비스가 실패했는지는 콘솔 출력(tee)으로 따로 판별해서
+                    // Build 스테이지 대상에서만 제외한다(2026-10-02: product-service
+                    // 테스트 실패 하나로 review-service 등 무관한 서비스 재배포까지
+                    // 전부 막혔던 사고 이후 도입).
+                    def testExitCode
                     container('gradle') {
                         // postgres 사이드카가 같은 Pod 안에서 거의 동시에 뜨기 시작하므로,
                         // 초기 기동(수 초) 중 바로 테스트가 접속을 시도하면 connection
                         // refused로 flaky하게 실패할 수 있다. 포트가 열릴 때까지 대기한다.
-                        sh """#!/bin/bash
-                            chmod +x gradlew
-                            for i in \$(seq 1 30); do
-                              (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1 && break
-                              sleep 1
-                            done
-                            CI_POSTGRES_URL=jdbc:postgresql://localhost:5432/test \\
-                            CI_POSTGRES_USER=test \\
-                            CI_POSTGRES_PASSWORD=test \\
-                            ./gradlew ${testTasks} --no-daemon --max-workers=2
-                        """
+                        testExitCode = sh(
+                            returnStatus: true,
+                            script: """#!/bin/bash
+                                chmod +x gradlew
+                                for i in \$(seq 1 30); do
+                                  (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1 && break
+                                  sleep 1
+                                done
+                                CI_POSTGRES_URL=jdbc:postgresql://localhost:5432/test \\
+                                CI_POSTGRES_USER=test \\
+                                CI_POSTGRES_PASSWORD=test \\
+                                ./gradlew ${testTasks} --continue --no-daemon --max-workers=2 2>&1 | tee test-output.log
+                                exit \${PIPESTATUS[0]}
+                            """
+                        )
+                    }
+
+                    if (testExitCode != 0) {
+                        def testOutput = readFile('test-output.log')
+                        def failedTargets = targets.findAll { target ->
+                            testOutput.contains("${target.gradleProject}:test FAILED")
+                        }
+                        def failedNames = failedTargets.collect { it.name }
+
+                        // 실패했는데 어느 서비스 탓인지 특정이 안 되면(예: modules/ 공용
+                        // 모듈 컴파일 에러처럼 서비스 test 태스크 자체가 FAILED로 안
+                        // 찍히는 경우) 안전한 쪽(전체 배포 중단)으로 처리한다 — 원인
+                        //불명인 실패를 전부 통과시켜버리는 사고를 막기 위함.
+                        if (failedNames.isEmpty()) {
+                            error("테스트가 실패했지만 어느 서비스 탓인지 특정할 수 없습니다(공용 모듈 문제 가능성) — 전체 배포를 중단합니다.")
+                        }
+
+                        echo "⚠ 테스트 실패로 이번 배포에서 제외: ${failedNames}"
+                        currentBuild.result = 'UNSTABLE'
+
+                        def remaining = services.findAll { !failedNames.contains(it) }
+                        detectedServices = groovy.json.JsonOutput.toJson(remaining)
                     }
                 }
             }
