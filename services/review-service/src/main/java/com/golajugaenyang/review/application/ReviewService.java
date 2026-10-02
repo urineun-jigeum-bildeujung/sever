@@ -77,6 +77,8 @@ public class ReviewService {
     @Transactional
     public Review createReview(Long memberId, ReviewCreateRequest request) {
 
+        rejectIfContainsNull(request.petIds(), ReviewErrorCode.INVALID_PET);
+
         if (reviewRepo.existsByMemberIdAndProductId(memberId, request.productId())) {
             throw new AppException(ReviewErrorCode.ALREADY_REVIEWED);
         }
@@ -436,8 +438,17 @@ public class ReviewService {
     }
 
     private void rejectIfContainsNull(List<?> values) {
-        if (values != null && values.contains(null)) {
-            throw new AppException(ReviewErrorCode.INVALID_FILTER);
+        rejectIfContainsNull(values, ReviewErrorCode.INVALID_FILTER);
+    }
+
+    private void rejectIfContainsNull(List<?> values, ReviewErrorCode errorCode) {
+        if (values == null) {
+            return;
+        }
+        for (Object value : values) {
+            if (value == null) {
+                throw new AppException(errorCode);
+            }
         }
     }
 
