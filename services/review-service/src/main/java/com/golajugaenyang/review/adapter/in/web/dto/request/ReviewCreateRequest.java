@@ -17,7 +17,7 @@ public record ReviewCreateRequest(
         @NotNull @DecimalMin("1.0") @DecimalMax("5.0") Double starRate,
         @NotNull @Positive Integer usagePeriod,
         @NotEmpty List<@Valid AnswerValue> answerValues,
-        @Size(max = 300) String text,
+        @NotBlank @Size(max = 300) String text,
         @Size(max = 3) List<String> images
 ) {
     @AssertTrue(message = "별점은 0.5 단위로 입력해야 합니다.")
