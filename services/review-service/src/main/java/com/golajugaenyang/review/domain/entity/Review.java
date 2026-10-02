@@ -13,6 +13,7 @@ public class Review {
     private String text;
     private double starRate;
     private int usagePeriod;
+    private int repurchaseCount;
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -24,7 +25,7 @@ public class Review {
     private List<ReviewPetSnapshot> pets;
     private Set<String> petHealthConcernCodes;
 
-    public Review(Long id, String text, double starRate, int usagePeriod,
+    public Review(Long id, String text, double starRate, int usagePeriod, int repurchaseCount,
                   Instant createdAt, Instant updatedAt, Instant deletedAt, Long memberId,
                   Long productId, DataOrigin dataOrigin, boolean isSynthetic, Long datasetRunId,
                   List<ReviewPetSnapshot> pets, Set<String> petHealthConcernCodes) {
@@ -32,6 +33,7 @@ public class Review {
         this.text = text;
         this.starRate = starRate;
         this.usagePeriod = usagePeriod;
+        this.repurchaseCount = repurchaseCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;

@@ -32,6 +32,9 @@ public class ReviewJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private int usagePeriod;
 
+    @Column(nullable = false)
+    private int repurchaseCount;
+
     private Instant deletedAt;
 
     @Column(nullable = false)
