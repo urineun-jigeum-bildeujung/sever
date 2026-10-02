@@ -1,10 +1,120 @@
 # golajugaenyang-server
 
-골라주개냥 백엔드
+**우리 아이에게 꼭 맞는 선택, 골라주개냥**
+개발팀 골라주개냥
+
+## 📌 Intro
+
+골라주개냥은 반려동물 보호자가 종·품종·체중·건강 관심사 같은 우리 아이의 특성에 맞는
+사료·간식·영양제를 쉽게 고를 수 있도록 돕는 펫 커머스 플랫폼입니다.
+
+- 🎯 **맞춤보기 추천** — 등록한 반려동물의 종·나이·체중·체구·건강 관심사를 기준으로, 같은
+  조건의 반려동물이 남긴 리뷰만 걸러서 보여줍니다.
+- ⏱ **타임딜** — 지정 시각 기준으로 상태가 자동 전이되는 한정 특가를 운영합니다.
+- 💬 **구매 후 반응 체크** — 구매확정 후 일정 기간(사료·간식 7일, 영양제 30일)이 지나면
+  "잘 맞았어요?" 상태 체크를 받아 다음 구매를 돕습니다.
+- 🔔 **실시간 알림** — FCM 푸시로 타임딜 오픈·공지 등 핵심 소식을 전달합니다.
+
+## 핵심 기능
+
+| 기능 | 설명 |
+| --- | --- |
+| 인증 | OAuth2 소셜 로그인(Google/Kakao), JWT 발급·rotation·재사용 탐지, Redis 기반 즉시 로그아웃 |
+| 회원 | 반려동물 다중 등록(종/품종/체중/중성화/건강 관심사), 배송지·약관 동의 관리 |
+| 상품 | 카테고리·조건별 검색, 타임딜 시각 기준 상태 자동 전이, 재고 동시성 제어 |
+| 주문 | 장바구니, 주문/결제 연동, 구매확정 처리 |
+| 결제 | 결제 승인·실패·완료 이벤트 처리 |
+| 리뷰 | 맞춤보기 개인화 필터, 품종 다중 선택, 리뷰 이미지 업로드, 구매 후 반응 체크 |
+| 알림 | FCM 푸시 토큰 관리, 카테고리별 구독, 공지 발송 |
+
+
+## 📄 Documents
+
+- [API 명세서]
+- [프로젝트 개요]
+- [아키텍처 의사결정 문서]
+- [발표 자료]
+
+## 🛠 Stack
+
+| 분류 | 상세 기술 스택 |
+| --- | --- |
+| 아키텍처 & 언어 | MSA (Microservices Architecture), Java 25 |
+| 프레임워크 | Spring Boot 4.1.0, Spring Cloud Gateway |
+| 인증 | Spring Security, JWT, OAuth2 (Google/Kakao) |
+| MSA 통신 & 라우팅 | Kafka(+ Outbox 패턴), OpenFeign, Spring Cloud Gateway |
+| 테스트 & 인프라 | Testcontainers, Docker / Docker Compose, Kubernetes |
+| 데이터베이스 & ORM | PostgreSQL, Spring Data JPA, Flyway, Redis |
+| 클라우드 & 배포 | AWS (S3, CloudFront, ECR), Jenkins |
+| 모니터링 | Prometheus, Micrometer, OpenTelemetry |
+
+## 👥 Member
+
+| 노여진 | 문시원 |
+| --- | --- |
+| 인증 · 회원 · 리뷰 · 알림 | 상품 · 주문 · 결제 |
+| [@jinjinjala-ish](https://github.com/jinjinjala-ish) | [@muncool39](https://github.com/muncool39) |
+
+---
 
 ## 요구사항
 - Java 25
 - Docker / Docker Compose (v2.20+)
+
+## 아키텍처
+
+Java 25 / Spring Boot 4.1.0 / Gradle(Groovy DSL) 기반 모노레포 + MSA 멀티모듈 구조다.
+서비스 간 메서드 직접 호출은 금지하며, 동기 통신은 OpenFeign REST, 비동기 통신은
+Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴다. DB는 서비스별로 완전히
+분리돼 있다.
+
+```
+Client → API Gateway → Auth / Member / Product / Order / Payment / Review / Notification
+```
+
+### 모듈 구성
+
+| 디렉토리 | 설명 |
+| --- | --- |
+| `platform/api-gateway` | 라우팅·인증 검증만 담당, 도메인 로직 없음 (`-service` 접미사 미사용) |
+| `services/auth-service` | 인증·OAuth2 로그인·JWT 발급 |
+| `services/member-service` | 회원·반려동물 |
+| `services/product-service` | 상품·재고·타임딜 |
+| `services/order-service` | 주문·장바구니 |
+| `services/payment-service` | 결제 |
+| `services/review-service` | 리뷰·구매 후 반응 체크 |
+| `services/notification-service` | 알림(FCM 푸시·공지) |
+| `modules/common-core` | 공통 응답 포맷·예외 처리·유틸. 도메인 로직 금지 |
+| `modules/common-event` | Kafka 이벤트 payload/enum만. 서비스 내부 도메인 금지 |
+| `modules/common-security` | 인증/인가 공통 로직 |
+| `modules/common-jpa` | JPA 공통 설정(Auditing 등) |
+| `modules/common-storage` | S3 presigned URL 발급 등 공통 스토리지 로직 |
+| `modules/common-test` | Testcontainers 등 통합테스트 지원. `testImplementation`으로만 의존 |
+
+각 서비스는 DDL을 Flyway로 관리하며(`src/main/resources/db/migration`), `ddl-auto: validate`를
+쓴다. 로컬 프로필(`application-local.yml`)은 Flyway가 자동 적용되지만, 배포 프로필
+(`application-infra.yml`)은 Flyway가 꺼져 있어 마이그레이션을 별도로 실행해야 한다.
+
+## 로컬 실행
+
+```bash
+# 인프라(Postgres/Redis/Kafka 등)만 기동
+docker compose -f local-infra/docker-compose.yml up -d
+
+# 특정 서비스 실행
+./gradlew :services:{service-name}:bootRun --args='--spring.profiles.active=local'
+```
+
+## 빌드/검증
+
+```bash
+./gradlew build
+```
+
+공통 모듈(`modules/`) 변경은 여러 서비스에 영향을 주므로 전체 빌드로 영향도를 확인한다.
+
+---
+
 
 ## API Gateway DEV 실행 계약
 
