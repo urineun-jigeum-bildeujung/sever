@@ -1,8 +1,7 @@
-# golajugaenyang-server
-
 # 🐾 골라주개냥 (golajugaenyang-server)
 
 > **우리 아이에게 꼭 맞는 선택, 맞춤형 펫 커머스 플랫폼**
+<br/>
 
 ## 🎯 Core Features
 
@@ -22,6 +21,7 @@
 | 인증 · 회원 · 리뷰 · 알림 | 상품 · 주문 · 결제 |
 | [@jinjinjala-ish](https://github.com/jinjinjala-ish) | [@muncool39](https://github.com/muncool39) |
 
+<br/>
 ## 핵심 기능
 
 | 기능 | 설명 |
@@ -34,13 +34,13 @@
 | 리뷰 | 맞춤보기 개인화 필터, 품종 다중 선택, 리뷰 이미지 업로드, 구매 후 반응 체크 |
 | 알림 | FCM 푸시 토큰 관리, 카테고리별 구독, 공지 발송 |
 
-
+<br/>
 ## 📄 Documents
 
 - [API 명세서](https://app.notion.com/p/API-3bb9e3e335cc800f89a7da87c1a4cc48?source=copy_link)
 - [ERD](https://www.erdcloud.com/d/tFD2rewSKvKfDQ9ne)
 
-
+<br/>
 ## 🛠 Stack
 
 | 분류 | 상세 기술 스택 |
@@ -53,7 +53,7 @@
 | 데이터베이스 & ORM | PostgreSQL, Spring Data JPA, Flyway, Redis |
 | 클라우드 & 배포 | AWS (S3, CloudFront, ECR), Jenkins |
 | 모니터링 | Prometheus, Micrometer, OpenTelemetry |
-
+<br/>
 ## 아키텍처
 
 Java 25 / Spring Boot 4.1.0 / Gradle(Groovy DSL) 기반 모노레포 + MSA 멀티모듈 구조다.
@@ -62,8 +62,7 @@ Kafka + Outbox 패턴(DB 변경과 이벤트 발행의 원자성 보장)을 쓴�
 분리돼 있다.
 
 <img width="747" height="358" alt="스크린샷 2026-10-02 오후 4 38 07" src="https://github.com/user-attachments/assets/3a952e2d-6e8b-4b49-bf06-ceb7ae98cd9f" />
----
-
+<br/>
 ## 요구사항
 - Java 25
 - Docker / Docker Compose (v2.20+)
