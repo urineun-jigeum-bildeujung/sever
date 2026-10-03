@@ -3,7 +3,7 @@
 -- 재구매 횟수도 높게 나오도록 분포를 둔다:
 --   평점 4~5점: 0=55%, 1=40%, 2=5%
 --   평점 1~3점: 0=90%, 1=10%
--- 기존 리뷰 전체(목데이터 포함, 수만 건)도 같은 분포로 소급 백필한다  .
+-- 기존 리뷰 전체(목데이터 포함, 수만 건)도 같은 분포로 소급 백필한다
 ALTER TABLE review ADD COLUMN repurchase_count integer NOT NULL DEFAULT 0;
 
 UPDATE review r
