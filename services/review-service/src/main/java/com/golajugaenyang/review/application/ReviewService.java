@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
@@ -112,6 +113,7 @@ public class ReviewService {
         }
 
         Review review = new Review(null, request.text(), request.starRate(), request.usagePeriod(),
+                randomRepurchaseCount(request.starRate()),
                 null, null, null, memberId, request.productId(),
                 DataOrigin.REAL, false, null, pets, healthConcernCodes);
         Review savedReview = reviewRepo.save(review);
@@ -219,6 +221,7 @@ public class ReviewService {
                 product != null ? product.productName() : "",
                 product != null ? product.thumbnailUrl() : null,
                 review.getStarRate(),
+                review.getRepurchaseCount(),
                 review.getText(),
                 review.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
         );
@@ -324,6 +327,7 @@ public class ReviewService {
                 pets,
                 review.getStarRate(),
                 review.getUsagePeriod(),
+                review.getRepurchaseCount(),
                 liked,
                 (int) likeCount,
                 answerValues,
@@ -385,6 +389,7 @@ public class ReviewService {
                                 .toList(),
                         review.getStarRate(),
                         review.getUsagePeriod(),
+                        review.getRepurchaseCount(),
                         palatabilityByReviewId.get(review.getId()),
                         review.getText(),
                         imagesByReviewId.get(review.getId()),
@@ -435,6 +440,16 @@ public class ReviewService {
                 usagePeriodMinDays, usagePeriodMaxDays, sortType, page, size,
                 personalizedSpecies, personalizedAge, personalizedWeight, personalizedNeutered,
                 personalizedBreedSize, personalizedHealthConcerns);
+    }
+
+    private int randomRepurchaseCount(double starRate) {
+        double roll = ThreadLocalRandom.current().nextDouble();
+        if (starRate >= 4) {
+            if (roll < 0.55) return 0;
+            if (roll < 0.95) return 1;
+            return 2;
+        }
+        return roll < 0.90 ? 0 : 1;
     }
 
     private void rejectIfContainsNull(List<?> values) {

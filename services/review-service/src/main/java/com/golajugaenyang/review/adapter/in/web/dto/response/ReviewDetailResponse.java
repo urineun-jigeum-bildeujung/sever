@@ -11,6 +11,7 @@ public record ReviewDetailResponse(
         List<Pet> pets,
         double rating,
         int usagePeriod,
+        int repurchaseCount,
         boolean liked,
         int likeCount,
         List<AnswerValue> answerValues,

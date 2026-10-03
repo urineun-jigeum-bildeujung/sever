@@ -14,6 +14,7 @@ public record ReviewFilterListResponse(
             List<Pet> pets,
             double rating,
             int usagePeriod,
+            int repurchaseCount,
             String palatability,
             String text,
             List<String> images,

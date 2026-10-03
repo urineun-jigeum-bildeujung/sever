@@ -20,6 +20,7 @@ public class ReviewMapper {
                 jpaEntity.getText(),
                 jpaEntity.getStarRate(),
                 jpaEntity.getUsagePeriod(),
+                jpaEntity.getRepurchaseCount(),
                 jpaEntity.getCreatedAt(),
                 jpaEntity.getUpdatedAt(),
                 jpaEntity.getDeletedAt(),
@@ -45,6 +46,7 @@ public class ReviewMapper {
                 .text(domain.getText())
                 .starRate(domain.getStarRate())
                 .usagePeriod(domain.getUsagePeriod())
+                .repurchaseCount(domain.getRepurchaseCount())
                 .deletedAt(domain.getDeletedAt())
                 .memberId(domain.getMemberId())
                 .productId(domain.getProductId())
