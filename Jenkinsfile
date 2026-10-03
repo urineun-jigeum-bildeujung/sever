@@ -51,6 +51,31 @@ def imageTargets = [
     ],
 ]
 
+// 캐시가 없는 관리 Pod에서 이전 사용자 확인과 이번 빌드 Pod 삭제 확인을 수행한다.
+// jenkins ServiceAccount는 Helm 차트의 기존 namespace Pod/event 권한을 사용한다.
+def cacheGuardStarted = false
+
+def CACHE_GUARD_POD_YAML = '''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: jenkins
+  containers:
+    - name: cache-guard
+      image: alpine/k8s:1.34.3
+      command: [sleep]
+      args: [99d]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+'''
+
+// readTrusted는 workspace 없이 이번 빌드의 SCM 커밋에서 셸 스크립트를 읽는다.
+def cacheGuardScript = ''
+
 pipeline {
     // dev 브랜치에 짧은 시간 안에 push가 몰리면 두 빌드가 동시에 같은 gitops-value
     // HEAD를 기준으로 clone해서, 먼저 push한 쪽 다음 push가 non-fast-forward로
@@ -65,6 +90,9 @@ pipeline {
     // ci-build는 web-ci/ai-ci와 공용으로 쓰는 lock 이름이라 레포가 달라도 직렬화된다.
     options {
         disableConcurrentBuilds()
+        // 단계 재시작으로 캐시 사전 검사를 건너뛰지 않게 한다.
+        disableRestartFromStage()
+        // agent none이므로 잠금 대기 중 Pod를 만들지 않는다. post 정리까지 잠금을 유지한다.
         lock(resource: 'ci-build')
     }
 
@@ -85,11 +113,58 @@ pipeline {
     // 전혀 파악 못 했고, 실제로 노드 하나가 디스크 99% 차서 DiskPressure로 통째로
     // 재기동되는 사고가 남(2026-09-10). kaniko는 이미지 빌드 tar를, gradle은 배포판+
     // 의존성 캐시를 workspace-volume(emptyDir, 노드 디스크)에 쓰기 때문에 둘 다 넉넉히 잡음.
-    agent {
-        kubernetes {
-            yaml """
+    agent none
+
+    parameters {
+        // 수동 빌드 시 여기 값 채워서 실행 = GHA의 workflow_dispatch.inputs.image 역할
+        string(name: 'IMAGE', defaultValue: '', description: '수동 빌드할 서비스명 (비워두면 자동 감지)')
+    }
+
+    environment {
+        IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
+        GITOPS_VALUE_REPO = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
+        OTEL_AGENT_VERSION = '2.31.1'
+        OTEL_AGENT_SHA256 = 'bbf83c151b6400709e2f225bdd07a04f839d9d13b8b93464241333fd25d3e3ba'
+    }
+
+    stages {
+        stage('Wait for Gradle Cache') {
+            agent {
+                kubernetes {
+                    inheritFrom ''
+                    yaml CACHE_GUARD_POD_YAML
+                    podRetention never()
+                    idleMinutes 0
+                    slaveConnectTimeout 900
+                }
+            }
+            options { skipDefaultCheckout() }
+            steps {
+                script {
+                    cacheGuardScript = readTrusted('scripts/ci-gradle-cache-guard.sh')
+                    cacheGuardStarted = true
+                    container('cache-guard') {
+                        sh cacheGuardScript
+                    }
+                }
+            }
+        }
+        stage('CI') {
+            agent {
+                kubernetes {
+                    inheritFrom ''
+                    podRetention never()
+                    idleMinutes 0
+                    // 다른 노드로 이동할 때 EBS detach/attach와 스케줄링에 최대 15분을 허용한다.
+                    slaveConnectTimeout 900
+                    yaml """
 apiVersion: v1
 kind: Pod
+metadata:
+  labels:
+    petflow.io/ci-build: "${env.BUILD_NUMBER}"
+  annotations:
+    petflow.io/ci-job: "${env.JOB_NAME}"
 spec:
   serviceAccountName: jenkins-kaniko # infra팀이 ECR push 권한을 가진 EKS Pod Identity로 생성 완료(infra #17)
   containers:
@@ -229,116 +304,103 @@ spec:
       persistentVolumeClaim:
         claimName: sever-ci-gradle-cache
 """
-        }
-    }
-
-    parameters {
-        // 수동 빌드 시 여기 값 채워서 실행 = GHA의 workflow_dispatch.inputs.image 역할
-        string(name: 'IMAGE', defaultValue: '', description: '수동 빌드할 서비스명 (비워두면 자동 감지)')
-    }
-
-    environment {
-        IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
-        GITOPS_VALUE_REPO = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
-        OTEL_AGENT_VERSION = '2.31.1'
-        OTEL_AGENT_SHA256 = 'bbf83c151b6400709e2f225bdd07a04f839d9d13b8b93464241333fd25d3e3ba'
-    }
-
-    stages {
-        stage('Detect Services') {
-            steps {
-                script {
-                    def eventName = params.IMAGE?.trim() ? 'workflow_dispatch' : 'push'
-                    def requestedImage = params.IMAGE?.trim() ?: 'all'
-                    def baseSha = ''
-
-                    if (eventName != 'workflow_dispatch') {
-                        if (env.CHANGE_ID) {
-                            // PR 빌드: PR 대상 브랜치와의 공통 조상 커밋을 base로 사용
-                            // (GHA의 github.event.pull_request.base.sha에 대응, 여긴 자동 제공값이 없어서 직접 계산)
-                            //
-                            // Declarative Checkout SCM은 PR 빌드에서 refs/pull/<N>/head만 fetch하고
-                            // 대상 브랜치(origin/${CHANGE_TARGET})는 로컬에 안 받아와서, 바로 merge-base를
-                            // 돌리면 "Not a valid object name"으로 실패함(2026-09-14 실제로 겪음).
-                            // merge-base 전에 대상 브랜치를 먼저 fetch해서 origin/${CHANGE_TARGET}이
-                            // 로컬에 존재하게 만든다.
-                            sh "git fetch --no-tags origin ${env.CHANGE_TARGET}:refs/remotes/origin/${env.CHANGE_TARGET}"
-                            baseSha = sh(
-                                script: "git merge-base HEAD origin/${env.CHANGE_TARGET}",
-                                returnStdout: true
-                            ).trim()
-                        } else {
-                            // 브랜치 push 빌드: 직전 성공 빌드 커밋 기준, 없으면(첫 빌드) 바로 이전 커밋
-                            baseSha = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?:
-                                sh(script: 'git rev-parse HEAD~1', returnStdout: true).trim()
-                        }
-                    }
-
-                    // requestedImage는 사람이 입력하는 Jenkins 빌드 파라미터라 신뢰 못 함 —
-                    // 예전엔 이 값을 Groovy 문자열 보간으로 셸 스크립트 소스에 직접 끼워넣어서,
-                    // 세미콜론/백틱 등을 넣으면 임의 명령 실행이 가능했음(2026-09-13 CodeRabbit
-                    // 리뷰로 발견). withEnv로 진짜 프로세스 환경변수로 넘기면 셸이 그 값을
-                    // "명령의 일부"가 아니라 "그냥 문자열 데이터"로만 다루므로 안전함.
-                    withEnv([
-                        "EVENT_NAME=${eventName}",
-                        "BASE_SHA=${baseSha}",
-                        "REQUESTED_IMAGE=${requestedImage}",
-                    ]) {
-                        detectedServices = sh(
-                            script: 'bash scripts/detect-services.sh',
-                            returnStdout: true
-                        ).trim()
-                    }
-
-                    imageTag = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-
-                    // dev 브랜치로 실제 merge된 push 빌드만 배포로 취급 (PR 검증 빌드, 다른
-                    // 브랜치 push는 빌드+테스트+스캔까지만 하고 ECR push/values 갱신은 안 함).
-                    // 사람이 "Build Now"로 수동 실행한 빌드는(IMAGE 파라미터를 안 채웠어도)
-                    // CHANGE_ID==null && BRANCH_NAME=='dev' 조건을 그대로 만족해버려서, 자동
-                    // push와 구분이 안 됨 — UserIdCause가 있으면 사람이 직접 누른 것이므로
-                    // 실배포에서 제외한다(2026-09-13 CodeRabbit 리뷰로 발견 — "그냥 재실행"이
-                    // 실제 ECR push/GitOps 갱신으로 이어지는 사고를 막기 위함).
-                    def isManualTrigger = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
-                    isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
-
-                    echo "감지된 서비스: ${detectedServices}"
-                    echo "실배포 여부: ${isRealDeploy}"
                 }
             }
-        }
+            stages {
+                stage('Detect Services') {
+                    steps {
+                        script {
+                            def eventName = params.IMAGE?.trim() ? 'workflow_dispatch' : 'push'
+                            def requestedImage = params.IMAGE?.trim() ?: 'all'
+                            def baseSha = ''
 
-        stage('Test') {
-            steps {
-                script {
-                    def services = readJSON(text: detectedServices)
+                            if (eventName != 'workflow_dispatch') {
+                                if (env.CHANGE_ID) {
+                                    // PR 빌드: PR 대상 브랜치와의 공통 조상 커밋을 base로 사용
+                                    // (GHA의 github.event.pull_request.base.sha에 대응, 여긴 자동 제공값이 없어서 직접 계산)
+                                    //
+                                    // Declarative Checkout SCM은 PR 빌드에서 refs/pull/<N>/head만 fetch하고
+                                    // 대상 브랜치(origin/${CHANGE_TARGET})는 로컬에 안 받아와서, 바로 merge-base를
+                                    // 돌리면 "Not a valid object name"으로 실패함(2026-09-14 실제로 겪음).
+                                    // merge-base 전에 대상 브랜치를 먼저 fetch해서 origin/${CHANGE_TARGET}이
+                                    // 로컬에 존재하게 만든다.
+                                    sh "git fetch --no-tags origin ${env.CHANGE_TARGET}:refs/remotes/origin/${env.CHANGE_TARGET}"
+                                    baseSha = sh(
+                                        script: "git merge-base HEAD origin/${env.CHANGE_TARGET}",
+                                        returnStdout: true
+                                    ).trim()
+                                } else {
+                                    // 브랜치 push 빌드: 직전 성공 빌드 커밋 기준, 없으면(첫 빌드) 바로 이전 커밋
+                                    baseSha = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?:
+                                        sh(script: 'git rev-parse HEAD~1', returnStdout: true).trim()
+                                }
+                            }
 
-                    if (services.isEmpty()) {
-                        echo '이번 변경에서 테스트할 서비스가 없습니다.'
-                        return
+                            // requestedImage는 사람이 입력하는 Jenkins 빌드 파라미터라 신뢰 못 함 —
+                            // 예전엔 이 값을 Groovy 문자열 보간으로 셸 스크립트 소스에 직접 끼워넣어서,
+                            // 세미콜론/백틱 등을 넣으면 임의 명령 실행이 가능했음(2026-09-13 CodeRabbit
+                            // 리뷰로 발견). withEnv로 진짜 프로세스 환경변수로 넘기면 셸이 그 값을
+                            // "명령의 일부"가 아니라 "그냥 문자열 데이터"로만 다루므로 안전함.
+                            withEnv([
+                                "EVENT_NAME=${eventName}",
+                                "BASE_SHA=${baseSha}",
+                                "REQUESTED_IMAGE=${requestedImage}",
+                            ]) {
+                                detectedServices = sh(
+                                    script: 'bash scripts/detect-services.sh',
+                                    returnStdout: true
+                                ).trim()
+                            }
+
+                            imageTag = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+
+                            // dev 브랜치로 실제 merge된 push 빌드만 배포로 취급 (PR 검증 빌드, 다른
+                            // 브랜치 push는 빌드+테스트+스캔까지만 하고 ECR push/values 갱신은 안 함).
+                            // 사람이 "Build Now"로 수동 실행한 빌드는(IMAGE 파라미터를 안 채웠어도)
+                            // CHANGE_ID==null && BRANCH_NAME=='dev' 조건을 그대로 만족해버려서, 자동
+                            // push와 구분이 안 됨 — UserIdCause가 있으면 사람이 직접 누른 것이므로
+                            // 실배포에서 제외한다(2026-09-13 CodeRabbit 리뷰로 발견 — "그냥 재실행"이
+                            // 실제 ECR push/GitOps 갱신으로 이어지는 사고를 막기 위함).
+                            def isManualTrigger = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
+                            isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
+
+                            echo "감지된 서비스: ${detectedServices}"
+                            echo "실배포 여부: ${isRealDeploy}"
+                        }
                     }
+                }
 
-                    def targets = services.collect { svc ->
-                        def target = imageTargets[svc]
-                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
-                        return target
-                    }
-                    def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
+                stage('Test') {
+                    steps {
+                        script {
+                            def services = readJSON(text: detectedServices)
 
-                    // 서비스 하나의 테스트 실패가 무관한 다른 서비스들의 빌드·배포까지
-                    // 막지 않도록 --continue로 전체 실행한다. 실패 유무는 종료 코드로,
-                    // 어느 서비스가 실패했는지는 콘솔 출력(tee)으로 따로 판별해서
-                    // Build 스테이지 대상에서만 제외한다(2026-10-02: product-service
-                    // 테스트 실패 하나로 review-service 등 무관한 서비스 재배포까지
-                    // 전부 막혔던 사고 이후 도입).
-                    def testExitCode
-                    container('gradle') {
-                        // postgres 사이드카가 같은 Pod 안에서 거의 동시에 뜨기 시작하므로,
-                        // 초기 기동(수 초) 중 바로 테스트가 접속을 시도하면 connection
-                        // refused로 flaky하게 실패할 수 있다. 포트가 열릴 때까지 대기한다.
-                        testExitCode = sh(
-                            returnStatus: true,
-                            script: """#!/bin/bash
+                            if (services.isEmpty()) {
+                                echo '이번 변경에서 테스트할 서비스가 없습니다.'
+                                return
+                            }
+
+                            def targets = services.collect { svc ->
+                                def target = imageTargets[svc]
+                                if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                                return target
+                            }
+                            def testTasks = targets.collect { "${it.gradleProject}:test" }.join(' ')
+
+                            // 서비스 하나의 테스트 실패가 무관한 다른 서비스들의 빌드·배포까지
+                            // 막지 않도록 --continue로 전체 실행한다. 실패 유무는 종료 코드로,
+                            // 어느 서비스가 실패했는지는 콘솔 출력(tee)으로 따로 판별해서
+                            // Build 스테이지 대상에서만 제외한다(2026-10-02: product-service
+                            // 테스트 실패 하나로 review-service 등 무관한 서비스 재배포까지
+                            // 전부 막혔던 사고 이후 도입).
+                            def testExitCode
+                            container('gradle') {
+                                // postgres 사이드카가 같은 Pod 안에서 거의 동시에 뜨기 시작하므로,
+                                // 초기 기동(수 초) 중 바로 테스트가 접속을 시도하면 connection
+                                // refused로 flaky하게 실패할 수 있다. 포트가 열릴 때까지 대기한다.
+                                testExitCode = sh(
+                                    returnStatus: true,
+                                    script: """#!/bin/bash
                                 chmod +x gradlew
                                 for i in \$(seq 1 30); do
                                   (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1 && break
@@ -349,115 +411,115 @@ spec:
                                 CI_POSTGRES_PASSWORD=test \\
                                 ./gradlew ${testTasks} --continue --no-daemon --max-workers=2 2>&1 | tee test-output.log
                                 exit \${PIPESTATUS[0]}
-                            """
-                        )
-                    }
+                                    """
+                                )
+                            }
 
-                    if (testExitCode != 0) {
-                        def testOutput = readFile('test-output.log')
-                        def failedTargets = targets.findAll { target ->
-                            testOutput.contains("${target.gradleProject}:test FAILED")
+                            if (testExitCode != 0) {
+                                def testOutput = readFile('test-output.log')
+                                def failedTargets = targets.findAll { target ->
+                                    testOutput.contains("${target.gradleProject}:test FAILED")
+                                }
+                                def failedNames = failedTargets.collect { it.name }
+
+                                // 실패했는데 어느 서비스 탓인지 특정이 안 되면(예: modules/ 공용
+                                // 모듈 컴파일 에러처럼 서비스 test 태스크 자체가 FAILED로 안
+                                // 찍히는 경우) 안전한 쪽(전체 배포 중단)으로 처리한다 — 원인
+                                //불명인 실패를 전부 통과시켜버리는 사고를 막기 위함.
+                                if (failedNames.isEmpty()) {
+                                    error("테스트가 실패했지만 어느 서비스 탓인지 특정할 수 없습니다(공용 모듈 문제 가능성) — 전체 배포를 중단합니다.")
+                                }
+
+                                echo "⚠ 테스트 실패로 이번 배포에서 제외: ${failedNames}"
+                                currentBuild.result = 'UNSTABLE'
+
+                                // groovy.json.JsonOutput은 Jenkins Groovy 샌드박스에서 승인되지
+                                // 않은 staticMethod라 RejectedAccessException으로 막힌다
+                                // (2026-10-02 실제 dev #7에서 재현). detect-services.sh의
+                                // to_json_array와 같은 방식으로 직접 문자열을 만든다 — 서비스
+                                // 디렉토리명은 영숫자+하이픈뿐이라 이스케이프 없이 안전하다.
+                                def remaining = services.findAll { !failedNames.contains(it) }
+                                detectedServices = '[' + remaining.collect { "\"${it}\"" }.join(',') + ']'
+                            }
                         }
-                        def failedNames = failedTargets.collect { it.name }
-
-                        // 실패했는데 어느 서비스 탓인지 특정이 안 되면(예: modules/ 공용
-                        // 모듈 컴파일 에러처럼 서비스 test 태스크 자체가 FAILED로 안
-                        // 찍히는 경우) 안전한 쪽(전체 배포 중단)으로 처리한다 — 원인
-                        //불명인 실패를 전부 통과시켜버리는 사고를 막기 위함.
-                        if (failedNames.isEmpty()) {
-                            error("테스트가 실패했지만 어느 서비스 탓인지 특정할 수 없습니다(공용 모듈 문제 가능성) — 전체 배포를 중단합니다.")
-                        }
-
-                        echo "⚠ 테스트 실패로 이번 배포에서 제외: ${failedNames}"
-                        currentBuild.result = 'UNSTABLE'
-
-                        // groovy.json.JsonOutput은 Jenkins Groovy 샌드박스에서 승인되지
-                        // 않은 staticMethod라 RejectedAccessException으로 막힌다
-                        // (2026-10-02 실제 dev #7에서 재현). detect-services.sh의
-                        // to_json_array와 같은 방식으로 직접 문자열을 만든다 — 서비스
-                        // 디렉토리명은 영숫자+하이픈뿐이라 이스케이프 없이 안전하다.
-                        def remaining = services.findAll { !failedNames.contains(it) }
-                        detectedServices = '[' + remaining.collect { "\"${it}\"" }.join(',') + ']'
                     }
                 }
-            }
-        }
 
-        stage('Build') {
-            steps {
-                script {
-                    def services = readJSON(text: detectedServices)
+                stage('Build') {
+                    steps {
+                        script {
+                            def services = readJSON(text: detectedServices)
 
-                    if (services.isEmpty()) {
-                        echo '이번 변경에서 빌드할 서비스가 없습니다.'
-                        return
-                    }
+                            if (services.isEmpty()) {
+                                echo '이번 변경에서 빌드할 서비스가 없습니다.'
+                                return
+                            }
 
-                    // Dockerfile 안에서 각 서비스마다 kaniko가 ./gradlew bootJar를 처음부터
-                    // 새로 돌리면, 서비스 7개가 전부 모노레포 전체를 COPY + 풀 JDK 이미지
-                    // 언패킹 + 의존성 재해석을 반복하게 됨 — 이게 "Timeout waiting to lock
-                    // journal cache" 락 경합(gradle 캐시를 여러 프로세스가 동시에 잡으려 함)과
-                    // ephemeral-storage 초과(파드 Evicted, 1Gi/3Gi 둘 다 부족)의 진짜 원인이었음
-                    // (2026-09-14 실제 Jenkins 빌드에서 재현). Test 스테이지처럼 gradle
-                    // 컨테이너에서 jar를 한 번만 미리 빌드해두고, kaniko는 그 jar를 COPY만
-                    // 하도록 Dockerfile을 단순화해서 이 문제를 구조적으로 없앤다.
-                    def targets = services.collect { svc ->
-                        def target = imageTargets[svc]
-                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
-                        return target
-                    }
-                    def bootJarTasks = targets.collect { "${it.gradleProject}:bootJar" }.join(' ')
-                    container('gradle') {
-                        sh """
+                            // Dockerfile 안에서 각 서비스마다 kaniko가 ./gradlew bootJar를 처음부터
+                            // 새로 돌리면, 서비스 7개가 전부 모노레포 전체를 COPY + 풀 JDK 이미지
+                            // 언패킹 + 의존성 재해석을 반복하게 됨 — 이게 "Timeout waiting to lock
+                            // journal cache" 락 경합(gradle 캐시를 여러 프로세스가 동시에 잡으려 함)과
+                            // ephemeral-storage 초과(파드 Evicted, 1Gi/3Gi 둘 다 부족)의 진짜 원인이었음
+                            // (2026-09-14 실제 Jenkins 빌드에서 재현). Test 스테이지처럼 gradle
+                            // 컨테이너에서 jar를 한 번만 미리 빌드해두고, kaniko는 그 jar를 COPY만
+                            // 하도록 Dockerfile을 단순화해서 이 문제를 구조적으로 없앤다.
+                            def targets = services.collect { svc ->
+                                def target = imageTargets[svc]
+                                if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                                return target
+                            }
+                            def bootJarTasks = targets.collect { "${it.gradleProject}:bootJar" }.join(' ')
+                            container('gradle') {
+                                sh """
                             chmod +x gradlew
                             ./gradlew ${bootJarTasks} -x test --no-daemon --max-workers=2
-                        """
-                    }
+                                """
+                            }
 
-                    // crane은 kaniko와 달리 ECR 자동인증이 없어서 crane push가 401
-                    // Unauthorized로 실패함(2026-09-14 실제 dev 빌드에서 재현). 레지스트리
-                    // 하나당 로그인 한 번이면 되므로(서비스마다 반복할 필요 없음) 서비스
-                    // 루프 밖에서 딱 한 번만 로그인한다.
-                    if (isRealDeploy) {
-                        container('awscli') {
-                            sh "aws ecr get-login-password --region ap-northeast-2 > ecr-token.txt"
-                        }
-                        container('crane') {
-                            sh "crane auth login ${env.IMAGE_REGISTRY.split('/')[0]} --username AWS --password-stdin < ecr-token.txt"
-                        }
-                        sh "rm -f ecr-token.txt"
-                    }
+                            // crane은 kaniko와 달리 ECR 자동인증이 없어서 crane push가 401
+                            // Unauthorized로 실패함(2026-09-14 실제 dev 빌드에서 재현). 레지스트리
+                            // 하나당 로그인 한 번이면 되므로(서비스마다 반복할 필요 없음) 서비스
+                            // 루프 밖에서 딱 한 번만 로그인한다.
+                            if (isRealDeploy) {
+                                container('awscli') {
+                                    sh "aws ecr get-login-password --region ap-northeast-2 > ecr-token.txt"
+                                }
+                                container('crane') {
+                                    sh "crane auth login ${env.IMAGE_REGISTRY.split('/')[0]} --username AWS --password-stdin < ecr-token.txt"
+                                }
+                                sh "rm -f ecr-token.txt"
+                            }
 
-                    // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Gateway는 최종 tar의
-                    // Agent를 실제 appuser 권한으로 로드 -> Trivy로 CRITICAL 스캔(걸리면 실패)
-                    // -> 실배포일 때만 crane으로 검증한 그 tar를 그대로 ECR에 push.
-                    // kaniko는 빌드만, crane은 push만 담당 — 스캔 통과 못 한 이미지는
-                    // 애초에 push 코드 경로를 안 타서 물리적으로 못 올라감.
-                    //
-                    // jar가 이미 만들어져 있어서 kaniko는 COPY만 하면 되므로 캐시 경합이
-                    // 구조적으로 불가능함 — 그래도 디스크 여유를 위해 tar는 순차로 지우며 진행.
-                    targets.each { target ->
-                        def tarFile = "${target.name}.tar"
-                        def imageRef = "${env.IMAGE_REGISTRY}/${target.name}:${imageTag}"
+                            // 각 서비스: kaniko로 로컬 tar 빌드(push 안 함) -> Gateway는 최종 tar의
+                            // Agent를 실제 appuser 권한으로 로드 -> Trivy로 CRITICAL 스캔(걸리면 실패)
+                            // -> 실배포일 때만 crane으로 검증한 그 tar를 그대로 ECR에 push.
+                            // kaniko는 빌드만, crane은 push만 담당 — 스캔 통과 못 한 이미지는
+                            // 애초에 push 코드 경로를 안 타서 물리적으로 못 올라감.
+                            //
+                            // jar가 이미 만들어져 있어서 kaniko는 COPY만 하면 되므로 캐시 경합이
+                            // 구조적으로 불가능함 — 그래도 디스크 여유를 위해 tar는 순차로 지우며 진행.
+                            targets.each { target ->
+                                def tarFile = "${target.name}.tar"
+                                def imageRef = "${env.IMAGE_REGISTRY}/${target.name}:${imageTag}"
 
-                        container('kaniko') {
-                            sh """
+                                container('kaniko') {
+                                    sh """
                                 /kaniko/executor \\
                                   --context=`pwd` \\
                                   --dockerfile=${target.dockerfile} \\
                                   --destination=${imageRef} \\
                                   --no-push \\
                                   --tarPath=${tarFile}
-                            """
-                        }
+                                    """
+                                }
 
-                        if (target.name == 'api-gateway') {
-                            // Docker 소켓/privileged Pod 없이 Kaniko가 만든 실제 Docker archive를
-                            // 풀어 최종 filesystem과 이미지 config를 재구성한다. 이미지 기본
-                            // 사용자인 appuser로 chroot 실행해 Agent 읽기·SHA256·JVM 로딩까지
-                            // 성공해야 다음 Trivy/Crane 단계로 진행한다.
-                            container('gradle') {
-                                sh """
+                                if (target.name == 'api-gateway') {
+                                    // Docker 소켓/privileged Pod 없이 Kaniko가 만든 실제 Docker archive를
+                                    // 풀어 최종 filesystem과 이미지 config를 재구성한다. 이미지 기본
+                                    // 사용자인 appuser로 chroot 실행해 Agent 읽기·SHA256·JVM 로딩까지
+                                    // 성공해야 다음 Trivy/Crane 단계로 진행한다.
+                                    container('gradle') {
+                                        sh """
                                     chmod +x scripts/verify-api-gateway-image.sh
                                     scripts/verify-api-gateway-image.sh \\
                                       ${tarFile} \\
@@ -465,108 +527,130 @@ spec:
                                       ${env.OTEL_AGENT_VERSION} \\
                                       ${env.OTEL_AGENT_SHA256} \\
                                       appuser
-                                """
-                            }
-                        }
+                                        """
+                                    }
+                                }
 
-                        container('trivy') {
-                            sh """
+                                container('trivy') {
+                                    sh """
                                 trivy image --input ${tarFile} \\
                                   --severity CRITICAL --exit-code 1 --ignore-unfixed
-                            """
-                        }
+                                    """
+                                }
 
-                        if (isRealDeploy) {
-                            container('crane') {
-                                sh "crane push ${tarFile} ${imageRef}"
+                                if (isRealDeploy) {
+                                    container('crane') {
+                                        sh "crane push ${tarFile} ${imageRef}"
+                                    }
+                                }
+
+                                sh "rm -f ${tarFile}"
                             }
                         }
-
-                        sh "rm -f ${tarFile}"
                     }
                 }
-            }
-        }
 
-        stage('Update GitOps') {
-            when {
-                expression { return isRealDeploy }
-            }
-            steps {
-                script {
-                    def services = readJSON(text: detectedServices)
-
-                    if (services.isEmpty()) {
-                        echo '갱신할 서비스가 없습니다.'
-                        return
+                stage('Update GitOps') {
+                    when {
+                        expression { return isRealDeploy }
                     }
+                    steps {
+                        script {
+                            def services = readJSON(text: detectedServices)
 
-                    def targets = services.collect { svc ->
-                        def target = imageTargets[svc]
-                        if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
-                        return target
-                    }
+                            if (services.isEmpty()) {
+                                echo '갱신할 서비스가 없습니다.'
+                                return
+                            }
 
-                    withCredentials([usernamePassword(
-                        credentialsId: 'gitops-value-push',
-                        usernameVariable: 'GIT_USER',
-                        passwordVariable: 'GIT_TOKEN'
-                    )]) {
-                        // 토큰을 URL에 넣으면 clone한 폴더의 .git/config에 평문으로 남고, 아래 push도
-                        // 그 저장된 주소에 기대게 된다. credential helper로 각 명령 한 번에만 넘긴다.
-                        // 작은따옴표(''')여야 $GIT_USER/$GIT_TOKEN을 Groovy가 아니라 쉘이 치환한다
-                        // (큰따옴표면 Groovy가 값을 미리 글자로 박는다). set +x는 명령이 로그에
-                        // 찍히는 것을 막는다. ai 레포 Jenkinsfile과 같은 방식이다.
-                        sh '''
+                            def targets = services.collect { svc ->
+                                def target = imageTargets[svc]
+                                if (target == null) { error("허용되지 않은 이미지명: ${svc}") }
+                                return target
+                            }
+
+                            withCredentials([usernamePassword(
+                                credentialsId: 'gitops-value-push',
+                                usernameVariable: 'GIT_USER',
+                                passwordVariable: 'GIT_TOKEN'
+                            )]) {
+                                // 토큰을 URL에 넣으면 clone한 폴더의 .git/config에 평문으로 남고, 아래 push도
+                                // 그 저장된 주소에 기대게 된다. credential helper로 각 명령 한 번에만 넘긴다.
+                                // 작은따옴표(''')여야 $GIT_USER/$GIT_TOKEN을 Groovy가 아니라 쉘이 치환한다
+                                // (큰따옴표면 Groovy가 값을 미리 글자로 박는다). set +x는 명령이 로그에
+                                // 찍히는 것을 막는다. ai 레포 Jenkinsfile과 같은 방식이다.
+                                sh '''
                             set +x
                             rm -rf gitops-value-checkout
                             git -c credential.helper='!f() { echo "username=$GIT_USER"; echo "password=$GIT_TOKEN"; }; f' \
                                 clone https://github.com/urineun-jigeum-bildeujung/gitops-value.git gitops-value-checkout
-                        '''
-                    }
+                                '''
+                            }
 
-                    // values.yaml의 tag 필드만 이번에 push한 커밋 SHA로 갱신.
-                    // gitops-value의 values/dev/services/<svc>/values.yaml 구조에 맞춤
-                    // (gitops-value README/appset.yaml과 반드시 일치해야 하는 경로).
-                    //
-                    // sed 대신 yq를 쓰는 이유 — sed는 YAML 구조를 모르고 "tag: "로 시작하는
-                    // 줄이면 전부 매치해서 바꿔버림. 지금은 파일마다 tag: 줄이 하나뿐이라
-                    // 우연히 안전하지만, 나중에 카나리(canary.image.tag) 구조가 추가되면
-                    // stable/canary가 같은 값으로 덮어써지는 사고로 이어짐(2026-09-11 도입
-                    // 전에 미리 발견). yq는 .image.tag처럼 정확한 경로만 지정해서 바꾸므로
-                    // 그런 사고가 구조적으로 불가능함.
-                    //
-                    // Update GitOps 스테이지는 container()로 안 감싸여 있어서 Jenkins가
-                    // 자동으로 붙여주는 jnlp 에이전트 컨테이너에서 도는데(git 내장), 여긴
-                    // yq가 없어서 매 빌드마다 고정 버전 바이너리를 내려받아 씀.
-                    sh '''
+                            // values.yaml의 tag 필드만 이번에 push한 커밋 SHA로 갱신.
+                            // gitops-value의 values/dev/services/<svc>/values.yaml 구조에 맞춤
+                            // (gitops-value README/appset.yaml과 반드시 일치해야 하는 경로).
+                            //
+                            // sed 대신 yq를 쓰는 이유 — sed는 YAML 구조를 모르고 "tag: "로 시작하는
+                            // 줄이면 전부 매치해서 바꿔버림. 지금은 파일마다 tag: 줄이 하나뿐이라
+                            // 우연히 안전하지만, 나중에 카나리(canary.image.tag) 구조가 추가되면
+                            // stable/canary가 같은 값으로 덮어써지는 사고로 이어짐(2026-09-11 도입
+                            // 전에 미리 발견). yq는 .image.tag처럼 정확한 경로만 지정해서 바꾸므로
+                            // 그런 사고가 구조적으로 불가능함.
+                            //
+                            // Update GitOps 스테이지는 container()로 안 감싸여 있어서 Jenkins가
+                            // 자동으로 붙여주는 jnlp 에이전트 컨테이너에서 도는데(git 내장), 여긴
+                            // yq가 없어서 매 빌드마다 고정 버전 바이너리를 내려받아 씀.
+                            sh '''
                         curl -sL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /tmp/yq
                         chmod +x /tmp/yq
-                    '''
+                            '''
 
-                    targets.each { target ->
-                        sh """
+                            targets.each { target ->
+                                sh """
                             /tmp/yq -i '.image.tag = "${imageTag}"' gitops-value-checkout/${target.valuesPath}
-                        """
-                    }
+                                """
+                            }
 
-                    dir('gitops-value-checkout') {
-                        sh """
+                            dir('gitops-value-checkout') {
+                                sh """
                             git config user.email 'jenkins@petflow.local'
                             git config user.name 'jenkins-ci'
                             git add values/
                             git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy ${services.collect { it }.join(", ")} @ ${imageTag}'
-                        """
+                                """
 
-                        withCredentials([usernamePassword(
-                            credentialsId: 'gitops-value-push',
-                            usernameVariable: 'GIT_USER',
-                            passwordVariable: 'GIT_TOKEN'
-                        )]) {
-                            sh '''
+                                withCredentials([usernamePassword(
+                                    credentialsId: 'gitops-value-push',
+                                    usernameVariable: 'GIT_USER',
+                                    passwordVariable: 'GIT_TOKEN'
+                                )]) {
+                                    sh '''
                                 set +x
                                 git -c credential.helper='!f() { echo "username=$GIT_USER"; echo "password=$GIT_TOKEN"; }; f' push
-                            '''
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                // 잠금 대기 중 취소된 빌드는 정리 Pod도 만들지 않는다.
+                if (!cacheGuardStarted) { return }
+                // CI 단계 에이전트를 반환한 뒤, 캐시 없는 Pod에서 삭제 완료를 확인한다.
+                // API 조회/삭제 실패 시 빌드를 실패시키고, 다음 빌드는 사전 검사에서 다시 차단한다.
+                podTemplate(yaml: CACHE_GUARD_POD_YAML, inheritFrom: '',
+                            podRetention: never(), idleMinutes: 0, slaveConnectTimeout: 900) {
+                    node(POD_LABEL) {
+                        container('cache-guard') {
+                            withEnv(['CACHE_GUARD_MODE=cleanup']) {
+                                sh cacheGuardScript
+                            }
                         }
                     }
                 }
