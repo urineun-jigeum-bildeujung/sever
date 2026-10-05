@@ -25,7 +25,7 @@ public class PetMapper {
             jpaEntity.getBreedId(),
             jpaEntity.getCreatedAt(),
             jpaEntity.getUpdatedAt()
-        );
+        ).withAllergyProfileStatus(jpaEntity.getAllergyProfileStatus());
     }
 
     public static PetJpaEntity toJpaEntity(Pet domain){
@@ -39,6 +39,7 @@ public class PetMapper {
             .species(domain.getSpecies())
             .age(domain.getAge())
             .birthDate(domain.getBirthDate())
+            .allergyProfileStatus(domain.getAllergyProfileStatus())
             .targetBreedSize(domain.getTargetBreedSize())
             .weight(domain.getWeight())
             .bcs(domain.getBcs())

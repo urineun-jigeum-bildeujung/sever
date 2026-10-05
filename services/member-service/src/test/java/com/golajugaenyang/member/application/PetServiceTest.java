@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
+import com.golajugaenyang.common.core.domain.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.storage.ObjectTagConfirmer;
@@ -146,5 +147,34 @@ class PetServiceTest {
         TransactionSynchronizationUtils.triggerAfterCommit();
 
         verify(objectTagConfirmer).confirm(fileUrl, "member-" + memberId);
+    }
+
+    @Test
+    void registrationStoresExplicitNoneAndDetailReturnsIt() {
+        when(breedMasterRepo.findById(100L))
+            .thenReturn(Optional.of(new BreedMaster(100L, Species.DOG, "test")));
+        when(petRepo.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        PetRegisterRequest request = new PetRegisterRequest("test", Sex.MALE, true, Species.DOG,
+            3, LocalDate.of(2023, 1, 1), TargetBreedSize.SMALL, 5, 3, null, 100L,
+            List.of(), List.of(), AllergyProfileStatus.KNOWN_NONE);
+        Pet saved = petService.registerPet(1L, request);
+        assertThat(saved.getAllergyProfileStatus()).isEqualTo(AllergyProfileStatus.KNOWN_NONE);
+        when(petRepo.findById(10L)).thenReturn(Optional.of(saved));
+        assertThat(petService.getPetDetail(1L, 10L).allergyProfileStatus())
+            .isEqualTo(AllergyProfileStatus.KNOWN_NONE);
+    }
+
+    @Test
+    void updateReplacesListWithExplicitNone() {
+        Pet existing = new Pet(10L, true, "test", Sex.MALE, true, Species.DOG, 3,
+            null, TargetBreedSize.SMALL, 5, 3, null, null, 1L, 100L, null, null)
+            .withAllergyProfileStatus(AllergyProfileStatus.KNOWN_LIST);
+        when(petRepo.findByIdForUpdate(10L)).thenReturn(Optional.of(existing));
+        when(petRepo.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        PetUpdateRequest request = new PetUpdateRequest(null, null, null, null, null, null,
+            null, null, null, null, null, null, List.of(), AllergyProfileStatus.KNOWN_NONE);
+        assertThat(petService.updatePet(1L, 10L, request).getAllergyProfileStatus())
+            .isEqualTo(AllergyProfileStatus.KNOWN_NONE);
+        verify(petAllergyRepo).deleteByPetId(10L);
     }
 }

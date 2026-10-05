@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.adapter.in.web.dto.request;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
+import com.golajugaenyang.common.core.domain.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
@@ -24,6 +25,13 @@ public record PetUpdateRequest(
     String image,
     Long breedId,
     List<String> healthConcerns,
-    List<AllergenCode> allergies
+    List<AllergenCode> allergies,
+    AllergyProfileStatus allergyProfileStatus
 ) {
+    public PetUpdateRequest(String name, Sex sex, Boolean isNeutered, Species species,
+        Integer age, LocalDate birthDate, TargetBreedSize size, Double weight, Integer bcs,
+        String image, Long breedId, List<String> healthConcerns, List<AllergenCode> allergies) {
+        this(name, sex, isNeutered, species, age, birthDate, size, weight, bcs, image,
+            breedId, healthConcerns, allergies, null);
+    }
 }
