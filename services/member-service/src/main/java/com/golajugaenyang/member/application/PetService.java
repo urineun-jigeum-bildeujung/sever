@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.application;
 
 import com.golajugaenyang.common.core.domain.AllergenCode;
+import com.golajugaenyang.member.domain.entity.enums.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.exception.AppException;
 import com.golajugaenyang.common.storage.ObjectTagConfirmer;
@@ -74,6 +75,7 @@ public class PetService {
             newPet = newPet.withTargetBreedSize(request.size());
         }
 
+        newPet = newPet.withAllergyProfileStatus(resolveProfile(request.allergyProfileStatus(), allergyCodes));
         Pet savedPet = petRepo.save(newPet);
 
 
@@ -155,6 +157,16 @@ public class PetService {
             }
         }
 
+        if (request.allergies() != null || request.allergyProfileStatus() != null || speciesChanged) {
+            List<AllergenCode> codes = request.allergies() != null ? request.allergies()
+                : petAllergyRepo.findByPetId(petId).stream().map(PetAllergy::getAllergyCode).toList();
+            AllergyProfileStatus declared = request.allergyProfileStatus();
+            if (declared == null && request.allergies() == null && speciesChanged
+                && pet.getAllergyProfileStatus() == AllergyProfileStatus.KNOWN_NONE) {
+                declared = AllergyProfileStatus.KNOWN_NONE;
+            }
+            updatedPet = updatedPet.withAllergyProfileStatus(resolveProfile(declared, codes));
+        }
         return petRepo.save(updatedPet);
     }
 
@@ -269,7 +281,16 @@ public class PetService {
 
         return new PetDetailResponse(  pet.getId(), pet.getName(), pet.getSpecies(), pet.getBreedId(), breed.getBreedName(),
                 pet.getAge(), pet.getBirthDate(), pet.getSex(), pet.isNeutered(), pet.getTargetBreedSize(),
-                pet.getWeight(), pet.getBcs(), healthConcerns, allergies, pet.getImage(), pet.isDefault());
+                pet.getWeight(), pet.getBcs(), healthConcerns, allergies, pet.getImage(), pet.isDefault(),
+                pet.getAllergyProfileStatus());
+    }
+
+    private AllergyProfileStatus resolveProfile(AllergyProfileStatus declared, List<AllergenCode> codes) {
+        try {
+            return AllergyProfileStatus.resolve(declared, codes);
+        } catch (IllegalArgumentException exception) {
+            throw new AppException(MemberErrorCode.INVALID_ALLERGY_PROFILE);
+        }
     }
 
     private List<ConcernMaster> validateConcerns(List<String> concernCodes, Species species) {

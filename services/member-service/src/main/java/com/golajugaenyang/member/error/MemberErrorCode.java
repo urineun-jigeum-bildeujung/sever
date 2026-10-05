@@ -45,6 +45,10 @@ public enum MemberErrorCode implements ErrorCode {
             HttpStatus.BAD_REQUEST,
             "MEMBER_400_INVALID_ALLERGY", "선택한 종에 해당하지 않는 알레르기입니다."
     ),
+    INVALID_ALLERGY_PROFILE(
+            HttpStatus.BAD_REQUEST,
+            "MEMBER_400_INVALID_ALLERGY_PROFILE", "알레르기 상태와 선택한 성분이 일치하지 않습니다."
+    ),
     ALREADY_SIGNED_UP(
             HttpStatus.CONFLICT,
             "MEMBER_409_ALREADY_SIGNED_UP", "이미 등록되었습니다."

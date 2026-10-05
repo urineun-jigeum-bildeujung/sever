@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.domain.entity;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.member.domain.entity.enums.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class Pet {
     private Long breedId;
     private Instant createdAt;
     private Instant updatedAt;
+    private AllergyProfileStatus allergyProfileStatus = AllergyProfileStatus.UNKNOWN;
 
     public Pet(Long id, boolean isDefault, String name, Sex sex,
         boolean isNeutered, Species species, int age, LocalDate birthDate,
@@ -54,17 +56,27 @@ public class Pet {
 
     public Pet delete() {
         return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
-            targetBreedSize, weight, bcs, image, LocalDateTime.now(), memberId, breedId, createdAt, updatedAt);
+            targetBreedSize, weight, bcs, image, LocalDateTime.now(), memberId, breedId, createdAt, updatedAt)
+            .withAllergyProfileStatus(allergyProfileStatus);
     }
 
     public Pet withIsDefault(boolean isDefault) {
         return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
-            targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
+            targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt)
+            .withAllergyProfileStatus(allergyProfileStatus);
     }
 
     public Pet withTargetBreedSize(TargetBreedSize targetBreedSize) {
         return new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
+            targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt)
+            .withAllergyProfileStatus(allergyProfileStatus);
+    }
+
+    public Pet withAllergyProfileStatus(AllergyProfileStatus status) {
+        Pet copy = new Pet(id, isDefault, name, sex, isNeutered, species, age, birthDate,
             targetBreedSize, weight, bcs, image, deletedAt, memberId, breedId, createdAt, updatedAt);
+        copy.allergyProfileStatus = status == null ? AllergyProfileStatus.UNKNOWN : status;
+        return copy;
     }
 
     public Pet update(String name, Sex sex, Boolean isNeutered, Species species, Integer age,
@@ -87,6 +99,6 @@ public class Pet {
             breedId != null ? breedId : this.breedId,
             createdAt,
             updatedAt
-        );
+        ).withAllergyProfileStatus(allergyProfileStatus);
     }
 }

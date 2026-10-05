@@ -1,0 +1,1 @@
+ALTER TABLE pet VALIDATE CONSTRAINT pet_allergy_profile_status_check;

@@ -1,6 +1,7 @@
 package com.golajugaenyang.member.adapter.out.persistence.entity;
 
 import com.golajugaenyang.common.core.domain.Species;
+import com.golajugaenyang.member.domain.entity.enums.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.common.jpa.entity.BaseTimeEntity;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
@@ -52,6 +53,11 @@ public class PetJpaEntity extends BaseTimeEntity {
     private int age;
 
     private LocalDate birthDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private AllergyProfileStatus allergyProfileStatus = AllergyProfileStatus.UNKNOWN;
 
     @Enumerated(EnumType.STRING)
     private TargetBreedSize targetBreedSize;
