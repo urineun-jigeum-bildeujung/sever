@@ -2,7 +2,7 @@ package com.golajugaenyang.member.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.golajugaenyang.common.core.domain.AllergyProfileStatus;
+import com.golajugaenyang.member.domain.entity.enums.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.Species;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.member.adapter.out.persistence.mapper.PetMapper;

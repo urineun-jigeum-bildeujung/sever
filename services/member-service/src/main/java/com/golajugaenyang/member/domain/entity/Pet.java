@@ -1,7 +1,7 @@
 package com.golajugaenyang.member.domain.entity;
 
 import com.golajugaenyang.common.core.domain.Species;
-import com.golajugaenyang.common.core.domain.AllergyProfileStatus;
+import com.golajugaenyang.member.domain.entity.enums.AllergyProfileStatus;
 import com.golajugaenyang.common.core.domain.TargetBreedSize;
 import com.golajugaenyang.member.domain.entity.enums.Sex;
 import java.time.LocalDate;

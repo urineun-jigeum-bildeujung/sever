@@ -1,4 +1,4 @@
-package com.golajugaenyang.common.core.domain;
+package com.golajugaenyang.member.domain.entity.enums;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ public enum AllergyProfileStatus {
         if (declared == null) {
             return allergies.isEmpty() ? UNKNOWN : KNOWN_LIST;
         }
-        if ((declared == KNOWN_NONE && !allergies.isEmpty())
+        if ((declared != KNOWN_LIST && !allergies.isEmpty())
             || (declared == KNOWN_LIST && allergies.isEmpty())) {
             throw new IllegalArgumentException("ALLERGY_PROFILE_INCONSISTENT");
         }

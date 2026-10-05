@@ -1,4 +1,6 @@
-package com.golajugaenyang.common.core.domain;
+package com.golajugaenyang.member.domain.entity.enums;
+
+import com.golajugaenyang.common.core.domain.AllergenCode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,5 +24,7 @@ class AllergyProfileStatusTest {
             AllergyProfileStatus.KNOWN_NONE, List.of(AllergenCode.CHICKEN)));
         assertThrows(IllegalArgumentException.class, () -> AllergyProfileStatus.resolve(
             AllergyProfileStatus.KNOWN_LIST, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> AllergyProfileStatus.resolve(
+            AllergyProfileStatus.UNKNOWN, List.of(AllergenCode.CHICKEN)));
     }
 }
