@@ -135,7 +135,7 @@ order·payment 컨슈머는 3회 재시도 후 `<topic>.DLT`로 메시지를 격
 ### 2. 이벤트 신뢰성: Transactional Outbox + Dead Letter Topic
 
 - 도메인 변경과 Outbox 기록을 같은 트랜잭션으로 커밋해 이벤트 유실과 유령 이벤트를 막습니다.
-- 폴러가 Outbox 행을 조건부 UPDATE로 선점한 뒤 발행하므로, 인스턴스가 여러 개여도 같은 행을 중복 발행하지 않습니다. 발행 실패 시 다음 주기에 재시도합니다.
+- 폴러가 Outbox 행을 조건부 UPDATE로 선점한 뒤 발행합니다. 발행 실패 시 다음 주기에 재시도합니다.
 - order·payment 컨슈머는 `DefaultErrorHandler`로 3회 재시도 후 DLT(`<topic>.DLT`)로 격리해, 처리 불가 메시지가 파티션을 막지 않게 합니다.
 - 📂 [`OrderOutboxPublisher`](services/order-service/src/main/java/com/golajugaenyang/order/adapter/out/event/OrderOutboxPublisher.java) · 
 [`KafkaConsumerConfig`](services/order-service/src/main/java/com/golajugaenyang/order/config/KafkaConsumerConfig.java)
